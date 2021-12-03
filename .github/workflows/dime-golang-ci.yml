@@ -8,11 +8,11 @@ on:
         required: true
         type: string
       base_ref:
-        description: The branch or tag ref or commit SHA that be base code
+        description: The branch or tag ref or commit SHA that be base code.
         required: true
         type: string
       target_ref:
-        description: The branch or tag ref or commit SHA that will be merged to base code
+        description: The branch or tag ref or commit SHA that will be merged to base code.
         required: true
         type: string
 
@@ -28,6 +28,8 @@ jobs:
 
       - name: Merge no commit and no fast-forward
         run: |
+          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
+          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
           git fetch
           git merge --no-commit --no-ff ${{ inputs.target_ref }}
 
