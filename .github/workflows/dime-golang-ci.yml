@@ -32,6 +32,7 @@ jobs:
 
       - name: Merge no commit and no fast-forward
         run: |
+          git config --global url.https://${{ github.token }}@github.com/.insteadOf https://github.com/
           git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
           git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
           git fetch
@@ -72,6 +73,7 @@ jobs:
 
       - name: Merge no commit and no fast-forward
         run: |
+          git config --global url.https://${{ github.token }}@github.com/.insteadOf https://github.com/
           git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
           git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
           git fetch
@@ -118,6 +120,7 @@ jobs:
 
       - name: Merge no commit and no fast-forward
         run: |
+          git config --global url.https://${{ github.token }}@github.com/.insteadOf https://github.com/
           git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
           git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
           git fetch
