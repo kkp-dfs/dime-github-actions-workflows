@@ -18,7 +18,7 @@ on:
 
 jobs:
   setup:
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v2
@@ -52,7 +52,7 @@ jobs:
   unit-test:
     name: Run unit testing
     needs: setup
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v2
@@ -90,7 +90,7 @@ jobs:
   integration-test:
     name: Run integration test
     needs: setup
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v2
