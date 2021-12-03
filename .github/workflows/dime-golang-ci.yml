@@ -46,7 +46,7 @@ jobs:
 
       - name: Install go modules
         run: |
-          make tool-install
+          make tools-install
           make tidy
 
   unit-test:
