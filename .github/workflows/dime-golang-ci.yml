@@ -48,8 +48,8 @@ jobs:
 
       - name: Install go modules
         run: |
-          make tools-install
           make tidy
+          make tools-install
 
   unit-test:
     name: Run unit testing
