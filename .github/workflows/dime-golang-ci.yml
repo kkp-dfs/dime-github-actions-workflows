@@ -27,7 +27,7 @@ jobs:
           ref: ${{ inputs.base_ref }}
 
       - name: Merge no commit and no fast-forward
-        run: git merge --no-commit -no-ff ${{ inputs.target_ref }}
+        run: git merge --no-commit --no-ff ${{ inputs.target_ref }}
 
       - name: Cache module and tools
         uses: actions/cache@v2
