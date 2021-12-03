@@ -1,0 +1,110 @@
+name: Dime Golang CI
+
+on:
+  push:
+    branches:
+      - '*'
+  pull-request:
+    branches:
+      - feature/*
+
+jobs:
+  setup:
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Merge no commit and no fast-forward
+        run: git merge --no-commit -no-ff ${{ github.sha }}
+
+      - name: Cache module and tools
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/go/bin
+            ./vendor
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install go modules
+        run: |
+          make tool-install
+          make tidy
+
+  unit-test:
+    name: Run unit testing
+    needs: setup
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Merge no commit and no fast-forward
+        run: git merge --no-commit -no-ff ${{ github.sha }}
+
+      - name: Cache module and tools
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/go/bin
+            ./vendor
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run test-cases
+        run: |
+          make unit-test
+          make generate-unitcoverage
+
+      - uses: Nef10/lcov-reporter-action@v0.3.0
+        with:
+          github-token: ${{ github.token }}
+          lcov-file: unitcoverage.lcov
+          pr_number: ${{ github.event.number }}
+
+  integration-test:
+    name: Run integration test
+    needs: setup
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Merge no commit and no fast-forward
+        run: git merge --no-commit -no-ff ${{ github.sha }}
+
+      - name: Cache module and tools
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/go/bin
+            ./vendor
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run test-cases
+        run: |
+          make integration-test
+          make generate-intcoverage
+
+      - uses: Nef10/lcov-reporter-action@v0.3.0
+        with:
+          github-token: ${{ github.token }}
+          lcov-file: integrationcoverage.lcov
+          pr_number: ${{ github.event.number }}
