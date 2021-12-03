@@ -1,12 +1,20 @@
 name: Dime Golang CI
 
 on:
-  push:
-    branches:
-      - '*'
-  pull_request:
-    branches:
-      - feature/*
+  workflow_call:
+    inputs:
+      repository:
+        description: The owner and repository name
+        required: true
+        type: string
+      base_ref:
+        description: The branch or tag ref or commit SHA that be base code
+        required: true
+        type: string
+      target_ref:
+        description: The branch or tag ref or commit SHA that will be merged to base code
+        required: true
+        type: string
 
 jobs:
   setup:
@@ -15,10 +23,11 @@ jobs:
       - name: Checkout current branch
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.base_ref }}
 
       - name: Merge no commit and no fast-forward
-        run: git merge --no-commit -no-ff ${{ github.sha }}
+        run: git merge --no-commit -no-ff ${{ inputs.target_ref }}
 
       - name: Cache module and tools
         uses: actions/cache@v2
@@ -28,9 +37,10 @@ jobs:
             ~/go/pkg/mod
             ~/go/bin
             ./vendor
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-
+            ${{ runner.os }}-go-${{ inputs.repository }}-
+            
 
       - name: Install go modules
         run: |
@@ -45,10 +55,11 @@ jobs:
       - name: Checkout current branch
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.base_ref }}
 
       - name: Merge no commit and no fast-forward
-        run: git merge --no-commit -no-ff ${{ github.sha }}
+        run: git merge --no-commit -no-ff ${{ inputs.target_ref }}
 
       - name: Cache module and tools
         uses: actions/cache@v2
@@ -58,8 +69,9 @@ jobs:
             ~/go/pkg/mod
             ~/go/bin
             ./vendor
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
+            ${{ runner.os }}-go-${{ inputs.repository }}-
             ${{ runner.os }}-go-
 
       - name: Run test-cases
@@ -81,10 +93,11 @@ jobs:
       - name: Checkout current branch
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.base_ref }}
 
       - name: Merge no commit and no fast-forward
-        run: git merge --no-commit -no-ff ${{ github.sha }}
+        run: git merge --no-commit -no-ff ${{ inputs.target_ref }}
 
       - name: Cache module and tools
         uses: actions/cache@v2
@@ -94,8 +107,9 @@ jobs:
             ~/go/pkg/mod
             ~/go/bin
             ./vendor
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
+            ${{ runner.os }}-go-${{ inputs.repository }}-
             ${{ runner.os }}-go-
 
       - name: Run test-cases
