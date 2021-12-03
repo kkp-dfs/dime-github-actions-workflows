@@ -26,6 +26,10 @@ jobs:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.base_ref }}
 
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17.2'
+
       - name: Merge no commit and no fast-forward
         run: |
           git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
@@ -62,8 +66,16 @@ jobs:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.base_ref }}
 
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17.2'
+
       - name: Merge no commit and no fast-forward
-        run: git merge --no-commit -no-ff ${{ inputs.target_ref }}
+        run: |
+          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
+          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
+          git fetch
+          git merge --no-commit --no-ff ${{ inputs.target_ref }}
 
       - name: Cache module and tools
         uses: actions/cache@v2
@@ -100,8 +112,16 @@ jobs:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.base_ref }}
 
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17.2'
+
       - name: Merge no commit and no fast-forward
-        run: git merge --no-commit -no-ff ${{ inputs.target_ref }}
+        run: |
+          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
+          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
+          git fetch
+          git merge --no-commit --no-ff ${{ inputs.target_ref }}
 
       - name: Cache module and tools
         uses: actions/cache@v2
