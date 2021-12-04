@@ -106,11 +106,13 @@ jobs:
           make unit-test
           make generate-unitcoverage
 
-      - uses: Nef10/lcov-reporter-action@v0.3.0
+      - name: Create coverage report
+        uses: zgosalvez/github-actions-report-lcov@v1
         with:
-          github-token: ${{ github.token }}
-          lcov-file: unitcoverage.lcov
-          pr_number: ${{ github.event.number }}
+          coverage-files: unitcoverage.lcov
+          minimum-coverage: 80
+          artifact-name: unittest-coverage-report
+          github-token: ${{ secrets.GH_ACCESS_TOKEN }}
 
   integration-test:
     name: Run integration test
@@ -156,8 +158,10 @@ jobs:
           make integration-test
           make generate-intcoverage
 
-      - uses: Nef10/lcov-reporter-action@v0.3.0
+      - name: Create coverage report
+        uses: zgosalvez/github-actions-report-lcov@v1
         with:
-          github-token: ${{ github.token }}
-          lcov-file: integrationcoverage.lcov
-          pr_number: ${{ github.event.number }}
+          coverage-files: integrationcoverage.lcov
+          minimum-coverage: 60
+          artifact-name: integation-coverage-report
+          github-token: ${{ secrets.GH_ACCESS_TOKEN }}
