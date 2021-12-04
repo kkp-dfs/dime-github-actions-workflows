@@ -21,12 +21,13 @@ on:
 
 jobs:
   setup:
+    name: Install dependencies and keep caches
     runs-on: ubuntu-latest
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
       GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
     steps:
-      - name: Checkout current branch
+      - name: Checkout base branch
         uses: actions/checkout@v2
         with:
           repository: ${{ inputs.repository }}
@@ -70,7 +71,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
       GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
     steps:
-      - name: Checkout current branch
+      - name: Checkout base branch
         uses: actions/checkout@v2
         with:
           repository: ${{ inputs.repository }}
@@ -122,7 +123,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
       GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
     steps:
-      - name: Checkout current branch
+      - name: Checkout base branch
         uses: actions/checkout@v2
         with:
           repository: ${{ inputs.repository }}
@@ -165,3 +166,61 @@ jobs:
           minimum-coverage: 60
           artifact-name: integation-coverage-report
           github-token: ${{ secrets.GH_ACCESS_TOKEN }}
+
+  build:
+    name: Build & push docker images to registry
+    needs: [unit-test]
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.base_ref }}
+
+      - name: Merge no commit and no fast-forward
+        run: |
+          git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
+          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
+          git fetch
+          git merge --no-commit --no-ff ${{ inputs.target_ref }}
+
+      - name: Get ECR details
+        id: ecr
+        run: |
+          REPOSITORY=$(aws ecr describe-repositories --region ap-southeast-1 --output text \
+          --query 'repositories[].repositoryUri' --repository-name '${{ inputs.repository }}')
+          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
+          --query 'authorizationData[].authorizationToken' | base64 -d | cut -d: -f2)
+
+          echo "::add-mark::$TOKEN"
+          echo "::set-output name=token::$TOKEN"
+          echo "::set-output name=registry::$(echo $REPOSITORY | sed 's|${{ inputs.repository }}||')"
+          echo "::set-output name=repository::$REPOSITORY"
+
+      - name: Login to ECR
+        uses: docker/login-action@v1
+        with:
+          registry: https://${{ steps.ecr.outputs.registry }}
+          username: AWS
+          password: ${{ steps.ecr.outputs.token }}
+      
+      - name: Set docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ steps.ecr.outputs.repository }}
+          tags: |
+            type=ref,event=pr,suffix=-latest
+            type=ref,event=pr,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
+            type=ref,event=branch,pattern=main,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
+            type=raw,event=branch,pattern=main,value=latest
+
+      - name: Build & push docker images
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
