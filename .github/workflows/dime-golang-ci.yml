@@ -15,6 +15,9 @@ on:
         description: The branch or tag ref or commit SHA that will be merged to base code.
         required: true
         type: string
+    secrets:
+      gh_access_token:
+        required: true
 
 jobs:
   setup:
