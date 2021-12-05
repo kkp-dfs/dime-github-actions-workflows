@@ -213,7 +213,8 @@ jobs:
           TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
           --query 'authorizationData[].authorizationToken' | base64 -d | cut -d: -f2)
 
-          echo "::add-mark::$TOKEN"
+          ls -la .
+          echo "::add-mask::$TOKEN"
           echo "::set-output name=token::$TOKEN"
           echo "::set-output name=registry::$(echo $REPOSITORY | sed 's|${{ inputs.repository }}||')"
           echo "::set-output name=repository::$REPOSITORY"
