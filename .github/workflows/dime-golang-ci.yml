@@ -58,7 +58,6 @@ jobs:
             ~/go/pkg/mod
             ~/go/bin
             ./vendor
-            ./.netrc
           key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ inputs.repository }}-
@@ -89,6 +88,11 @@ jobs:
 
       - name: Merge no commit and no fast-forward
         run: |
+          cat <<EOF > .netrc
+          machine github.com
+            login $GH_ACCESS_TOKEN
+            password x-oauth-basic
+          EOF
           git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
           git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
           git fetch
@@ -102,7 +106,6 @@ jobs:
             ~/go/pkg/mod
             ~/go/bin
             ./vendor
-            ./.netrc
           key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ inputs.repository }}-
@@ -141,6 +144,11 @@ jobs:
 
       - name: Merge no commit and no fast-forward
         run: |
+          cat <<EOF > .netrc
+          machine github.com
+            login $GH_ACCESS_TOKEN
+            password x-oauth-basic
+          EOF
           git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
           git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
           git fetch
@@ -154,7 +162,6 @@ jobs:
             ~/go/pkg/mod
             ~/go/bin
             ./vendor
-            ./.netrc
           key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-${{ inputs.repository }}-
@@ -186,24 +193,15 @@ jobs:
 
       - name: Merge no commit and no fast-forward
         run: |
+          cat <<EOF > .netrc
+          machine github.com
+            login $GH_ACCESS_TOKEN
+            password x-oauth-basic
+          EOF
           git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
           git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
           git fetch
           git merge --no-commit --no-ff ${{ inputs.target_ref }}
-
-      - name: Cache module and tools
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-            ~/go/bin
-            ./vendor
-            ./.netrc
-          key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ inputs.repository }}-
-            ${{ runner.os }}-go-
 
       - name: Get ECR details
         id: ecr
