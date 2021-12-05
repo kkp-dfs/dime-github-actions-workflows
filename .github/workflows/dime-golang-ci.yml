@@ -28,40 +28,11 @@ jobs:
       GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
     steps:
       - name: Checkout base branch
-        uses: actions/checkout@v2
+        uses: ./dime-golang-setup.yml
         with:
           repository: ${{ inputs.repository }}
-          ref: ${{ inputs.base_ref }}
-
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '^1.17.2'
-
-      - name: Merge no commit and no fast-forward
-        run: |
-          cat <<EOF > .netrc
-          machine github.com
-            login $GH_ACCESS_TOKEN
-            password x-oauth-basic
-          EOF
-          git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
-          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
-          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
-          git fetch
-          git merge --no-commit --no-ff ${{ inputs.target_ref }}
-
-      - name: Cache module and tools
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-            ~/go/bin
-            ./vendor
-          key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ inputs.repository }}-
-            
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
 
       - name: Install go modules
         run: |
@@ -77,39 +48,11 @@ jobs:
       GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
     steps:
       - name: Checkout base branch
-        uses: actions/checkout@v2
+        uses: ./dime-golang-setup.yml
         with:
           repository: ${{ inputs.repository }}
-          ref: ${{ inputs.base_ref }}
-
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '^1.17.2'
-
-      - name: Merge no commit and no fast-forward
-        run: |
-          cat <<EOF > .netrc
-          machine github.com
-            login $GH_ACCESS_TOKEN
-            password x-oauth-basic
-          EOF
-          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
-          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
-          git fetch
-          git merge --no-commit --no-ff ${{ inputs.target_ref }}
-
-      - name: Cache module and tools
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-            ~/go/bin
-            ./vendor
-          key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ inputs.repository }}-
-            ${{ runner.os }}-go-
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
 
       - name: Run test-cases
         run: |
@@ -133,39 +76,11 @@ jobs:
       GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
     steps:
       - name: Checkout base branch
-        uses: actions/checkout@v2
+        uses: ./dime-golang-setup.yml
         with:
           repository: ${{ inputs.repository }}
-          ref: ${{ inputs.base_ref }}
-
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '^1.17.2'
-
-      - name: Merge no commit and no fast-forward
-        run: |
-          cat <<EOF > .netrc
-          machine github.com
-            login $GH_ACCESS_TOKEN
-            password x-oauth-basic
-          EOF
-          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
-          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
-          git fetch
-          git merge --no-commit --no-ff ${{ inputs.target_ref }}
-
-      - name: Cache module and tools
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-            ~/go/bin
-            ./vendor
-          key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ inputs.repository }}-
-            ${{ runner.os }}-go-
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
 
       - name: Run test-cases
         run: |
@@ -186,22 +101,11 @@ jobs:
     runs-on: [self-hosted, linux]
     steps:
       - name: Checkout base branch
-        uses: actions/checkout@v2
+        uses: ./dime-golang-setup.yml
         with:
           repository: ${{ inputs.repository }}
-          ref: ${{ inputs.base_ref }}
-
-      - name: Merge no commit and no fast-forward
-        run: |
-          cat <<EOF > .netrc
-          machine github.com
-            login $GH_ACCESS_TOKEN
-            password x-oauth-basic
-          EOF
-          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
-          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
-          git fetch
-          git merge --no-commit --no-ff ${{ inputs.target_ref }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
 
       - name: Get ECR details
         id: ecr
@@ -211,7 +115,6 @@ jobs:
           TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
           --query 'authorizationData[].authorizationToken' | base64 -d | cut -d: -f2)
 
-          ls -la .
           echo "::add-mask::$TOKEN"
           echo "::set-output name=token::$TOKEN"
           echo "::set-output name=registry::$(echo $REPOSITORY | sed 's|${{ inputs.repository }}||')"
