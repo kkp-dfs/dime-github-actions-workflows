@@ -27,7 +27,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-action-merge-test-pr@main
+        uses: kkp-dfs/dime-github-actions-workflows/actions/merge-test-pr@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -35,7 +35,7 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
 
       - name: Set up go version and caches
-        uses: kkp-dfs/dime-action-golang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/actions/golang-setup@main
 
       - name: Install go modules
         run: |
@@ -51,7 +51,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-action-merge-test-pr@main
+        uses: kkp-dfs/dime-github-actions-workflows/actions/merge-test-pr@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -59,7 +59,7 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
 
       - name: Set up go version and caches
-        uses: kkp-dfs/dime-action-golang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/actions/golang-setup@main
 
       - name: Run test-cases
         run: |
@@ -82,7 +82,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-action-merge-test-pr@main
+        uses: kkp-dfs/dime-github-actions-workflows/actions/merge-test-pr@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -90,7 +90,7 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
 
       - name: Set up go version and caches
-        uses: kkp-dfs/dime-action-golang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/actions/golang-setup@main
 
       - name: Run test-cases
         run: |
@@ -111,7 +111,7 @@ jobs:
     runs-on: [self-hosted, linux]
     steps:
       - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-action-merge-test-pr@main
+        uses: kkp-dfs/dime-github-actions-workflows/actions/merge-test-pr@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}

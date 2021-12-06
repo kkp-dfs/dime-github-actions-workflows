@@ -1,0 +1,31 @@
+name: Golang Setup
+description: Install golang version and set caches of go module
+
+inputs:
+  go-version:
+    description: Version of golang that would like to install
+    required: false
+    default: '^1.17.2'
+
+env: 
+  GOPRIVATE: github.com/kkp-dfs/*
+
+runs:
+  using: composite
+  steps:
+    - name: Install go version ${{ inputs.go-version }}
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ inputs.go-version }}
+
+    - name: Cache module and tools
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+          ~/go/bin
+          ./vendor
+        key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-${{ inputs.repository }}-
