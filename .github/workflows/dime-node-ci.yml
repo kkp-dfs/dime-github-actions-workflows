@@ -52,7 +52,7 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
 
       - name: Set up go version and caches
-        uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
 
       - name: Run lint
         run: npm run lint

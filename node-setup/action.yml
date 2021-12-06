@@ -25,8 +25,9 @@ runs:
       with:
         path: |
           ~/.npm
-          node_modules
-          */*/node_modules
+          ~/node_modules
+          ./node_modules
+          ./*/*/node_modules
           ${{ steps.yarn-cache-dir-path.outputs.dir }}
         key: ${{ runner.os }}-node-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
         restore-keys: |
