@@ -1,14 +1,11 @@
 name: Golang Setup
-description: Install golang version and set caches of go module
+description: Install golang version and set cache of go module
 
 inputs:
   go-version:
     description: Version of golang that would like to install
     required: false
     default: '^1.17.2'
-
-env: 
-  GOPRIVATE: github.com/kkp-dfs/*
 
 runs:
   using: composite

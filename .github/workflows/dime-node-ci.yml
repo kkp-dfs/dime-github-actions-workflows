@@ -24,44 +24,16 @@ jobs:
     name: Install dependencies and keep caches
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout base branch
-        uses: actions/checkout@v2
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
         with:
           repository: ${{ inputs.repository }}
-          ref: ${{ inputs.base_ref }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
-      - name: Merge no commit and no fast-forward
-        run: |
-          cat <<EOF > .netrc
-          machine github.com
-            login $GH_ACCESS_TOKEN
-            password x-oauth-basic
-          EOF
-          git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
-          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
-          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
-          git fetch
-          git merge --no-commit --no-ff ${{ inputs.target_ref }}
-
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-
-      - name: Cache module and tools
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.npm
-            node_modules
-            */*/node_modules
-            ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ inputs.repository }}-
+      - name: Set up go version and caches
+        uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
 
       - name: Install node modules
         run: npm install
@@ -71,44 +43,34 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout base branch
-        uses: actions/checkout@v2
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
         with:
           repository: ${{ inputs.repository }}
-          ref: ${{ inputs.base_ref }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
-      - name: Merge no commit and no fast-forward
-        run: |
-          cat <<EOF > .netrc
-          machine github.com
-            login $GH_ACCESS_TOKEN
-            password x-oauth-basic
-          EOF
-          git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
-          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
-          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
-          git fetch
-          git merge --no-commit --no-ff ${{ inputs.target_ref }}
-
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-
-      - name: Cache module and tools
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.npm
-            node_modules
-            */*/node_modules
-            ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ inputs.repository }}-
+      - name: Set up go version and caches
+        uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
 
       - name: Run lint
         run: npm run lint
+
+  build:
+    name: Build & push docker images to registry
+    needs: [unit-test]
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+      - name: Build and push docker image
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
+        with:
+          repository: ${{ inputs.repository }}

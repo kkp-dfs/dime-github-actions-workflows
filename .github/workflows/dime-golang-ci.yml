@@ -39,7 +39,6 @@ jobs:
 
       - name: Install go modules
         run: |
-          ls -la .
           make tidy
           make tools-install
 
@@ -118,41 +117,7 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
           gh_access_token: ${{ secrets.gh_access_token }}
 
-      - name: Get ECR details and copy .netrc file to context directory
-        id: ecr
-        run: |
-          REPOSITORY=$(aws ecr describe-repositories --region ap-southeast-1 --output text \
-          --query 'repositories[].repositoryUri' --repository-name '${{ inputs.repository }}')
-          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
-          --query 'authorizationData[].authorizationToken' | base64 -d | cut -d: -f2)
-          echo "::add-mask::$TOKEN"
-          echo "::set-output name=token::$TOKEN"
-          echo "::set-output name=registry::$(echo $REPOSITORY | sed 's|${{ inputs.repository }}||')"
-          echo "::set-output name=repository::$REPOSITORY"
-          cp ~/.netrc ./
-
-      - name: Login to ECR
-        uses: docker/login-action@v1
+      - name: Build and push docker image
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
-          registry: https://${{ steps.ecr.outputs.registry }}
-          username: AWS
-          password: ${{ steps.ecr.outputs.token }}
-      
-      - name: Set docker metadata
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ steps.ecr.outputs.repository }}
-          tags: |
-            type=ref,event=pr,suffix=-latest
-            type=ref,event=pr,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
-            type=ref,event=branch,pattern=main,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
-            type=ref,event=branch,pattern=main,value=latest
-
-      - name: Build & push docker images
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          repository: ${{ inputs.repository }}

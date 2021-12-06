@@ -1,0 +1,53 @@
+name: Docker Build and Push
+description: Build docker image and push to registry
+
+inputs:
+  repository:
+    description: The owner and repository name
+    required: true
+  image:
+    description: Docker image name
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Get ECR details and copy .netrc file to context directory
+      id: ecr
+      shell: bash
+      run: |
+        REPOSITORY=$(aws ecr describe-repositories --region ap-southeast-1 --output text \
+        --query 'repositories[].repositoryUri' --repository-name '${{ inputs.repository }}')
+        TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
+        --query 'authorizationData[].authorizationToken' | base64 -d | cut -d: -f2)
+        echo "::add-mask::$TOKEN"
+        echo "::set-output name=token::$TOKEN"
+        echo "::set-output name=registry::$(echo $REPOSITORY | sed 's|${{ inputs.repository }}||')"
+        echo "::set-output name=repository::$REPOSITORY"
+        cp ~/.netrc ./
+
+    - name: Login to ECR
+      uses: docker/login-action@v1
+      with:
+        registry: https://${{ steps.ecr.outputs.registry }}
+        username: AWS
+        password: ${{ steps.ecr.outputs.token }}
+    
+    - name: Set docker metadata
+      id: meta
+      uses: docker/metadata-action@v3
+      with:
+        images: ${{ inputs.image || steps.ecr.outputs.repository }}
+        tags: |
+          type=ref,event=pr,suffix=-latest
+          type=ref,event=pr,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
+          type=ref,event=branch,pattern=main,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
+          type=ref,event=branch,pattern=main,value=latest
+
+    - name: Build & push docker images
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
