@@ -1,4 +1,4 @@
-name: Dime NodeJS CI
+name: Dime NodeJS Continuous Integration
 
 on:
   workflow_call:
