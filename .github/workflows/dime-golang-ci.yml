@@ -39,6 +39,7 @@ jobs:
 
       - name: Install go modules
         run: |
+          ls -la .
           make tidy
           make tools-install
 
