@@ -1,0 +1,114 @@
+name: Dime NodeJS CI
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: The owner and repository name
+        required: true
+        type: string
+      base_ref:
+        description: The branch or tag ref or commit SHA that be base code.
+        required: true
+        type: string
+      target_ref:
+        description: The branch or tag ref or commit SHA that will be merged to base code.
+        required: true
+        type: string
+    secrets:
+      gh_access_token:
+        required: true
+
+jobs:
+  setup:
+    name: Install dependencies and keep caches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.base_ref }}
+
+      - name: Merge no commit and no fast-forward
+        run: |
+          cat <<EOF > .netrc
+          machine github.com
+            login $GH_ACCESS_TOKEN
+            password x-oauth-basic
+          EOF
+          git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
+          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
+          git fetch
+          git merge --no-commit --no-ff ${{ inputs.target_ref }}
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache module and tools
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            */*/node_modules
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ inputs.repository }}-
+
+      - name: Install node modules
+        run: npm install
+
+  lint:
+    name: Run lint
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout base branch
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.base_ref }}
+
+      - name: Merge no commit and no fast-forward
+        run: |
+          cat <<EOF > .netrc
+          machine github.com
+            login $GH_ACCESS_TOKEN
+            password x-oauth-basic
+          EOF
+          git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+          git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
+          git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
+          git fetch
+          git merge --no-commit --no-ff ${{ inputs.target_ref }}
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache module and tools
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            */*/node_modules
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ inputs.repository }}-
+
+      - name: Run lint
+        run: npm run lint

@@ -1,0 +1,46 @@
+name: Golang Setup
+description: Install golang version and set caches of go module
+
+inputs:
+  go-version:
+    description: Version of golang that would like to install
+    required: false
+    default: '^1.17.2'
+  repository:
+    description: The owner and repository name
+    required: true
+  base_ref:
+    description: The branch or tag ref or commit SHA that be base code.
+    required: true
+  target_ref:
+    description: The branch or tag ref or commit SHA that will be merged to base code.
+    required: true
+  gh_access_token:
+    description: GitHub access token
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: dime-kkp/dime-actions-workflows/merge-test-pr@v1
+      with:
+        repository: ${{ inputs.repository }}
+        base_ref: ${{ inputs.base_ref }}
+        target_ref: ${{ inputs.target_ref }}
+        gh_access_token: ${{ inputs.gh_access_token }}
+
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ inputs.go-version }}
+
+    - name: Cache module and tools
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+          ~/go/bin
+          ./vendor
+        key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-${{ inputs.repository }}-
