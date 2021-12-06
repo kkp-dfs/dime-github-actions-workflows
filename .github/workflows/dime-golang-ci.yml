@@ -27,7 +27,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Checkout base branch
-        uses: kkp-dfs/dime-action-golang-setup@v1
+        uses: kkp-dfs/dime-action-golang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -47,7 +47,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Checkout base branch
-        uses: kkp-dfs/dime-action-golang-setup@v1
+        uses: kkp-dfs/dime-action-golang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -75,7 +75,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Checkout base branch
-        uses: kkp-dfs/dime-action-golang-setup@v1
+        uses: kkp-dfs/dime-action-golang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -101,7 +101,7 @@ jobs:
     runs-on: [self-hosted, linux]
     steps:
       - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-action-merge-test-pr@v1
+        uses: kkp-dfs/dime-action-merge-test-pr@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
