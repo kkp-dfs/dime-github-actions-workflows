@@ -26,13 +26,16 @@ jobs:
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
-      - name: Checkout base branch
-        uses: kkp-dfs/dime-action-golang-setup@main
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-action-merge-test-pr@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+      - name: Set up go version and caches
+        uses: kkp-dfs/dime-action-golang-setup@main
 
       - name: Install go modules
         run: |
@@ -46,13 +49,16 @@ jobs:
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
-      - name: Checkout base branch
-        uses: kkp-dfs/dime-action-golang-setup@main
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-action-merge-test-pr@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+      - name: Set up go version and caches
+        uses: kkp-dfs/dime-action-golang-setup@main
 
       - name: Run test-cases
         run: |
@@ -65,7 +71,7 @@ jobs:
           coverage-files: unitcoverage.lcov
           minimum-coverage: 80
           artifact-name: unittest-coverage-report
-          github-token: ${{ secrets.GH_ACCESS_TOKEN }}
+          github-token: ${{ secrets.gh_access_token }}
 
   integration-test:
     name: Run integration test
@@ -74,13 +80,16 @@ jobs:
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
-      - name: Checkout base branch
-        uses: kkp-dfs/dime-action-golang-setup@main
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-action-merge-test-pr@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+      - name: Set up go version and caches
+        uses: kkp-dfs/dime-action-golang-setup@main
 
       - name: Run test-cases
         run: |
