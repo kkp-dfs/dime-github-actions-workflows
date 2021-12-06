@@ -118,6 +118,19 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
           gh_access_token: ${{ secrets.gh_access_token }}
 
+      - name: Get ECR details and copy .netrc file to context directory
+        id: ecr
+        run: |
+          REPOSITORY=$(aws ecr describe-repositories --region ap-southeast-1 --output text \
+          --query 'repositories[].repositoryUri' --repository-name '${{ inputs.repository }}')
+          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
+          --query 'authorizationData[].authorizationToken' | base64 -d | cut -d: -f2)
+          echo "::add-mask::$TOKEN"
+          echo "::set-output name=token::$TOKEN"
+          echo "::set-output name=registry::$(echo $REPOSITORY | sed 's|${{ inputs.repository }}||')"
+          echo "::set-output name=repository::$REPOSITORY"
+          cp ~/.netrc ./
+
       - name: Login to ECR
         uses: docker/login-action@v1
         with:
