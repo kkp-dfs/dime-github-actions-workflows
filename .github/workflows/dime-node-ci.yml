@@ -59,7 +59,7 @@ jobs:
 
   build:
     name: Build & push docker images to registry
-    needs: [unit-test]
+    needs: [lint]
     runs-on: [self-hosted, linux]
     steps:
       - name: Checkout and merge PR to base branch
