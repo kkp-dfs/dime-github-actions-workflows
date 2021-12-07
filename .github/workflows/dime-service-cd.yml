@@ -16,11 +16,18 @@ on:
         description: Name of application
         required: true
         type: string
+      application_endpoints:
+        description: Endpoints of application
+        required: true
+        type: string
       ref:
         description: commit reference of repository
         required: false
         type: string
         default: main
+    secrets:
+      gh_access_token:
+        required: true
 
 jobs:
   argocd:
@@ -38,6 +45,10 @@ jobs:
 
       - name: Apply Dime ArgoCD Application Helm
         run: |
-          helm apply ${{ inputs.release_name }} charts/dime-application \
-          -f values/${{ inputs.service_name }}/values.yaml \
-          -f values/${{ inputs.service_name }}/values-${{ inputs.environment }}.yaml
+          helm template ${{ inputs.release_name }} charts/dime-application \
+          -f values/${{ inputs.application_name }}/values.yaml \
+          -f values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml
+          --set "source.username=${{ secrets.gh_access_token }}" \
+          --set "source.password=x-oauth-basic" \
+          --set "destination.cluster=${{ inputs.environment }}" \
+          --set "application.values.virtualService.hosts={ ${{ inputs.application_endpoints }} }" \
