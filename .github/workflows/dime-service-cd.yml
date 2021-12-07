@@ -34,7 +34,7 @@ jobs:
     name: Apply argo application to kubernetes cluster
     runs-on: [self-hosted, linux, deployment]
     container:
-      image: ubuntu:20.04
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
 
     steps:
       - name: Checkout Dime helm repository
