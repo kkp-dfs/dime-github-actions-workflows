@@ -1,0 +1,38 @@
+name: Dime Service Continuous Delivery
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: Environment that would like to deploy services
+        required: true
+        default: sit
+        type: string
+      release_name:
+        description: Release name of service
+        required: true
+        type: string
+      application_name:
+        description: Name of application
+        required: true
+        type: string
+
+jobs:
+  argocd:
+    name: Apply argo application to kubernetes cluster
+    runs-on: [self-hosted, linux, deployment]
+    container:
+      image: ubuntu:20.04
+
+    steps:
+      - name: Checkout Dime helm repository
+        uses: actions/checkout@v2
+        with:
+          repository: https://github.com/kkp-dfs/dime-helm.git
+          ref: main
+
+      - name: Apply Dime ArgoCD Application Helm
+        run: |
+          helm apply ${{ inputs.release_name }} charts/dime-application \
+          -f values/${{ inputs.service_name }}/values.yaml \
+          -f values/${{ inputs.service_name }}/values-${{ inputs.environment }}.yaml

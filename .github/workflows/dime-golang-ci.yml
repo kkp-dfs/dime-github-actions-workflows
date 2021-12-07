@@ -1,4 +1,4 @@
-name: Dime Golang CI
+name: Dime Golang Continuous Integration
 
 on:
   workflow_call:
