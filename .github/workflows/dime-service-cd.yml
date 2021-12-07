@@ -30,16 +30,40 @@ on:
         required: true
 
 jobs:
+  credentials:
+    name: Get ECR credentials
+    runs-on: [self-hosted, linux]
+    outputs:
+      ecr_username: ${{ steps.ecr.outputs.username }}
+      ecr_password: ${{ steps.ecr.outputs.password }}
+    steps:
+      - name: Get ECR login password
+        id: ecr
+        run: |
+          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
+          --query 'authorizationData[].authorizationToken' | base64 -d)
+          echo "::add-mask::$TOKEN"
+          echo "::set-output name=username::$(echo $TOKEN | cut -d: -f1)"
+          echo "::set-output name=password::$(echo $TOKEN | cut -d: -f2)"
+
   argocd:
     name: Apply argo application to kubernetes cluster
+    needs: credentials
     runs-on: [self-hosted, linux, deployment]
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
-
+      credentials:
+        username: ${{ needs.credentials.outputs.ecr_username }}
+        password: ${{ needs.credentials.outputs.ecr_password }}
     steps:
       - name: Checkout Dime helm repository
         run: |
-          git clone https://${{ secrets.gh_access_token }}@github.com/kkp-dfs/dime-helm.git
+          cat <<EOF > ~/.netrc
+          machine github.com
+            login ${{ secrets.gh_access_token }}
+            password x-oauth-basic
+          EOF
+          git clone https://github.com/kkp-dfs/dime-helm.git
           cd dime-helm
           git reset ${{ inputs.ref }} --hard
 
