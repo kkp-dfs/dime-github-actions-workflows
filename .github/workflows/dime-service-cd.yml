@@ -38,17 +38,17 @@ jobs:
 
     steps:
       - name: Checkout Dime helm repository
-        uses: actions/checkout@v2
-        with:
-          repository: kkp-dfs/dime-helm.git
-          ref: ${{ inputs.ref }}
+        run: |
+          git clone https://${{ secrets.gh_access_token }}@github.com/kkp-dfs/dime-helm.git
+          cd dime-helm
+          git reset ${{ inputs.ref }} --hard
 
       - name: Apply Dime ArgoCD Application Helm
         run: |
-          helm template ${{ inputs.release_name }} charts/dime-application \
-          -f values/${{ inputs.application_name }}/values.yaml \
-          -f values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml
+          helm template ${{ inputs.release_name }} dime-helm/charts/dime-application \
+          -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
+          -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml
           --set "source.username=${{ secrets.gh_access_token }}" \
           --set "source.password=x-oauth-basic" \
           --set "destination.cluster=${{ inputs.environment }}" \
-          --set "application.values.virtualService.hosts={ ${{ inputs.application_endpoints }} }" \
+          --set "application.values.virtualService.hosts={ ${{ inputs.application_endpoints }} }"
