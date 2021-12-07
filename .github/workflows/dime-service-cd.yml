@@ -40,7 +40,7 @@ jobs:
       - name: Checkout Dime helm repository
         uses: actions/checkout@v2
         with:
-          repository: https://github.com/kkp-dfs/dime-helm.git
+          repository: kkp-dfs/dime-helm.git
           ref: ${{ inputs.ref }}
 
       - name: Apply Dime ArgoCD Application Helm
