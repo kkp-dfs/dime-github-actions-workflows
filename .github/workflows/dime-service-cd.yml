@@ -16,6 +16,11 @@ on:
         description: Name of application
         required: true
         type: string
+      ref:
+        description: commit reference of repository
+        required: false
+        type: string
+        default: main
 
 jobs:
   argocd:
@@ -29,7 +34,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: https://github.com/kkp-dfs/dime-helm.git
-          ref: main
+          ref: ${{ inputs.ref }}
 
       - name: Apply Dime ArgoCD Application Helm
         run: |
