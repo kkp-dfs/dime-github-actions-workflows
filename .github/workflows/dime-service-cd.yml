@@ -78,6 +78,13 @@ jobs:
 
       - name: Apply Dime ArgoCD Application Helm
         run: |
+          export APISERVER=https://kubernetes.default.svc
+          export SERVICEACCOUNT=/var/run/secrets/kubernetes.io/serviceaccount
+          export NAMESPACE=$(cat ${SERVICEACCOUNT}/namespace)
+          export TOKEN=$(cat ${SERVICEACCOUNT}/token)
+          export CACERT=${SERVICEACCOUNT}/ca.crt
+          curl -v --cacert ${CACERT} --header "Authorization: Bearer ${TOKEN}" -X GET ${APISERVER}/api
+
           helm template ${{ inputs.release_name }} dime-helm/charts/dime-application \
           -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
           -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
