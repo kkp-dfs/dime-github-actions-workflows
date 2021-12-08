@@ -25,6 +25,15 @@ on:
         required: false
         type: string
         default: main
+      image_repository:
+        description: Docker image repository
+        required: true
+        type: string
+      image_tag:
+        description: Docker image tag
+        required: true
+        type: string
+
     secrets:
       gh_access_token:
         required: true
@@ -69,10 +78,12 @@ jobs:
 
       - name: Apply Dime ArgoCD Application Helm
         run: |
-          helm template ${{ inputs.release_name }} dime-helm/charts/dime-application \
+          helm upgrade -i ${{ inputs.release_name }} dime-helm/charts/dime-application \
           -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
           -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
           --set "source.username=${{ secrets.gh_access_token }}" \
           --set "source.password=x-oauth-basic" \
           --set "destination.cluster=${{ inputs.environment }}" \
-          --set "application.values.virtualService.hosts={${{ inputs.application_endpoints }}}"
+          --set "application.values.virtualService.hosts={${{ inputs.application_endpoints }}}" \
+          --set "application.values.image.repository=${{ inputs.image_repository }}" \
+          --set "application.values.image.tag=${{ inputs.image_tag }}"

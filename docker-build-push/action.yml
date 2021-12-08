@@ -10,9 +10,9 @@ inputs:
     required: false
 
 outputs:
-  docker_tags:
-    description: Docker tags
-    value: ${{ steps.meta.outputs.docker_tags }}
+  docker_image:
+    description: Docker image metadata
+    value: ${{ steps.meta.outputs.json }}
 
 runs:
   using: composite

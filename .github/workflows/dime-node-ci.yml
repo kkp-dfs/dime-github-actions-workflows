@@ -15,9 +15,15 @@ on:
         description: The branch or tag ref or commit SHA that will be merged to base code.
         required: true
         type: string
+
     secrets:
       gh_access_token:
         required: true
+
+    outputs:
+      docker_image:
+        description: Docker image metadata
+        value: ${{ jobs.build.outputs.docker_image }}
 
 jobs:
   setup:
@@ -61,6 +67,8 @@ jobs:
     name: Build & push docker images to registry
     needs: [lint]
     runs-on: [self-hosted, linux]
+    outputs:
+      docker_image: ${{ steps.build.outputs.docker_image }}
     steps:
       - name: Checkout and merge PR to base branch
         uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
@@ -71,6 +79,7 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
 
       - name: Build and push docker image
+        id: build
         uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
           repository: ${{ inputs.repository }}
