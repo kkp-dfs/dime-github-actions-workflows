@@ -9,6 +9,11 @@ inputs:
     description: Docker image name
     required: false
 
+outputs:
+  docker_tags:
+    description: Docker tags
+    value: ${{ steps.meta.outputs.docker_tags }}
+
 runs:
   using: composite
   steps:
