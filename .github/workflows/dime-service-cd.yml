@@ -71,8 +71,8 @@ jobs:
         run: |
           helm template ${{ inputs.release_name }} dime-helm/charts/dime-application \
           -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
-          -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml
+          -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
           --set "source.username=${{ secrets.gh_access_token }}" \
           --set "source.password=x-oauth-basic" \
           --set "destination.cluster=${{ inputs.environment }}" \
-          --set "application.values.virtualService.hosts={ ${{ inputs.application_endpoints }} }"
+          --set "application.values.virtualService.hosts={${{ inputs.application_endpoints }}}"
