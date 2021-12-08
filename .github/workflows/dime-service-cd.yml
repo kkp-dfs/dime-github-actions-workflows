@@ -78,7 +78,7 @@ jobs:
 
       - name: Apply Dime ArgoCD Application Helm
         run: |
-          helm upgrade -i ${{ inputs.release_name }} dime-helm/charts/dime-application \
+          helm template ${{ inputs.release_name }} dime-helm/charts/dime-application \
           -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
           -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
           --set "source.username=${{ secrets.gh_access_token }}" \
@@ -86,4 +86,4 @@ jobs:
           --set "destination.cluster=${{ inputs.environment }}" \
           --set "application.values.virtualService.hosts={${{ inputs.application_endpoints }}}" \
           --set "application.values.image.repository=${{ inputs.image_repository }}" \
-          --set "application.values.image.tag=${{ inputs.image_tag }}"
+          --set "application.values.image.tag=${{ inputs.image_tag }}" | kubectl apply -f --
