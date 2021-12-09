@@ -64,6 +64,8 @@ jobs:
       credentials:
         username: ${{ needs.credentials.outputs.ecr_username }}
         password: ${{ needs.credentials.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Checkout Dime helm repository
         run: |
