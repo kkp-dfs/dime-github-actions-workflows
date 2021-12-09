@@ -82,12 +82,13 @@ jobs:
         run: |
           export APISERVER=https://kubernetes.default.svc
           export SERVICEACCOUNT=/var/run/secrets/kubernetes.io/serviceaccount
-          ls -la /var/run/secrets
-          ls -la /var/run/secrets/kubernetes.io
           export NAMESPACE=$(cat ${SERVICEACCOUNT}/namespace)
           export TOKEN=$(cat ${SERVICEACCOUNT}/token)
           export CACERT=${SERVICEACCOUNT}/ca.crt
-          curl -v --cacert ${CACERT} --header "Authorization: Bearer ${TOKEN}" -X GET ${APISERVER}/api
+        
+          kubectl config set-credentials eks-account --token=$TOKEN
+          kubectl config set-cluster eks --server=$APISERVER --certificate-authority=$CACERT
+          kubectl config set-context --current --cluster=eks --user=eks-account --namespace=$NAMESPACE
 
           helm template ${{ inputs.release_name }} dime-helm/charts/dime-application \
           -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
