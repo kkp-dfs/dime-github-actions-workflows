@@ -80,6 +80,8 @@ jobs:
         run: |
           export APISERVER=https://kubernetes.default.svc
           export SERVICEACCOUNT=/var/run/secrets/kubernetes.io/serviceaccount
+          ls -la /var/run/secrets
+          ls -la /var/run/secrets/kubernetes.io
           export NAMESPACE=$(cat ${SERVICEACCOUNT}/namespace)
           export TOKEN=$(cat ${SERVICEACCOUNT}/token)
           export CACERT=${SERVICEACCOUNT}/ca.crt
