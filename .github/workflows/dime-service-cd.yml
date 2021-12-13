@@ -8,8 +8,8 @@ on:
         required: true
         default: sit
         type: string
-      release_name:
-        description: Release name of service
+      reference:
+        description: Reference name of git commit
         required: true
         type: string
       application_name:
@@ -91,12 +91,21 @@ jobs:
           kubectl config set-context default --cluster=eks --user=eks-account --namespace=$NAMESPACE
           kubectl config use-context default
 
-          helm upgrade -i ${{ inputs.release_name }} dime-helm/charts/dime-application \
+          if [ "${{ inputs.reference }}" = "main" ]; then
+            export DESTINATION_NAMESPACE=dime
+          else
+            export DESTINATION_NAMESPACE=${{ inputs.application_name }}-${{ inputs.reference }}
+          fi
+
+          helm upgrade -i ${{ inputs.application_name }}-${{ inputs.reference }} dime-helm/charts/dime-application \
           -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
           -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
           --set "source.username=${{ secrets.gh_access_token }}" \
           --set "source.password=x-oauth-basic" \
           --set "destination.cluster=${{ inputs.environment }}" \
+          --set "destination.namespace=$DESTINATION_NAMESPACE" \
+          --set "application.values.fullnameOverride=${{ inputs.application_name }}" \
+          --set "application.values.nameOverride=${{ inputs.application_name }}" \
           --set "application.values.virtualService.hosts={${{ inputs.application_endpoints }}}" \
           --set "application.values.image.repository=${{ inputs.image_repository }}" \
           --set "application.values.image.tag=${{ inputs.image_tag }}"
