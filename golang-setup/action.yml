@@ -2,6 +2,9 @@ name: Golang Setup
 description: Install golang version and set cache of go module
 
 inputs:
+  repository:
+    description: The owner and repository name
+    required: true
   go-version:
     description: Version of golang that would like to install
     required: false

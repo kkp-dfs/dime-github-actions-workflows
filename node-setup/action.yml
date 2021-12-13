@@ -2,6 +2,9 @@ name: Node Setup
 description: Install node version and set cache of node modules
 
 inputs:
+  repository:
+    description: The owner and repository name
+    required: true
   node-version:
     description: Version of node that would like to install
     required: true
