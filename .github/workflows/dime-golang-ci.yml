@@ -114,6 +114,7 @@ jobs:
     name: Build & push docker images to registry
     needs: [unit-test]
     runs-on: [self-hosted, linux]
+    if: ${{ always() }}
     outputs:
       docker_image: ${{ steps.build.outputs.docker_image }}
     steps:
