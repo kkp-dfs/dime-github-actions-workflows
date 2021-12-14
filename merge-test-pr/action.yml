@@ -33,8 +33,9 @@ runs:
           password x-oauth-basic
         EOF
         chmod 600 ~/.netrc
+        git config --global init.defaultBranch main
         git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
         git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
         git fetch
-        git diff ${{ inputs.target_ref }} -- .
-        git merge --no-commit --no-ff ${{ inputs.target_ref }}
+        git diff origin/${{ inputs.target_ref }} -- .
+        git merge --no-commit --no-ff origin/${{ inputs.target_ref }}
