@@ -38,4 +38,4 @@ runs:
         git fetch
         echo "HEAD ref => ${{ inputs.base_ref }}"
         echo "TARGET ref => ${{ inputs.target_ref }}"
-        git merge --no-commit ${{ inputs.target_ref }}
+        git merge --no-commit --ff-only ${{ inputs.target_ref }}
