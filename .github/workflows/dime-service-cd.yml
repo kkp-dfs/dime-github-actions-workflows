@@ -41,7 +41,7 @@ on:
 jobs:
   credentials:
     name: Get ECR credentials
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, linux, build]
     outputs:
       ecr_username: ${{ steps.ecr.outputs.username }}
       ecr_password: ${{ steps.ecr.outputs.password }}
