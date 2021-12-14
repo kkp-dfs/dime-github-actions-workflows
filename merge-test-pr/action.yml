@@ -27,7 +27,11 @@ runs:
     - name: Merge no commit and no fast-forward
       shell: bash
       run: |
-        echo "machine github.com login ${{ inputs.gh_access_token }} password x-oauth-basic" > $HOME/.netrc
+        cat <<EOF > $HOME/.netrc
+        machine github.com
+          login ${{ inputs.gh_access_token }}
+          password x-oauth-basic
+        EOF
         chmod 600 ~/.netrc
         git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
         git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
