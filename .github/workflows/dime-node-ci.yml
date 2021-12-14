@@ -61,6 +61,8 @@ jobs:
 
       - name: Set up go version and caches
         uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
+        with:
+          repository: ${{ inputs.repository }}
 
       - name: Run lint
         run: npm run lint

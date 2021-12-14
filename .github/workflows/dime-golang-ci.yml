@@ -67,6 +67,8 @@ jobs:
 
       - name: Set up go version and caches
         uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
+        with:
+          repository: ${{ inputs.repository }}
 
       - name: Run test-cases
         run: |
@@ -98,6 +100,8 @@ jobs:
 
       - name: Set up go version and caches
         uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
+        with:
+          repository: ${{ inputs.repository }}
 
       - name: Run test-cases
         run: |
