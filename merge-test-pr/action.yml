@@ -36,6 +36,4 @@ runs:
         git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
         git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
         git fetch
-        git status
-        git clean -fd .
         git merge --no-commit --no-ff ${{ inputs.target_ref }}
