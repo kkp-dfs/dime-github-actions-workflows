@@ -1,0 +1,289 @@
+name: Dime CI/CD workflow
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: The owner and repository name
+        required: true
+        type: string
+      base_ref:
+        description: The branch or tag ref or commit SHA that be base code.
+        required: true
+        type: string
+      target_ref:
+        description: The branch or tag ref or commit SHA that will be merged to base code.
+        required: true
+        type: string
+      helm_ref:
+        description: commit reference of helm repository
+        required: false
+        type: string
+        default: main
+      environment:
+        description: Environment that would like to deploy services
+        required: true
+        default: sit
+        type: string
+      hostname:
+        description: The hostname of the application service
+        required: true
+        type: string
+      code_lang:
+        description: The program language of this repository
+        required: true
+        type: string
+      event_name:
+        description: The name of the event that triggered the workflow run.
+        required: true
+        type: string
+      event_number:
+        description: The number of the event that triggered the workflow run.
+        required: true
+        type: string
+      application_name:
+        description: Name of application
+        required: true
+        type: string
+
+    secrets:
+      gh_access_token:
+        required: true
+
+jobs:
+  setup:
+    name: Install dependencies and keep caches
+    runs-on: ubuntu-latest
+    env: 
+      GOPRIVATE: github.com/kkp-dfs/*
+    steps:
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+      - name: Set up node version and caches
+        if: ${{ inputs.code_lang == 'node' }}
+        uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
+        with:
+          repository: ${{ inputs.repository }}
+      - name: Install go modules
+        if: ${{ inputs.code_lang == 'node' }}
+        run: npm install
+
+      - name: Set up go version and caches
+        if: ${{ inputs.code_lang == 'golang' }}
+        uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
+        with:
+          repository: ${{ inputs.repository }}
+      - name: Install go modules
+        if: ${{ inputs.code_lang == 'golang' }}
+        run: |
+          make tidy
+          make tools-install
+  
+  lint:
+    name: Run lint
+    needs: setup
+    runs-on: ubuntu-latest
+    env: 
+      GOPRIVATE: github.com/kkp-dfs/*
+    steps:
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+      - name: Set up go version and caches
+        if: ${{ inputs.code_lang == 'node' }}
+        uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
+        with:
+          repository: ${{ inputs.repository }}
+      - name: Run lint
+        if: ${{ inputs.code_lang == 'node' }}
+        run: npm run lint
+
+  unit-test:
+    name: Run unit testing
+    needs: setup
+    runs-on: ubuntu-latest
+    env: 
+      GOPRIVATE: github.com/kkp-dfs/*
+    steps:
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+      - name: Set up go version and caches
+        if: ${{ inputs.code_lang == 'golang' }}
+        uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
+        with:
+          repository: ${{ inputs.repository }}
+      - name: Run test-cases
+        if: ${{ inputs.code_lang == 'golang' }}
+        run: |
+          make unit-test
+          make generate-unitcoverage
+      - name: Create coverage report
+        if: ${{ inputs.code_lang == 'golang' }}
+        uses: zgosalvez/github-actions-report-lcov@v1
+        with:
+          coverage-files: unitcoverage.lcov
+          minimum-coverage: 80
+          artifact-name: unittest-coverage-report
+          github-token: ${{ secrets.gh_access_token }}
+
+  integration-test:
+    name: Run integration test
+    needs: setup
+    runs-on: ubuntu-latest
+    env: 
+      GOPRIVATE: github.com/kkp-dfs/*
+    steps:
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+      - name: Set up go version and caches
+        if: ${{ inputs.code_lang == 'golang' }}
+        uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
+        with:
+          repository: ${{ inputs.repository }}
+      - name: Run test-cases
+        if: ${{ inputs.code_lang == 'golang' }}
+        run: |
+          make integration-test
+          make generate-intcoverage
+      - name: Create coverage report
+        if: ${{ inputs.code_lang == 'golang' }}
+        uses: zgosalvez/github-actions-report-lcov@v1
+        with:
+          coverage-files: integrationcoverage.lcov
+          minimum-coverage: 60
+          artifact-name: integation-coverage-report
+          github-token: ${{ secrets.gh_access_token }}
+
+  build:
+    name: Build & push docker images to registry
+    needs: 
+      - unit-test
+      - integration-test
+      - lint
+    runs-on: [self-hosted, linux, build]
+    if: ${{ always() }}
+    outputs:
+      docker_image: ${{ steps.build.outputs.docker_image }}
+      endpoint: ${{ steps.paramater.outputs.host }}
+      ref: ${{ steps.paramater.outputs.ref }}
+      image_repo: ${{ steps.paramater.outputs.image_repo }}
+      image_tag: ${{ steps.paramater.outputs.image_tag }}
+      ecr_username: ${{ steps.paramater.outputs.username }}
+      ecr_password: ${{ steps.paramater.outputs.password }}
+    steps:
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+      - name: Build and push docker image
+        id: build
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
+        with:
+          repository: ${{ inputs.repository }}
+
+      - id: paramater
+        run: |
+          REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
+          if [ "${{ inputs.event_name }}" == "pull_request" ]; then
+            HOST=pr-${{ inputs.event_number }}.${{ inputs.hostname }}
+          elif [ "${REF_NAME}" != "main" ]; then
+            HOST=${REF_NAME}.${{ inputs.hostname }}
+          else
+            HOST=${{ inputs.hostname }}
+          fi
+          echo "::set-output name=ref::$REF_NAME"
+          echo "::set-output name=host::$HOST"
+
+          IMAGE=$(echo '${{ steps.build.outputs.docker_image }}' | jq -r '.tags[0]')
+          echo "::set-output name=image_repo::$(echo $IMAGE | cut -d: -f1)"
+          echo "::set-output name=image_tag::$(echo $IMAGE | cut -d: -f2)"
+
+          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
+          --query 'authorizationData[].authorizationToken' | base64 -d)
+          echo "::add-mask::$TOKEN"
+          echo "::set-output name=username::$(echo $TOKEN | cut -d: -f1)"
+          echo "::set-output name=password::$(echo $TOKEN | cut -d: -f2)"
+
+  argocd:
+    name: Apply argo application to kubernetes cluster
+    needs: build
+    runs-on: [self-hosted, linux, deployment]
+    if: ${{ always() }}
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
+      credentials:
+        username: ${{ needs.build.outputs.ecr_username }}
+        password: ${{ needs.build.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Checkout Dime helm repository
+        run: |
+          cat <<EOF > ~/.netrc
+          machine github.com
+            login ${{ secrets.gh_access_token }}
+            password x-oauth-basic
+          EOF
+          git clone https://github.com/kkp-dfs/dime-helm.git
+          cd dime-helm
+          git fetch
+          git reset ${{ inputs.helm_ref }} --hard
+
+      - name: Apply Dime ArgoCD Application Helm
+        run: |
+          export APISERVER=https://kubernetes.default.svc
+          export SERVICEACCOUNT=/var/run/secrets/kubernetes.io/serviceaccount
+          export NAMESPACE=$(cat ${SERVICEACCOUNT}/namespace)
+          export TOKEN=$(cat ${SERVICEACCOUNT}/token)
+          export CACERT=${SERVICEACCOUNT}/ca.crt
+
+          kubectl config set-credentials eks-account --token=$TOKEN
+          kubectl config set-cluster eks --server=$APISERVER --certificate-authority=$CACERT
+          kubectl config set-context default --cluster=eks --user=eks-account --namespace=$NAMESPACE
+          kubectl config use-context default
+
+          if [ "${{ needs.build.outputs.ref }}" = "main" ]; then
+            export DESTINATION_NAMESPACE=dime
+          else
+            export DESTINATION_NAMESPACE=${{ inputs.application_name }}-${{ needs.build.outputs.ref }}
+          fi
+
+          helm upgrade -i ${{ inputs.application_name }}-${{ needs.build.outputs.ref }} dime-helm/charts/dime-application \
+          -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
+          -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
+          --set "source.username=${{ secrets.gh_access_token }}" \
+          --set "source.password=x-oauth-basic" \
+          --set "destination.cluster=${{ inputs.environment }}" \
+          --set "destination.namespace=$DESTINATION_NAMESPACE" \
+          --set "application.values.fullnameOverride=${{ inputs.application_name }}" \
+          --set "application.values.nameOverride=${{ inputs.application_name }}" \
+          --set "application.values.virtualService.hosts={${{ needs.build.outputs.endpoint }}}" \
+          --set "application.values.image.repository=${{ needs.build.outputs.image_repo }}" \
+          --set "application.values.image.tag=${{ needs.build.outputs.image_tag }}"

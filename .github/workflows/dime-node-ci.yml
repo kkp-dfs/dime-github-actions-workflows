@@ -38,7 +38,7 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
           gh_access_token: ${{ secrets.gh_access_token }}
 
-      - name: Set up go version and caches
+      - name: Set up node version and caches
         uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
         with:
           repository: ${{ inputs.repository }}
