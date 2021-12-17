@@ -29,6 +29,11 @@ on:
         description: The hostname of the application service
         required: true
         type: string
+      additional_hostnames:
+        description: The additional hostnames of the application service
+        required: false
+        type: string
+        default: ""
       code_lang:
         description: The program language of this repository
         required: true
@@ -215,6 +220,8 @@ jobs:
             HOST=pr-${{ inputs.event_number }}.${{ inputs.hostname }}
           elif [ "${REF_NAME}" != "main" ]; then
             HOST=${REF_NAME}.${{ inputs.hostname }}
+          elif [[ ! -z "${{ inputs.additional_hostnames }}" ]]; then
+            HOST=${{ inputs.hostname }},${{ inputs.additional_hostnames }}
           else
             HOST=${{ inputs.hostname }}
           fi
