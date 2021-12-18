@@ -285,12 +285,12 @@ jobs:
           helm upgrade -i ${{ inputs.application_name }}-${{ needs.build.outputs.ref }} dime-helm/charts/dime-application \
           -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
           -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
+          --set "fullnameOverride=${{ inputs.application_name }}" \
+          --set "nameOverride=${{ inputs.application_name }}" \
           --set "source.username=${{ secrets.gh_access_token }}" \
           --set "source.password=x-oauth-basic" \
           --set "destination.cluster=${{ inputs.environment }}" \
           --set "destination.namespace=$DESTINATION_NAMESPACE" \
-          --set "application.values.fullnameOverride=${{ inputs.application_name }}" \
-          --set "application.values.nameOverride=${{ inputs.application_name }}" \
           --set "application.values.virtualService.hosts={${{ needs.build.outputs.endpoint }}}" \
           --set "application.values.image.repository=${{ needs.build.outputs.image_repo }}" \
           --set "application.values.image.tag=${{ needs.build.outputs.image_tag }}"
