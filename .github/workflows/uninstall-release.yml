@@ -1,0 +1,26 @@
+name: Remove argo application for PR
+
+on:
+  workflow_call:
+    inputs:
+      application_name:
+        description: Name of application
+        required: true
+        type: string
+
+jobs:
+  argo:
+    name: Remove argo application
+    runs-on: [self-hosted, linux, deployment]
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
+      credentials:
+        username: ${{ needs.build.outputs.ecr_username }}
+        password: ${{ needs.build.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Delete Dime ArgoCD Application Helm release
+        run: |
+          REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
+          helm uninstall ${{ inputs.application_name }}-$REF_NAME
