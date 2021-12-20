@@ -121,32 +121,19 @@ jobs:
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
-      - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+      - name: Run golang unit-test
+        if: ${{ inputs.code_lang == 'golang' }}
+        uses: kkp-dfs/dime-github-actions-workflows/golang-testing@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
           gh_access_token: ${{ secrets.gh_access_token }}
-
-      - name: Set up go version and caches
-        if: ${{ inputs.code_lang == 'golang' }}
-        uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-      - name: Run test-cases
-        if: ${{ inputs.code_lang == 'golang' }}
-        run: |
-          make unit-test
-          make generate-unitcoverage
-      - name: Create coverage report
-        if: ${{ inputs.code_lang == 'golang' }}
-        uses: zgosalvez/github-actions-report-lcov@v1
-        with:
-          coverage-files: unitcoverage.lcov
-          minimum-coverage: 80
-          artifact-name: unittest-coverage-report
-          github-token: ${{ secrets.gh_access_token }}
+          test_name: unit-test
+          coverage_generator: generate-unitcoverage
+          coverage_files: unitcoverage.lcov
+          artifact_name: unittest-coverage-report
+          minimum_coverage: 80
 
   integration-test:
     name: Run integration test
@@ -155,32 +142,19 @@ jobs:
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
-      - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+      - name: Run golang integration test
+        if: ${{ inputs.code_lang == 'golang' }}
+        uses: kkp-dfs/dime-github-actions-workflows/golang-testing@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
           gh_access_token: ${{ secrets.gh_access_token }}
-
-      - name: Set up go version and caches
-        if: ${{ inputs.code_lang == 'golang' }}
-        uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-      - name: Run test-cases
-        if: ${{ inputs.code_lang == 'golang' }}
-        run: |
-          make integration-test
-          make generate-intcoverage
-      - name: Create coverage report
-        if: ${{ inputs.code_lang == 'golang' }}
-        uses: zgosalvez/github-actions-report-lcov@v1
-        with:
-          coverage-files: integrationcoverage.lcov
-          minimum-coverage: 60
-          artifact-name: integation-coverage-report
-          github-token: ${{ secrets.gh_access_token }}
+          test_name: integration-test
+          coverage_generator: generate-intcoverage
+          coverage_files: integrationcoverage.lcov
+          artifact_name: integation-coverage-report
+          minimum_coverage: 60
 
   build:
     name: Build & push docker images to registry

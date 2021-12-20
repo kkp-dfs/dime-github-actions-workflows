@@ -1,0 +1,59 @@
+name: Golang Testiong
+description: Run test cases and keep testing report
+
+inputs:
+  repository:
+    description: The owner and repository name
+    required: true
+  base_ref:
+    description: The branch or tag ref or commit SHA that be base code.
+    required: true
+  target_ref:
+    description: The branch or tag ref or commit SHA that will be merged to base code.
+    required: true
+  test_name:
+    description: The make target for run testing
+    required: true
+  coverage_generator:
+    description: The make target for generate testing coverage file
+    required: true
+  coverage_files:
+    description: The coverage files to scan. For example, `coverage/lcov.*.info`
+    required: true
+  artifact_name:
+    description: The GitHub artifact name of the generated HTML report. For example, `code-coverage-report`. _Note:_ When downloading, it will be extracted in an `html` directory
+    required: true
+  minimum_coverage:
+    description: "The minimum coverage to pass the check. Optional. Default: `0` (always passes)"
+    required: false
+    default: "0"
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout and merge PR to base branch
+      uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+      with:
+        repository: ${{ inputs.repository }}
+        base_ref: ${{ inputs.base_ref }}
+        target_ref: ${{ inputs.target_ref }}
+        gh_access_token: ${{ secrets.gh_access_token }}
+
+    - name: Set up go version and caches
+      uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
+      with:
+        repository: ${{ inputs.repository }}
+  
+    - name: Run test-cases
+      shell: bash
+      run: |
+        make ${{ inputs.test_name }}
+        make ${{ inputs.coverage_generator }}
+
+    - name: Create coverage report
+      uses: zgosalvez/github-actions-report-lcov@v1
+      with:
+        coverage-files: ${{ inputs.coverage_files }}
+        minimum-coverage: ${{ inputs.minimum_coverage }}
+        artifact-name: ${{ inputs.artifact_name }}
+        github-token: ${{ secrets.gh_access_token }}
