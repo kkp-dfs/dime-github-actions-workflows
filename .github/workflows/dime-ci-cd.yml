@@ -205,7 +205,7 @@ jobs:
           if [ "${{ inputs.event_name }}" == "pull_request" ]; then
             HOST=pr-${{ inputs.event_number }}.${{ inputs.hostname }}
           elif [ "${REF_NAME}" != "main" ]; then
-            HOST=${REF_NAME}.${{ inputs.hostname }}
+            HOST=${{ inputs.application_name }}-${REF_NAME}.${{ inputs.hostname }}
           elif [[ ! -z "${{ inputs.additional_hostnames }}" ]]; then
             HOST=${{ inputs.hostname }},${{ inputs.additional_hostnames }}
           else
