@@ -5,16 +5,19 @@ on:
     inputs:
       repository:
         description: The owner and repository name
-        required: true
+        required: false
         type: string
+        default: ${{ github.repository }}
       base_ref:
         description: The branch or tag ref or commit SHA that be base code.
-        required: true
+        required: false
         type: string
+        default: ${{ github.base_ref || 'main' }}
       target_ref:
         description: The branch or tag ref or commit SHA that will be merged to base code.
-        required: true
+        required: false
         type: string
+        default: ${{ github.head_ref || github.ref_name }}
       helm_ref:
         description: commit reference of helm repository
         required: false
@@ -40,12 +43,19 @@ on:
         type: string
       event_name:
         description: The name of the event that triggered the workflow run.
-        required: true
+        required: false
         type: string
+        default: ${{ github.event_name }}
       event_number:
         description: The number of the event that triggered the workflow run.
-        required: true
+        required: false
         type: string
+        default: ${{ github.event.number }}
+      namespace:
+        description: The namespace of destination
+        required: false
+        type: string
+        default: dime
       application_name:
         description: Name of application
         required: true
@@ -203,9 +213,9 @@ jobs:
         run: |
           REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
           if [ "${{ inputs.event_name }}" == "pull_request" ]; then
-            HOST=pr-${{ inputs.event_number }}.${{ inputs.hostname }}
+            HOST=${{ inputs.application_name }}-pr-${{ inputs.event_number }}.${{ inputs.hostname }}
           elif [ "${REF_NAME}" != "main" ]; then
-            HOST=${{ inputs.application_name }}-${REF_NAME}.${{ inputs.hostname }}
+            HOST=${REF_NAME}.${{ inputs.hostname }}
           elif [[ ! -z "${{ inputs.additional_hostnames }}" ]]; then
             HOST=${{ inputs.hostname }},${{ inputs.additional_hostnames }}
           else
@@ -263,7 +273,7 @@ jobs:
           kubectl config use-context default
 
           if [ "${{ needs.build.outputs.ref }}" = "main" ]; then
-            export DESTINATION_NAMESPACE=dime
+            export DESTINATION_NAMESPACE=${{ inputs.namespace }}
           else
             export DESTINATION_NAMESPACE=${{ inputs.application_name }}-${{ needs.build.outputs.ref }}
           fi
