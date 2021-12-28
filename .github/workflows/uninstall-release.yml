@@ -9,18 +9,43 @@ on:
         type: string
 
 jobs:
+  credentials:
+    name: Get ECR credentials
+    runs-on: [self-hosted, linux, build]
+    outputs:
+      ecr_username: ${{ steps.parameter.outputs.username }}
+      ecr_password: ${{ steps.parameter.outputs.password }}
+    steps:
+      - id: parameter
+        run: |
+          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
+          --query 'authorizationData[].authorizationToken' | base64 -d)
+          echo "::add-mask::$TOKEN"
+          echo "::set-output name=username::$(echo $TOKEN | cut -d: -f1)"
+          echo "::set-output name=password::$(echo $TOKEN | cut -d: -f2)"
   argo:
     name: Remove argo application
+    needs: credentials
     runs-on: [self-hosted, linux, deployment]
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
-        username: ${{ needs.build.outputs.ecr_username }}
-        password: ${{ needs.build.outputs.ecr_password }}
+        username: ${{ needs.credentials.outputs.ecr_username }}
+        password: ${{ needs.credentials.outputs.ecr_password }}
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Delete Dime ArgoCD Application Helm release
         run: |
-          REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
-          helm uninstall ${{ inputs.application_name }}-$REF_NAME
+          export APISERVER=https://kubernetes.default.svc
+          export SERVICEACCOUNT=/var/run/secrets/kubernetes.io/serviceaccount
+          export NAMESPACE=$(cat ${SERVICEACCOUNT}/namespace)
+          export TOKEN=$(cat ${SERVICEACCOUNT}/token)
+          export CACERT=${SERVICEACCOUNT}/ca.crt
+
+          kubectl config set-credentials eks-account --token=$TOKEN
+          kubectl config set-cluster eks --server=$APISERVER --certificate-authority=$CACERT
+          kubectl config set-context default --cluster=eks --user=eks-account --namespace=$NAMESPACE
+          kubectl config use-context default
+
+          helm uninstall ${{ inputs.application_name }}-refs-pull-${{ github.event.pull_request.number }}-merge
