@@ -1,0 +1,49 @@
+name: Flutter Testing
+description: Run test case
+
+inputs:
+  repository:
+    description: The owner and repository name
+    required: true
+  base_ref:
+    description: The branch or tag ref or commit SHA that be base code.
+    required: true
+  target_ref:
+    description: The branch or tag ref or commit SHA that will be merged to base code.
+    required: true
+  artifact_name:
+    description: The GitHub artifact name of the generated HTML report. For example, `code-coverage-report`. _Note:_ When downloading, it will be extracted in an `html` directory
+    required: true
+  minimum_coverage:
+    description: "The minimum coverage to pass the check. Optional. Default: `0` (always passes)"
+    required: false
+    default: "0"
+  gh_access_token:
+    description: GitHub access token
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout branch
+      uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+      with:
+        repository: ${{ inputs.repository }}
+        base_ref: ${{ inputs.base_ref }}
+        target_ref: ${{ inputs.target_ref }}
+        gh_access_token: ${{ inputs.gh_access_token }}
+
+    - name: Run test-case
+      shell: bash
+      run: |
+        export PATH=/opt/flutter/bin:$PATH
+        flutter test --coverage .
+
+    - name: Create coverage report
+      uses: zgosalvez/github-actions-report-lcov@v1
+      if: ${{ always() }}
+      with:
+        coverage-files: coverage/lcov.info
+        minimum-coverage: ${{ inputs.minimum_coverage }}
+        artifact-name: ${{ inputs.artifact_name }}
+        github-token: ${{ inputs.gh_access_token }}

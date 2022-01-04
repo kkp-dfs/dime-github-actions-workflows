@@ -64,6 +64,7 @@ runs:
 
     - name: Create coverage report
       uses: zgosalvez/github-actions-report-lcov@v1
+      if: ${{ always() }}
       with:
         coverage-files: ${{ inputs.coverage_files }}
         minimum-coverage: ${{ inputs.minimum_coverage }}
