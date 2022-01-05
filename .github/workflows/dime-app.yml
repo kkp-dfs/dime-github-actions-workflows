@@ -1,0 +1,82 @@
+name: Dime App workflow
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: The owner and repository name
+        required: false
+        type: string
+        default: ${{ github.repository }}
+      base_ref:
+        description: The branch or tag ref or commit SHA that be base code.
+        required: false
+        type: string
+        default: ${{ github.base_ref || 'main' }}
+      target_ref:
+        description: The branch or tag ref or commit SHA that will be merged to base code.
+        required: false
+        type: string
+        default: ${{ github.head_ref || github.ref_name }}
+      # environment:
+      #   description: Environment that would like to deploy services
+      #   required: true
+      #   default: sit
+      #   type: string
+      # slack_channel:
+      #   description: The slack channel that send notification.
+      #   type: string
+      #   required: true
+
+    secrets:
+      gh_access_token:
+        required: true
+      # slack_webhook:
+      #   required: true
+
+jobs:
+  prepare:
+    name: Prepare parameters
+    runs-on: [self-hosted, linux, build]
+    outputs:
+      ecr_username: ${{ steps.paramater.outputs.username }}
+      ecr_password: ${{ steps.paramater.outputs.password }}
+    steps:
+      - id: paramater
+        run: |
+          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
+          --query 'authorizationData[].authorizationToken' | base64 -d)
+          echo "::add-mask::$TOKEN"
+          echo "::set-output name=username::$(echo $TOKEN | cut -d: -f1)"
+          echo "::set-output name=password::$(echo $TOKEN | cut -d: -f2)"
+
+  unit-test:
+    name: Run unit testing
+    needs: prepare
+    runs-on: [self-hosted, linux, deployment]
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/flutter:2.8.1-stable
+      credentials:
+        username: ${{ needs.prepare.outputs.ecr_username }}
+        password: ${{ needs.prepare.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Cache module and tools
+        uses: actions/cache@v2
+        with:
+          path: |
+             /opt/flutter/.pub-cache
+          key: ${{ runner.os }}-flutter-${{ inputs.repository }}-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-${{ inputs.repository }}-
+    
+      - name: Run flutter unit-test
+        uses: kkp-dfs/dime-github-actions-workflows/flutter-testing@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          artifact_name: unittest-coverage-report
+          gh_access_token: ${{ secrets.gh_access_token }}
+          minimum_coverage: 80

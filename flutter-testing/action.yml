@@ -37,6 +37,7 @@ runs:
       shell: bash
       run: |
         export PATH=/opt/flutter/bin:$PATH
+        flutter config --no-analytics
         flutter test --coverage .
 
     - name: Create coverage report
