@@ -79,7 +79,7 @@ runs:
         SLACK_COLOR: good
         SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
         SLACK_MESSAGE: This repo passed all test cases of ${{ inputs.test_name }} and there is coverage over than ${{ inputs.minimum_coverage }}%
-        SLACK_TITLE: Go ${{ inputs.test_name }} is PASS
+        SLACK_TITLE: ${{ inputs.application_name }} ${{ inputs.test_name }} is PASS
         SLACK_USERNAME: GitHub Actions
         SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
 

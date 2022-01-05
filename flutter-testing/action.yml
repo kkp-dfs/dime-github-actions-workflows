@@ -2,6 +2,9 @@ name: Flutter Testing
 description: Run test case
 
 inputs:
+  application_name:
+    description: Name of application
+    required: true
   repository:
     description: The owner and repository name
     required: true
@@ -18,6 +21,9 @@ inputs:
     description: "The minimum coverage to pass the check. Optional. Default: `0` (always passes)"
     required: false
     default: "0"
+  slack_channels:
+    description: The JSON array of obect of slack channel and webhook that send notification.
+    required: true
   gh_access_token:
     description: GitHub access token
     required: true
