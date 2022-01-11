@@ -59,6 +59,8 @@ runs:
     - name: Run test-cases
       shell: bash
       run: |
+        export PATH=$(go env GOPATH)/bin:$PATH
+        find / -name *ginkgo* -print
         make ${{ inputs.test_name }}
         make ${{ inputs.coverage_generator }}
 

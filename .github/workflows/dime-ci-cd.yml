@@ -158,6 +158,8 @@ jobs:
     name: Run integration test
     needs: setup
     runs-on: [self-hosted, linux, deployment]
+    container:
+      image: ubuntu:latest
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
