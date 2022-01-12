@@ -74,9 +74,12 @@ on:
 jobs:
   setup:
     name: Install dependencies and keep caches
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, build]
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
+    outputs:
+      ecr_username: ${{ steps.credentials.outputs.username }}
+      ecr_password: ${{ steps.credentials.outputs.password }}
     steps:
       - name: Checkout and merge PR to base branch
         uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
@@ -105,6 +108,14 @@ jobs:
         run: |
           make tidy
           make tools-install
+      - name: Get credentials
+        id: credentials
+        run: |
+          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
+          --query 'authorizationData[].authorizationToken' | base64 -d)
+          echo "::add-mask::$TOKEN"
+          echo "::set-output name=username::$(echo $TOKEN | cut -d: -f1)"
+          echo "::set-output name=password::$(echo $TOKEN | cut -d: -f2)"
   
   lint:
     name: Run lint
@@ -159,7 +170,12 @@ jobs:
     needs: setup
     runs-on: [self-hosted, linux, deployment]
     container:
-      image: ubuntu:latest
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
@@ -194,8 +210,6 @@ jobs:
       ref: ${{ steps.paramater.outputs.ref }}
       image_repo: ${{ steps.paramater.outputs.image_repo }}
       image_tag: ${{ steps.paramater.outputs.image_tag }}
-      ecr_username: ${{ steps.paramater.outputs.username }}
-      ecr_password: ${{ steps.paramater.outputs.password }}
     steps:
       - name: Checkout and merge PR to base branch
         uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
@@ -230,22 +244,18 @@ jobs:
           echo "::set-output name=image_repo::$(echo $IMAGE | cut -d: -f1)"
           echo "::set-output name=image_tag::$(echo $IMAGE | cut -d: -f2)"
 
-          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
-          --query 'authorizationData[].authorizationToken' | base64 -d)
-          echo "::add-mask::$TOKEN"
-          echo "::set-output name=username::$(echo $TOKEN | cut -d: -f1)"
-          echo "::set-output name=password::$(echo $TOKEN | cut -d: -f2)"
-
   argocd:
     name: Apply argo application to kubernetes cluster
-    needs: build
+    needs:
+      - setup
+      - build
     runs-on: [self-hosted, linux, deployment]
     if: ${{ always() }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
-        username: ${{ needs.build.outputs.ecr_username }}
-        password: ${{ needs.build.outputs.ecr_password }}
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
