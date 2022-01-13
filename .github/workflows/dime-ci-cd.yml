@@ -64,6 +64,16 @@ on:
         description: The slack channel that send notification.
         type: string
         required: true
+      directory:
+        description: Specify the directory containing migration files
+        type: string
+        required: false
+        default: ./db/migrations
+      schema:
+        description: Specify the schema file location
+        type: string
+        required: false
+        default: ./db/schema.sq
 
     secrets:
       gh_access_token:
@@ -326,3 +336,21 @@ jobs:
           SLACK_TITLE: Fail to deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment
           SLACK_USERNAME: GitHub Actions
           SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
+
+  db_migration:
+    name: Migrate database
+    needs:
+      - setup
+      - build
+    runs-on: [self-hosted, linux, deployment]
+    if: ${{ always() }}
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/dbmate:1.12
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Migrate database
+        uses: kkp-dfs/dime-github-actions-workflows/db-migration@main

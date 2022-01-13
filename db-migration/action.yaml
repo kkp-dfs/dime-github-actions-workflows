@@ -1,0 +1,59 @@
+name: Database Migration
+description: Migrate database schema and data
+
+inputs:
+  directory:
+    description: Specify the directory containing migration files
+    required: false
+    default: ./db/migrations
+  schema:
+    description: Specify the schema file location
+    required: false
+    default: ./db/schema.sq
+
+runs:
+  using: composite
+  steps:
+    - name: Get db credentials
+      id: db
+      shell: bash
+      run: |
+        cat <<EOF > ~/.netrc
+        machine github.com
+          login ${{ secrets.gh_access_token }}
+          password x-oauth-basic
+        EOF
+        git clone https://github.com/kkp-dfs/dime-helm.git
+        cd dime-helm
+        git fetch
+        git reset ${{ inputs.helm_ref }} --hard
+
+        yaml-merge values/${{ inputs.application_name }}/values.yaml values/${{ inputs.application_name }}/values-sit.yaml > values.yaml
+        VAULT_USERNAME=$(cat values.yaml | yq eval '.application.values.secrets.default.data.DB_USERNAME' - | sed -e 's/vault:/https:\/\/vault.mydime.tech\/v1\//g')
+        VAULT_PASSWORD=$(cat values.yaml | yq eval '.application.values.secrets.default.data.DB_PASSWORD' - | sed -e 's/vault:/https:\/\/vault.mydime.tech\/v1\//g')
+        USERNAME_KEY=$(echo $VAULT_USERNAME | cut -d '#' -f2)
+        PASSWORD_KEY=$(echo $VAULT_PASSWORD | cut -d '#' -f2)
+
+        JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+        echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
+        TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/login | jq -r '.auth.client_token')
+
+        echo "::set-output name=host::$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_HOST' -)"
+        echo "::set-output name=port::$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_PORT' -)"
+        echo "::set-output name=database::$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_DATABASE' -)"
+        echo "::set-output name=username::$(curl -H "X-VAULT-TOKEN:$TOKEN" $VAULT_USERNAME | jq -r ".data.data.$USERNAME_KEY")"
+        echo "::set-output name=password::$(curl -H "X-VAULT-TOKEN:$TOKEN" $VAULT_PASSWORD | jq -r ".data.data.$PASSWORD_KEY")"
+
+    - name: Checkout and merge PR to base branch
+      uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+      with:
+        repository: ${{ inputs.repository }}
+        base_ref: ${{ inputs.base_ref }}
+        target_ref: ${{ inputs.target_ref }}
+        gh_access_token: ${{ secrets.gh_access_token }}
+
+    - name: Migrate
+      shell: bash
+      run: |
+        URL=mysql://${{steps.db.outputs.username}}:${{steps.db.outputs.password}}@${{steps.db.outputs.host}}:${{steps.db.outputs.port}}/${{steps.db.outputs.database}}
+        dbmate --wait =d ${{ inputs.directory }} -s ${{ inputs.schema }} -u $URL up
