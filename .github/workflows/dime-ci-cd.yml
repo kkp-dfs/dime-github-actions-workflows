@@ -8,6 +8,10 @@ on:
         required: false
         type: string
         default: ${{ github.repository }}
+      node-version:
+        description: Version of node that would like to install
+        required: false
+        default: '16'
       base_ref:
         description: The branch or tag ref or commit SHA that be base code.
         required: false
@@ -94,6 +98,7 @@ jobs:
         uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
         with:
           repository: ${{ inputs.repository }}
+          node-version: ${{ inputs.node-version }}
       - name: Install go modules
         if: ${{ inputs.code_lang == 'node' }}
         run: npm install
@@ -132,11 +137,12 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
           gh_access_token: ${{ secrets.gh_access_token }}
 
-      - name: Set up go version and caches
+      - name: Set up node version and caches
         if: ${{ inputs.code_lang == 'node' }}
         uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
         with:
           repository: ${{ inputs.repository }}
+          node-version: ${{ inputs.node-version }}
       - name: Run lint
         if: ${{ inputs.code_lang == 'node' }}
         run: npm run lint
@@ -159,6 +165,22 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
           test_name: unit-test
           coverage_generator: generate-unitcoverage
+          coverage_files: unitcoverage.lcov
+          artifact_name: unittest-coverage-report
+          minimum_coverage: 80
+          slack_webhook: ${{ secrets.slack_webhook }}
+          slack_channel: ${{ inputs.slack_channel }}
+      - name: Run nodejs unit-test
+        if: ${{ inputs.code_lang == 'node' }}
+        uses: kkp-dfs/dime-github-actions-workflows/node-testing@main
+        with:
+          application_name: ${{ inputs.application_name }}
+          repository: ${{ inputs.repository }}
+          node-version: ${{ inputs.node-version }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+          test_name: unit-test
           coverage_files: unitcoverage.lcov
           artifact_name: unittest-coverage-report
           minimum_coverage: 80

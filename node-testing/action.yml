@@ -1,0 +1,99 @@
+name: Nodejs Testiong
+description: Run test cases and keep testing report
+
+inputs:
+  application_name:
+    description: Name of application
+    required: true
+  repository:
+    description: The owner and repository name
+    required: true
+  node-version:
+    description: Version of node that would like to install
+    required: true
+    default: '16'
+  base_ref:
+    description: The branch or tag ref or commit SHA that be base code.
+    required: true
+  target_ref:
+    description: The branch or tag ref or commit SHA that will be merged to base code.
+    required: true
+  test_name:
+    description: The npm script for run testing
+    required: true
+  coverage_files:
+    description: The coverage files to scan. For example, `coverage/lcov.*.info`
+    required: true
+  artifact_name:
+    description: The GitHub artifact name of the generated HTML report. For example, `code-coverage-report`. _Note:_ When downloading, it will be extracted in an `html` directory
+    required: true
+  minimum_coverage:
+    description: "The minimum coverage to pass the check. Optional. Default: `0` (always passes)"
+    required: false
+    default: "0"
+  slack_channel:
+    description: The slack channel that send notification.
+    required: true
+  slack_webhook:
+    description: The slack webhook url
+    required: true
+  gh_access_token:
+    description: GitHub access token
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout and merge PR to base branch
+      uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+      with:
+        repository: ${{ inputs.repository }}
+        base_ref: ${{ inputs.base_ref }}
+        target_ref: ${{ inputs.target_ref }}
+        gh_access_token: ${{ inputs.gh_access_token }}
+
+    - name: Set up node version and caches
+      uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
+      with:
+        repository: ${{ inputs.repository }}
+        node-version: ${{ inputs.node-version }}
+  
+    - name: Run test-cases
+      shell: bash
+      run: |
+        export PATH=$HOME/go/bin:$(go env GOPATH)/bin:/go/bin:$PATH
+        touch $HOME/.ack-ginkgo-rc
+        npm run ${{ inputs.test_name }}
+
+    - name: Create coverage report
+      uses: zgosalvez/github-actions-report-lcov@v1
+      if: ${{ always() }}
+      with:
+        coverage-files: ${{ inputs.coverage_files }}
+        minimum-coverage: ${{ inputs.minimum_coverage }}
+        artifact-name: ${{ inputs.artifact_name }}
+        github-token: ${{ inputs.gh_access_token }}
+
+    - name: Slack Notification
+      if: ${{ success() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ inputs.slack_channel }}
+        SLACK_COLOR: good
+        SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
+        SLACK_MESSAGE: This repo passed all test cases of ${{ inputs.test_name }} and there is coverage over than ${{ inputs.minimum_coverage }}%
+        SLACK_TITLE: ${{ inputs.application_name }} ${{ inputs.test_name }} is PASS
+        SLACK_USERNAME: GitHub Actions
+        SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
+
+    - name: Slack Notification
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ inputs.slack_channel }}
+        SLACK_COLOR: danger
+        SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
+        SLACK_MESSAGE: This repo fail on some test cases of ${{ inputs.test_name }} or there is coverage less than ${{ inputs.minimum_coverage }}%
+        SLACK_TITLE: ${{ inputs.application_name }} ${{ inputs.test_name }} is FAIL
+        SLACK_USERNAME: GitHub Actions
+        SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
