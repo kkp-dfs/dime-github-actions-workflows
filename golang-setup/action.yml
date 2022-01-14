@@ -26,6 +26,9 @@ runs:
           ~/go/pkg/mod
           ~/go/bin
           ./vendor
+          /go/bin
         key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
         restore-keys: |
+          ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
           ${{ runner.os }}-go-${{ inputs.repository }}-
+          ${{ runner.os }}-go-
