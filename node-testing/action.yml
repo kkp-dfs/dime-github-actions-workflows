@@ -61,8 +61,6 @@ runs:
     - name: Run test-cases
       shell: bash
       run: |
-        export PATH=$HOME/go/bin:$(go env GOPATH)/bin:/go/bin:$PATH
-        touch $HOME/.ack-ginkgo-rc
         npm run ${{ inputs.test_name }}
 
     - name: Create coverage report
