@@ -65,4 +65,4 @@ runs:
       shell: bash
       run: |
         URL=mysql://${{steps.db.outputs.username}}:${{steps.db.outputs.password}}@${{steps.db.outputs.host}}:${{steps.db.outputs.port}}/${{steps.db.outputs.database}}
-        dbmate --wait =d ${{ inputs.directory }} -s ${{ inputs.schema }} -u $URL up
+        dbmate --wait -d ${{ inputs.directory }} -s ${{ inputs.schema }} -u $URL up
