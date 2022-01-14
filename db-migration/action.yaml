@@ -9,7 +9,7 @@ inputs:
   schema:
     description: Specify the schema file location
     required: false
-    default: ./db/schema.sq
+    default: ./db/schema.sql
 
 runs:
   using: composite

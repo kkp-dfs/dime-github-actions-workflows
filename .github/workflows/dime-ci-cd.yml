@@ -64,16 +64,21 @@ on:
         description: The slack channel that send notification.
         type: string
         required: true
-      directory:
+      migration:
+        description: Enable/disable to run database migration job
+        type: boolean
+        required: false
+        default: false
+      migrate_dir:
         description: Specify the directory containing migration files
         type: string
         required: false
         default: ./db/migrations
-      schema:
+      migrate_schema:
         description: Specify the schema file location
         type: string
         required: false
-        default: ./db/schema.sq
+        default: ./db/schema.sql
 
     secrets:
       gh_access_token:
@@ -343,7 +348,7 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment]
-    if: ${{ always() }}
+    if: ${{ always() && inputs.migration }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/dbmate:1.12
       credentials:
@@ -354,3 +359,6 @@ jobs:
     steps:
       - name: Migrate database
         uses: kkp-dfs/dime-github-actions-workflows/db-migration@main
+        with:
+          directory: ${{ inputs.migrate_dir }}
+          schema: ${{ inputs.migrate_schema }}
