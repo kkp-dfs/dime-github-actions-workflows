@@ -10,7 +10,13 @@ inputs:
     description: Specify the schema file location
     required: false
     default: ./db/schema.sql
-
+  gh_access_token:
+    description: GitHub access token
+    required: true
+  helm_ref:
+    description: commit reference of helm repository
+    required: false
+    default: main
 runs:
   using: composite
   steps:
@@ -20,7 +26,7 @@ runs:
       run: |
         cat <<EOF > ~/.netrc
         machine github.com
-          login ${{ secrets.gh_access_token }}
+          login ${{ inputs.gh_access_token }}
           password x-oauth-basic
         EOF
         git clone https://github.com/kkp-dfs/dime-helm.git
@@ -50,7 +56,7 @@ runs:
         repository: ${{ inputs.repository }}
         base_ref: ${{ inputs.base_ref }}
         target_ref: ${{ inputs.target_ref }}
-        gh_access_token: ${{ secrets.gh_access_token }}
+        gh_access_token: ${{ inputs.gh_access_token }}
 
     - name: Migrate
       shell: bash

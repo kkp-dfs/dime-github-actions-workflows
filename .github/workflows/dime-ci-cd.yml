@@ -362,3 +362,5 @@ jobs:
         with:
           directory: ${{ inputs.migrate_dir }}
           schema: ${{ inputs.migrate_schema }}
+          helm_ref: ${{ inputs.helm_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
