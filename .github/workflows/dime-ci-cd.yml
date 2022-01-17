@@ -166,7 +166,14 @@ jobs:
   unit-test:
     name: Run unit testing
     needs: setup
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, deployment]
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
