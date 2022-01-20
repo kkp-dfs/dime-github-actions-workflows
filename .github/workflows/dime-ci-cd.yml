@@ -70,6 +70,10 @@ on:
         required: false
         type: string
         default: linux/amd64,linux/arm64
+      build_args:
+        description: List of build-time variables
+        required: false
+        type: string       
       slack_channel:
         description: The slack channel that send notification.
         type: string

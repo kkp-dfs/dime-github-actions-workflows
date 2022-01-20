@@ -12,7 +12,7 @@ inputs:
     description: List of target platforms for build
     required: false
     default: linux/amd64,linux/arm64
-  build-args:
+  build_args:
     description: List of build-time variables
     required: false
 
