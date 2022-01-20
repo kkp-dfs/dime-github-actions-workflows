@@ -65,6 +65,11 @@ on:
         description: Name of application
         required: true
         type: string
+      platforms:
+        description: List of target platforms for build
+        required: false
+        type: string
+        default: linux/amd64,linux/arm64
       slack_channel:
         description: The slack channel that send notification.
         type: string
@@ -269,6 +274,7 @@ jobs:
         uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
           repository: ${{ inputs.repository }}
+          platforms: ${{ inputs.platforms }}
 
       - id: paramater
         run: |
