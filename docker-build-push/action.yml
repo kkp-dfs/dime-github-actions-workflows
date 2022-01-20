@@ -8,6 +8,9 @@ inputs:
   image:
     description: Docker image name
     required: false
+  build-args:
+    description: List of build-time variables
+    required: false
 
 outputs:
   docker_image:
@@ -54,5 +57,6 @@ runs:
       with:
         context: .
         push: true
+        build-args: ${{ inputs.build_args }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
