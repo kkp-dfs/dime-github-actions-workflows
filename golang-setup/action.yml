@@ -27,8 +27,8 @@ runs:
           ~/go/bin
           ./vendor
           /go/bin
-        key: ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-cache-v1-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
         restore-keys: |
-          ${{ runner.os }}-go-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
-          ${{ runner.os }}-go-${{ inputs.repository }}-
-          ${{ runner.os }}-go-
+          ${{ runner.os }}-go-cache-v1-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+          ${{ runner.os }}-go-cache-v1-${{ inputs.repository }}-
+          ${{ runner.os }}-go-cache-v1-
