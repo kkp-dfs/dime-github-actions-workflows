@@ -31,14 +31,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Checkout branch
-      uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
-      with:
-        repository: ${{ inputs.repository }}
-        base_ref: ${{ inputs.base_ref }}
-        target_ref: ${{ inputs.target_ref }}
-        gh_access_token: ${{ inputs.gh_access_token }}
-
     - name: Run test-case
       shell: bash
       run: |
