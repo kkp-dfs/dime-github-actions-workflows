@@ -109,7 +109,7 @@ jobs:
           make gen-config-sit
     
       - name: Run flutter unit-test
-        uses: kkp-dfs/dime-github-actions-workflows/flutter-testing@update-dime-app-workflow
+        uses: kkp-dfs/dime-github-actions-workflows/flutter-testing@main
         with:
           application_name: ${{ inputs.application_name }}
           repository: ${{ inputs.repository }}
