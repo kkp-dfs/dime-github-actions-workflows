@@ -36,7 +36,7 @@ runs:
       run: |
         export PATH=/opt/flutter/bin:$PATH
         flutter config --no-analytics
-        flutter test --coverage .
+        flutter test --coverage ./test
 
     - name: Create coverage report
       uses: zgosalvez/github-actions-report-lcov@v1
