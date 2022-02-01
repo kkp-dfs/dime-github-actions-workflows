@@ -39,6 +39,10 @@ inputs:
   gh_access_token:
     description: GitHub access token
     required: true
+  allow_failure:
+    description: Allow run next step if previous step is failed
+    required: false
+    default: false
 
 runs:
   using: composite
@@ -57,6 +61,7 @@ runs:
         repository: ${{ inputs.repository }}
   
     - name: Run test-cases
+      continue-on-error: ${{ inputs.allow_failure }}
       shell: bash
       run: |
         export PATH=$HOME/go/bin:$(go env GOPATH)/bin:/go/bin:$PATH
