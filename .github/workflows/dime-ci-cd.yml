@@ -236,6 +236,7 @@ jobs:
       - name: Run golang integration test
         if: ${{ inputs.code_lang == 'golang' }}
         uses: kkp-dfs/dime-github-actions-workflows/golang-testing@main
+        continue-on-error: true
         with:
           application_name: ${{ inputs.application_name }}
           repository: ${{ inputs.repository }}
