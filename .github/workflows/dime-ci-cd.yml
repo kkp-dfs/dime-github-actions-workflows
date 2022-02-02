@@ -258,7 +258,6 @@ jobs:
       - integration-test
       - lint
     runs-on: [self-hosted, linux, build]
-    if: ${{ always() }}
     outputs:
       docker_image: ${{ steps.build.outputs.docker_image }}
       endpoint: ${{ steps.paramater.outputs.host }}
@@ -306,7 +305,6 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment]
-    if: ${{ always() }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
@@ -389,7 +387,7 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment]
-    if: ${{ always() && inputs.migration }}
+    if: ${{ inputs.migration }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/dbmate:1.12
       credentials:
