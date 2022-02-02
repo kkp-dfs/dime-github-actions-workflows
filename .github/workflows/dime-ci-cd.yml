@@ -235,7 +235,8 @@ jobs:
     steps:
       - name: Run golang integration test
         if: ${{ inputs.code_lang == 'golang' }}
-        uses: kkp-dfs/dime-github-actions-workflows/golang-testing@support-continue-on-error
+        uses: kkp-dfs/dime-github-actions-workflows/golang-testing@main
+        continue-on-error: true
         with:
           application_name: ${{ inputs.application_name }}
           repository: ${{ inputs.repository }}
@@ -249,7 +250,6 @@ jobs:
           minimum_coverage: 60
           slack_webhook: ${{ secrets.slack_webhook }}
           slack_channel: ${{ inputs.slack_channel }}
-          allow_failure: true
 
   build:
     name: Build & push docker images to registry
