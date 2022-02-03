@@ -51,8 +51,8 @@ runs:
       with:
         images: ${{ inputs.image || steps.ecr.outputs.repository }}
         tags: |
-          type=ref,event=pr,suffix=-latest
           type=ref,event=pr,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
+          type=ref,event=pr,suffix=-latest
           type=ref,event=branch,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
           type=ref,event=branch
 
