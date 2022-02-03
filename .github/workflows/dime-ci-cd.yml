@@ -257,16 +257,17 @@ jobs:
           echo "::set-output name=db_pass::${DB_PASS}"
           mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME//-/_} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
           mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE USER IF NOT EXISTS '${DB_USER:0:32}'@'%' IDENTIFIED BY '${DB_PASS}';"
-          mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "GRANT ALL PRIVILEGES ON '${DB_NAME//-/_}.*' TO '${DB_USER}'@'%';"
+          mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "GRANT ALL PRIVILEGES ON ${DB_NAME//-/_}.* TO '${DB_USER:0:32}'@'%'; FLUSH PRIVILEGES;"
       - name: Run golang integration test
         if: ${{ inputs.code_lang == 'golang' }}
         uses: kkp-dfs/dime-github-actions-workflows/golang-testing@main
         continue-on-error: true
         env:
-          DB_HOST: ${{ steps.setup.db_host }}
-          DB_DATABASE: ${{ steps.setup.db_name }}
-          DB_USERNAME: ${{ steps.setup.db_user }}
-          DB_PASSWORD: ${{ steps.setup.db_pass }}
+          INTEGRATION_ON_SIT: "true"
+          DB_HOST: ${{ steps.setup.outputs.db_host }}
+          DB_DATABASE: ${{ steps.setup.outputs.db_name }}
+          DB_USERNAME: ${{ steps.setup.outputs.db_user }}
+          DB_PASSWORD: ${{ steps.setup.outputs.db_pass }}
         with:
           application_name: ${{ inputs.application_name }}
           repository: ${{ inputs.repository }}
@@ -283,14 +284,14 @@ jobs:
       - name: Tear down integration test environment
         if: ${{ inputs.code_lang == 'golang' && always() }}
         run: |
-          DB_HOST=${{ steps.setup.db_host }}
-          DB_ADMIN_USER=$(echo ${{ steps.setup.db_admin_user }} | base64 -d)
-          DB_ADMIN_PASS=$(echo ${{ steps.setup.db_admin_pass }} | base64 -d)
-          DB_NAME=${{ steps.setup.db_name }}
-          DB_USER=${{ steps.setup.db_user }}
-          mysql --host=$DB_HOST -u $DB_ADMIN_USER -p$DB_ADMIN_PASS -e "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '$DB_USER'@'%';"
-          mysql --host=$DB_HOST -u $DB_ADMIN_USER -p$DB_ADMIN_PASS -e "DROP USER '$DB_USER'@'%';"
-          mysql --host=$DB_HOST -u $DB_ADMIN_USER -p$DB_ADMIN_PASS -e "DROP DATABASE '$DB_NAME';"
+          DB_HOST=${{ steps.setup.outputs.db_host }}
+          DB_ADMIN_USER=$(echo ${{ steps.setup.outputs.db_admin_user }} | base64 -d)
+          DB_ADMIN_PASS=$(echo ${{ steps.setup.outputs.db_admin_pass }} | base64 -d)
+          DB_NAME=${{ steps.setup.outputs.db_name }}
+          DB_USER=${{ steps.setup.outputs.db_user }}
+          mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '${DB_USER}'@'%';"
+          mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP USER '${DB_USER}'@'%';"
+          mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP DATABASE ${DB_NAME};"
 
   build:
     name: Build & push docker images to registry
