@@ -168,9 +168,16 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           node-version: ${{ inputs.node-version }}
-      - name: Run lint
+      - name: Run node lint
         if: ${{ inputs.code_lang == 'node' }}
         run: npm run lint
+
+      - name: Run golangci lint
+        if: ${{ inputs.code_lang == 'golang' }}
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.29
+          args: -E gocyclo -E gosec
 
   unit-test:
     name: Run unit testing
