@@ -233,10 +233,66 @@ jobs:
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
+      - name: Setup integration test environment
+        id: setup
+        if: ${{ inputs.code_lang == 'golang' }}
+        shell: bash
+        run: |
+          JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
+          TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/login | jq -r '.auth.client_token')
+
+          DB=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/database/sit)
+          DB_HOST=dime-default-db.csi5ylritr1l.ap-southeast-1.rds.amazonaws.com
+          DB_ADMIN_USER=$(echo $DB | jq -r '.data.data.username')
+          DB_ADMIN_PASS=$(echo $DB | jq -r '.data.data.password')
+          DB_NAME=${{ inputs.application_name }}-${{ github.sha }}
+          DB_USER=${{ inputs.application_name }}-${{ github.sha }}
+          DB_PASS=${{ github.sha }}
+          echo "::set-output name=db_host::${DB_HOST}"
+          echo "::set-output name=db_admin_user::$(echo ${DB_ADMIN_USER} | base64)"
+          echo "::set-output name=db_admin_pass::$(echo ${DB_ADMIN_PASS} | base64)"
+          echo "::set-output name=db_name::${DB_NAME//-/_}"
+          echo "::set-output name=db_user::${DB_USER:0:32}"
+          echo "::set-output name=db_pass::${DB_PASS}"
+
+          mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME//-/_} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+          mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE USER IF NOT EXISTS '${DB_USER:0:32}'@'%' IDENTIFIED BY '${DB_PASS}';"
+          mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "GRANT ALL PRIVILEGES ON ${DB_NAME//-/_}.* TO '${DB_USER:0:32}'@'%'; FLUSH PRIVILEGES;"
+
+          RMQ=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/rabbitmq/sit)
+          RMQ_HOST=internal-abea450ac00a74238af70161947df1b8-2039002308.ap-southeast-1.elb.amazonaws.com
+          RMQ_PORT=5672
+          RMQ_ADMIN_USER=$(echo $RMQ | jq -r '.data.data.admin_username')
+          RMQ_ADMIN_PASS=$(echo $RMQ | jq -r '.data.data.admin_password')
+          RMQ_VHOST=${{ inputs.application_name }}-${{ github.sha }}
+          RMQ_USER=${{ inputs.application_name }}-${{ github.sha }}
+          RMQ_PASS=${{ github.sha }}
+          echo "::set-output name=rmq_host::${RMQ_HOST}"
+          echo "::set-output name=rmq_port::${RMQ_PORT}"
+          echo "::set-output name=rmq_admin_user::$(echo ${RMQ_ADMIN_USER} | base64)"
+          echo "::set-output name=rmq_admin_pass::$(echo ${RMQ_ADMIN_PASS} | base64)"
+          echo "::set-output name=rmq_vhost::${RMQ_VHOST}"
+          echo "::set-output name=rmq_user::${RMQ_USER}"
+          echo "::set-output name=rmq_pass::${RMQ_PASS}"
+
+          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://rabbitmq.sit.mydime.tech/api/vhosts/${RMQ_VHOST}
+          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"password\":\"${RMQ_PASS}\",\"tags\":\"management\"}" https://rabbitmq.sit.mydime.tech/api/users/${RMQ_USER}
+          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"configure\":\".*\",\"write\":\".*\",\"read\":\".*\"}" https://rabbitmq.sit.mydime.tech/api/permissions/${RMQ_VHOST}/${RMQ_USER}
       - name: Run golang integration test
         if: ${{ inputs.code_lang == 'golang' }}
         uses: kkp-dfs/dime-github-actions-workflows/golang-testing@main
         continue-on-error: true
+        env:
+          INTEGRATION_ON_SIT: "true"
+          DB_HOST: ${{ steps.setup.outputs.db_host }}
+          DB_DATABASE: ${{ steps.setup.outputs.db_name }}
+          DB_USERNAME: ${{ steps.setup.outputs.db_user }}
+          DB_PASSWORD: ${{ steps.setup.outputs.db_pass }}
+          RABBITMQ_HOST: ${{ steps.setup.outputs.rmq_host }}
+          RABBITMQ_PORT: ${{ steps.setup.outputs.rmq_port }}
+          RABBITMQ_USERNAME: ${{ steps.setup.outputs.rmq_user }}
+          RABBITMQ_PASSWORD: ${{ steps.setup.outputs.rmq_pass }}
         with:
           application_name: ${{ inputs.application_name }}
           repository: ${{ inputs.repository }}
@@ -250,6 +306,25 @@ jobs:
           minimum_coverage: 60
           slack_webhook: ${{ secrets.slack_webhook }}
           slack_channel: ${{ inputs.slack_channel }}
+      - name: Tear down integration test environment
+        if: ${{ inputs.code_lang == 'golang' && always() }}
+        run: |
+          DB_HOST=${{ steps.setup.outputs.db_host }}
+          DB_ADMIN_USER=$(echo ${{ steps.setup.outputs.db_admin_user }} | base64 -d)
+          DB_ADMIN_PASS=$(echo ${{ steps.setup.outputs.db_admin_pass }} | base64 -d)
+          DB_NAME=${{ steps.setup.outputs.db_name }}
+          DB_USER=${{ steps.setup.outputs.db_user }}
+          mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '${DB_USER}'@'%';"
+          mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP USER '${DB_USER}'@'%';"
+          mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP DATABASE ${DB_NAME};"
+
+          RMQ_VHOST=${{ steps.setup.outputs.rmq_vhost }}
+          RMQ_USER=${{ steps.setup.outputs.rmq_user }}
+          RMQ_ADMIN_USER=$(echo ${{ steps.setup.outputs.rmq_admin_user }} | base64 -d)
+          RMQ_ADMIN_PASS=$(echo ${{ steps.setup.outputs.rmq_admin_pass }} | base64 -d)
+          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://rabbitmq.sit.mydime.tech/api/permissions/${RMQ_VHOST}/${RMQ_USER}
+          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://rabbitmq.sit.mydime.tech/api/users/${RMQ_USER}
+          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://rabbitmq.sit.mydime.tech/api/vhosts/${RMQ_VHOST}
 
   build:
     name: Build & push docker images to registry
