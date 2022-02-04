@@ -177,17 +177,18 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           args: -E gocyclo -E gosec
-      # - name: Slack Notification
-      #   if: ${{ failure() }}
-      #   uses: rtCamp/action-slack-notify@v2
-      #   env:
-      #     SLACK_CHANNEL: ${{ inputs.slack_channel }}
-      #     SLACK_COLOR: danger
-      #     SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
-      #     SLACK_MESSAGE: Cannot deploy ${{ inputs.application_name }} from $GITHUB_REF to ${{ inputs.environment }} environment
-      #     SLACK_TITLE: Found issue
-      #     SLACK_USERNAME: GitHub Actions
-      #     SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
+
+      - name: Slack Notification
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ inputs.slack_channel }}
+          SLACK_COLOR: danger
+          SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
+          SLACK_MESSAGE: Found issues in ${{ inputs.application_name }}
+          SLACK_TITLE: Lint issues found
+          SLACK_USERNAME: GitHub Actions
+          SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
 
   unit-test:
     name: Run unit testing
