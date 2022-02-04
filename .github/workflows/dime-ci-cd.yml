@@ -176,7 +176,7 @@ jobs:
         if: ${{ inputs.code_lang == 'golang' }}
         uses: golangci/golangci-lint-action@v2
         with:
-          args: -E gocyclo -E gosec
+          args: -E misspell -E gocyclo -E gosec
 
       - name: Slack Notification
         if: ${{ failure() }}
