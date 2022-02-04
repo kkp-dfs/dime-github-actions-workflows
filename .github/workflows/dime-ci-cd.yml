@@ -291,6 +291,7 @@ jobs:
           DB_PASSWORD: ${{ steps.setup.outputs.db_pass }}
           RABBITMQ_HOST: ${{ steps.setup.outputs.rmq_host }}
           RABBITMQ_PORT: ${{ steps.setup.outputs.rmq_port }}
+          RABBITMQ_VHOST: ${{ steps.setup.outputs.rmq_vhost }}
           RABBITMQ_USERNAME: ${{ steps.setup.outputs.rmq_user }}
           RABBITMQ_PASSWORD: ${{ steps.setup.outputs.rmq_pass }}
         with:
