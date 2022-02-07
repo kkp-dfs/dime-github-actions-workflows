@@ -153,6 +153,14 @@ jobs:
     runs-on: ubuntu-latest
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
+    strategy:
+      matrix:
+        include:
+          - linter: gosec
+            ignore: false
+          - linter: gocyclo
+            ignore: true
+    continue-on-error: ${{ matrix.ingore }}
     steps:
       - name: Checkout and merge PR to base branch
         uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
@@ -176,7 +184,7 @@ jobs:
         if: ${{ inputs.code_lang == 'golang' }}
         uses: golangci/golangci-lint-action@v2
         with:
-          args: -E misspell -E gocyclo -E gosec
+          args: -E ${{ matrix.linter }}
 
       - name: Slack Notification
         if: ${{ failure() }}
