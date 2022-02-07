@@ -248,7 +248,7 @@ jobs:
   integration-test:
     name: Run integration test
     needs: setup
-    runs-on: [self-hosted, linux, deployment]
+    runs-on: [self-hosted, linux, deployment, sit]
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
