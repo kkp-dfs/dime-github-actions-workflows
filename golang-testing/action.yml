@@ -61,7 +61,6 @@ runs:
       run: |
         export PATH=$HOME/go/bin:$(go env GOPATH)/bin:/go/bin:$PATH
         touch $HOME/.ack-ginkgo-rc
-        go install
         make ${{ inputs.test_name }}
         make ${{ inputs.coverage_generator }}
 
