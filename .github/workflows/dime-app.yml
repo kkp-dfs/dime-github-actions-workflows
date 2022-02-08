@@ -72,7 +72,6 @@ jobs:
       SLACK_USERNAME: GitHub Actions
       SLACK_CHANNEL: ${{ inputs.slack_channel }}
       SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
-    continue-on-error: true
     steps:
       - name: Cache module and tools
         uses: actions/cache@v2
@@ -111,6 +110,7 @@ jobs:
     
       - name: Run flutter unit-test
         uses: kkp-dfs/dime-github-actions-workflows/flutter-testing@main
+        continue-on-error: true
         with:
           application_name: ${{ inputs.application_name }}
           repository: ${{ inputs.repository }}
