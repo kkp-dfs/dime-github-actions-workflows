@@ -288,7 +288,7 @@ jobs:
           mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "GRANT ALL PRIVILEGES ON ${DB_NAME//-/_}.* TO '${DB_USER:0:32}'@'%'; FLUSH PRIVILEGES;"
 
           RMQ=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/rabbitmq/sit)
-          RMQ_HOST=internal-abea450ac00a74238af70161947df1b8-2039002308.ap-southeast-1.elb.amazonaws.com
+          RMQ_HOST=rmq-server-rabbitmq.rabbitmq.svc.cluster.local
           RMQ_PORT=5672
           RMQ_ADMIN_USER=$(echo $RMQ | jq -r '.data.data.admin_username')
           RMQ_ADMIN_PASS=$(echo $RMQ | jq -r '.data.data.admin_password')
@@ -303,9 +303,9 @@ jobs:
           echo "::set-output name=rmq_user::${RMQ_USER}"
           echo "::set-output name=rmq_pass::${RMQ_PASS}"
 
-          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://rabbitmq.sit.mydime.tech/api/vhosts/${RMQ_VHOST}
-          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"password\":\"${RMQ_PASS}\",\"tags\":\"management\"}" https://rabbitmq.sit.mydime.tech/api/users/${RMQ_USER}
-          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"configure\":\".*\",\"write\":\".*\",\"read\":\".*\"}" https://rabbitmq.sit.mydime.tech/api/permissions/${RMQ_VHOST}/${RMQ_USER}
+          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/vhosts/${RMQ_VHOST}
+          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"password\":\"${RMQ_PASS}\",\"tags\":\"management\"}" http://${RMQ_HOST}:15672/api/users/${RMQ_USER}
+          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"configure\":\".*\",\"write\":\".*\",\"read\":\".*\"}" http://${RMQ_HOST}:15672/api/permissions/${RMQ_VHOST}/${RMQ_USER}
       - name: Run golang integration test
         if: ${{ inputs.code_lang == 'golang' }}
         uses: kkp-dfs/dime-github-actions-workflows/golang-testing@main
@@ -346,13 +346,14 @@ jobs:
           mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP USER '${DB_USER}'@'%';"
           mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP DATABASE ${DB_NAME};"
 
+          RMQ_HOST: ${{ steps.setup.outputs.rmq_host }}
           RMQ_VHOST=${{ steps.setup.outputs.rmq_vhost }}
           RMQ_USER=${{ steps.setup.outputs.rmq_user }}
           RMQ_ADMIN_USER=$(echo ${{ steps.setup.outputs.rmq_admin_user }} | base64 -d)
           RMQ_ADMIN_PASS=$(echo ${{ steps.setup.outputs.rmq_admin_pass }} | base64 -d)
-          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://rabbitmq.sit.mydime.tech/api/permissions/${RMQ_VHOST}/${RMQ_USER}
-          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://rabbitmq.sit.mydime.tech/api/users/${RMQ_USER}
-          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://rabbitmq.sit.mydime.tech/api/vhosts/${RMQ_VHOST}
+          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/permissions/${RMQ_VHOST}/${RMQ_USER}
+          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/users/${RMQ_USER}
+          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/vhosts/${RMQ_VHOST}
 
   build:
     name: Build & push docker images to registry
