@@ -346,7 +346,7 @@ jobs:
           mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP USER '${DB_USER}'@'%';"
           mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP DATABASE ${DB_NAME};"
 
-          RMQ_HOST: ${{ steps.setup.outputs.rmq_host }}
+          RMQ_HOST=${{ steps.setup.outputs.rmq_host }}
           RMQ_VHOST=${{ steps.setup.outputs.rmq_vhost }}
           RMQ_USER=${{ steps.setup.outputs.rmq_user }}
           RMQ_ADMIN_USER=$(echo ${{ steps.setup.outputs.rmq_admin_user }} | base64 -d)
