@@ -160,7 +160,6 @@ jobs:
             ignore: false
           - linter: gocyclo
             ignore: true
-    continue-on-error: ${{ matrix.ingore }}
     steps:
       - name: Checkout and merge PR to base branch
         uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
@@ -181,6 +180,7 @@ jobs:
         run: npm run lint
 
       - name: Run golangci lint
+        continue-on-error: ${{ matrix.ingore }}
         if: ${{ inputs.code_lang == 'golang' }}
         uses: golangci/golangci-lint-action@v2
         with:
