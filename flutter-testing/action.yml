@@ -37,6 +37,7 @@ runs:
         export PATH=/opt/flutter/bin:$PATH
         flutter config --no-analytics
         flutter test --coverage ./test
+        make lcov-remove-coverage
 
     - name: Create coverage report
       uses: zgosalvez/github-actions-report-lcov@v1

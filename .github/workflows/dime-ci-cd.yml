@@ -286,6 +286,7 @@ jobs:
           mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME//-/_} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
           mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE USER IF NOT EXISTS '${DB_USER:0:32}'@'%' IDENTIFIED BY '${DB_PASS}';"
           mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "GRANT ALL PRIVILEGES ON ${DB_NAME//-/_}.* TO '${DB_USER:0:32}'@'%'; FLUSH PRIVILEGES;"
+          dbmate --wait -d ${{ inputs.migrate_dir }} -s ${{ inputs.migrate_schema }} -u mysql://${DB_ADMIN_USER}:${DB_ADMIN_PASS}@${DB_HOST}/${DB_NAME//-/_} up
 
           RMQ=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/rabbitmq/sit)
           RMQ_HOST=rmq-server-rabbitmq.rabbitmq.svc.cluster.local
