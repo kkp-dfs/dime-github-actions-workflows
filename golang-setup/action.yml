@@ -22,9 +22,9 @@ runs:
       uses: actions/cache@v2
       with:
         path: |
-          $(go env GOCACHE)
-          $(go env GOROOT)/pkg/mod
-          $(go env GOROOT)/bin
+          ~/.cache/go-build
+          ~/go/pkg/mod
+          ~/go/bin
           ./vendor
         key: ${{ runner.os }}-go-cache-v2-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
         restore-keys: |
