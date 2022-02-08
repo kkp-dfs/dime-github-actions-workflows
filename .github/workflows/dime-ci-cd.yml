@@ -153,6 +153,14 @@ jobs:
     runs-on: ubuntu-latest
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
+    strategy:
+      matrix:
+        include:
+          - linter: gosec
+            ignore: false
+          - linter: gocyclo
+            ignore: true
+    continue-on-error: ${{ matrix.ingore }}
     steps:
       - name: Checkout and merge PR to base branch
         uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
@@ -168,9 +176,27 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           node-version: ${{ inputs.node-version }}
-      - name: Run lint
+      - name: Run node lint
         if: ${{ inputs.code_lang == 'node' }}
         run: npm run lint
+
+      - name: Run golangci lint
+        if: ${{ inputs.code_lang == 'golang' }}
+        uses: golangci/golangci-lint-action@v2
+        with:
+          args: -E ${{ matrix.linter }}
+
+      - name: Slack Notification
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ inputs.slack_channel }}
+          SLACK_COLOR: danger
+          SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
+          SLACK_MESSAGE: Found issues in ${{ inputs.application_name }}
+          SLACK_TITLE: Lint issues found
+          SLACK_USERNAME: GitHub Actions
+          SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
 
   unit-test:
     name: Run unit testing
@@ -222,7 +248,7 @@ jobs:
   integration-test:
     name: Run integration test
     needs: setup
-    runs-on: [self-hosted, linux, deployment]
+    runs-on: [self-hosted, linux, deployment, sit]
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
