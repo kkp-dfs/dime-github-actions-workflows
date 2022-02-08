@@ -48,4 +48,6 @@ jobs:
           kubectl config set-context default --cluster=eks --user=eks-account --namespace=$NAMESPACE
           kubectl config use-context default
 
+          kubectl patch -n argocd app ${{ inputs.application_name }}-refs-pull-${{ github.event.pull_request.number }}-merge -p '{"metadata": {"finalizers": ["resources-finalizer.argocd.argoproj.io"]}}' --type merge
+          kubectl delete -n argocd app ${{ inputs.application_name }}-refs-pull-${{ github.event.pull_request.number }}-merge
           helm uninstall ${{ inputs.application_name }}-refs-pull-${{ github.event.pull_request.number }}-merge
