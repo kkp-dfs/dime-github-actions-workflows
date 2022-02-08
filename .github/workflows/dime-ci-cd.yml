@@ -180,7 +180,7 @@ jobs:
         run: npm run lint
 
       - name: Run golangci lint
-        continue-on-error: ${{ matrix.ingore }}
+        continue-on-error: ${{ matrix.ignore }}
         if: ${{ inputs.code_lang == 'golang' }}
         uses: golangci/golangci-lint-action@v2
         with:
