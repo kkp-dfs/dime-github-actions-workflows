@@ -260,6 +260,13 @@ jobs:
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - name: Setup integration test environment
         id: setup
         if: ${{ inputs.code_lang == 'golang' }}
