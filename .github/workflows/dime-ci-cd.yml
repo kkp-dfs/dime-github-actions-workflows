@@ -136,6 +136,7 @@ jobs:
       - name: Install go modules
         if: ${{ inputs.code_lang == 'golang' }}
         run: |
+          go install
           make tidy
           make tools-install
       - name: Get credentials
