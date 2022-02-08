@@ -95,7 +95,7 @@ jobs:
         run: |
           JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
           echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
-          TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/login | jq -r '.auth.client_token')
+          TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/main/login | jq -r '.auth.client_token')
           DATA=$(curl -H "X-VAULT-TOKEN:$TOKEN" https:/vault.mydime.tech/v1/secrets/data/services/dime-app/testing)
 
           export DIRECTUS_ACCESS_TOKEN=$(echo $DATA | jq -r ".data.data.DIRECTUS_ACCESS_TOKEN")
@@ -106,6 +106,7 @@ jobs:
           export PATH=/opt/flutter/bin:$PATH
 
           envsubst < environment_secret_template.yaml > environment_secret.yaml
+          cat environment_secret.yaml
           make gen-config-sit
     
       - name: Run flutter unit-test
