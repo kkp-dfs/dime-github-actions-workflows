@@ -59,7 +59,7 @@ jobs:
   unit-test:
     name: Run unit testing
     needs: prepare
-    runs-on: [self-hosted, linux, deployment]
+    runs-on: [self-hosted, linux, deployment, main]
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/flutter:2.8.1-stable
       credentials:
