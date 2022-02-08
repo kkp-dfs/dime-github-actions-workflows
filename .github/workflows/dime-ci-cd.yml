@@ -124,7 +124,7 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           node-version: ${{ inputs.node-version }}
-      - name: Install go modules
+      - name: Install node modules
         if: ${{ inputs.code_lang == 'node' }}
         run: npm install
 
