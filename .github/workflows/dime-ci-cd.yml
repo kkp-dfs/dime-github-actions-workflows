@@ -188,7 +188,6 @@ jobs:
         with:
           args: -E ${{ matrix.linter }} --skip-files ".*_test\\.go" --skip-dirs ".*_mock" --skip-dirs ".*_gen"
           version: latest
-
       - name: Slack Notification
         if: ${{ failure() }}
         uses: rtCamp/action-slack-notify@v2
