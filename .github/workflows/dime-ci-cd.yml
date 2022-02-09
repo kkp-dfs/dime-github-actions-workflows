@@ -184,8 +184,7 @@ jobs:
         if: ${{ inputs.code_lang == 'golang' }}
         uses: golangci/golangci-lint-action@v2
         with:
-          args: -E ${{ matrix.linter }}
-          modules-download-mode: vendor
+          args: -E ${{ matrix.linter }} --moduls-download-mode vendor
 
       - name: Slack Notification
         if: ${{ failure() }}
