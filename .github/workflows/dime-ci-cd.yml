@@ -186,7 +186,7 @@ jobs:
         env:
           GO111MODULE: off
         with:
-          args: -E ${{ matrix.linter }} --modules-download-mode vendor
+          args: -E ${{ matrix.linter }}
 
       - name: Slack Notification
         if: ${{ failure() }}
