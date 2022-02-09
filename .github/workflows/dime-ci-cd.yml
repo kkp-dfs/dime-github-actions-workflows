@@ -187,7 +187,7 @@ jobs:
           GO111MODULE: off
         with:
           version: latest
-          args: -E ${{ matrix.linter }} --skip-files ".*_test\\.go" --skip-dirs ".*_gen"
+          args: -E ${{ matrix.linter }} --skip-files ".*_test\\.go" --skip-dirs ".*_gen"  ".*_mock"
 
       - name: Slack Notification
         if: ${{ failure() }}
