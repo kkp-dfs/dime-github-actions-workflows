@@ -186,6 +186,7 @@ jobs:
         env:
           GO111MODULE: off
         with:
+          version: latest
           args: -E ${{ matrix.linter }} --skip-files ".*_test\\.go" --skip-dirs ".*_gen"
 
       - name: Slack Notification
