@@ -183,6 +183,8 @@ jobs:
         continue-on-error: ${{ matrix.ignore }}
         if: ${{ inputs.code_lang == 'golang' }}
         uses: golangci/golangci-lint-action@v2
+        env:
+          GO111MODULE: off
         with:
           args: -E ${{ matrix.linter }} --modules-download-mode vendor
 
