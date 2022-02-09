@@ -182,11 +182,8 @@ jobs:
       - name: Run golangci lint
         continue-on-error: ${{ matrix.ignore }}
         if: ${{ inputs.code_lang == 'golang' }}
-        uses: golangci/golangci-lint-action@v2.5.2
-        # env:
-        #   GO111MODULE: off
+        uses: golangci/golangci-lint-action@v2
         with:
-          # args: -E ${{ matrix.linter }} --skip-files ".*_test\\.go" --skip-dirs ".*_mock" --skip-dirs ".*_gen"
           args: -E ${{ matrix.linter }}
           version: latest
       - name: Slack Notification
