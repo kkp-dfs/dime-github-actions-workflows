@@ -184,7 +184,7 @@ jobs:
         if: ${{ inputs.code_lang == 'golang' }}
         uses: golangci/golangci-lint-action@v2
         with:
-          args: -E ${{ matrix.linter }}
+          args: -E ${{ matrix.linter }} --timeout 2m0s
           version: latest
       - name: Slack Notification
         if: ${{ failure() }}
