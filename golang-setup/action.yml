@@ -26,8 +26,8 @@ runs:
           ~/go/pkg/mod
           ~/go/bin
           ./vendor
-        key: ${{ runner.os }}-go-cache-v2-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-cache-v3-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
         restore-keys: |
-          ${{ runner.os }}-go-cache-v2-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
-          ${{ runner.os }}-go-cache-v2-${{ inputs.repository }}-
-          ${{ runner.os }}-go-cache-v2-
+          ${{ runner.os }}-go-cache-v3-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+          ${{ runner.os }}-go-cache-v3-${{ inputs.repository }}-
+          ${{ runner.os }}-go-cache-v3-
