@@ -59,14 +59,7 @@ jobs:
   analyze:
     name: Run analyze
     needs: prepare
-    runs-on: [self-hosted, linux, deployment, main]
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/flutter:2.8.1-stable
-      credentials:
-        username: ${{ needs.prepare.outputs.ecr_username }}
-        password: ${{ needs.prepare.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    runs-on: ubuntu-latest
     env:
       SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
       SLACK_USERNAME: GitHub Actions
@@ -91,11 +84,11 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
           gh_access_token: ${{ secrets.gh_access_token }}
 
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v1
+      - run: flutter pub get
       - name: Run flutter analyze
-        run: |
-          export PATH=/opt/flutter/bin:$PATH
-          flutter pub get
-          flutter analyze --pub
+        uses: zgosalvez/github-actions-analyze-dart@v1
 
       - name: Failure Notification
         if: ${{ failure() }}
