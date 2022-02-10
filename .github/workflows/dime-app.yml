@@ -87,8 +87,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
       - run: flutter pub get
-      - name: Run flutter analyze
-        uses: zgosalvez/github-actions-analyze-dart@v1
+      - run: flutter analyze .
 
       - name: Failure Notification
         if: ${{ failure() }}
