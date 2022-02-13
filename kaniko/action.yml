@@ -11,12 +11,12 @@ inputs:
   target_ref:
     description: The branch or tag ref or commit SHA that will be merged to base code.
     required: true
-  image_repo:
-    description: The image repository
+  image:
+    description: Docker image name
     required: true
-  image_tag:
-    description: The image tag
-    required: true
+  build_args:
+    description: List of build-time variables
+    required: false
   gh_access_token:
     description: GitHub access token
     required: true
@@ -31,7 +31,18 @@ runs:
         base_ref: ${{ inputs.base_ref }}
         target_ref: ${{ inputs.target_ref }}
         gh_access_token: ${{ inputs.gh_access_token }}
+    - name: ECR login
+      run: |
+        CREDS=$(aws ecr get-authorization-token --region ap-southeast-1 --registry-id 915060398631 \
+        | jq -r '.authorizationData[0].authorizationToken')
+        mkdir -p ~/.docker
+        cat > ~/.docker/config.json <<EOF
+        {"auths":{"915060398631.dkr.ecr.ap-southeast-1.amazonaws.com":{"auth":"$CREDS"}}}
+        EOF
     - name: build image
       uses: docker://gcr.io/kaniko-project/executor:debug
       with:
-        args: --dockerfile=Dockerfile --destination=915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:latest
+        entrypoint: /busybox/sh
+        args: >-
+          -c "cp -R ~/.docker /kaniko; 
+          /kaniko/executor --dockerfile=Dockerfile --cache --destination=${{ inputs.image }}"
