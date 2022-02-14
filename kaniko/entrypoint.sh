@@ -8,7 +8,6 @@ LABELS=$(echo $2 | sed -e "s| | --label=|g")
 /kaniko/executor \
     --cache \
     --dockerfile=Dockerfile \
-    --destination=$DESTINATIONS \
-    --label=$LABELS
+    --destination=$DESTINATIONS
 
 echo "::set-output name=image::$1"
