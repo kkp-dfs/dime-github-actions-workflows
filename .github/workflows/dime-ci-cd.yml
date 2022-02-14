@@ -202,6 +202,7 @@ jobs:
     name: Run unit testing
     needs: setup
     runs-on: [self-hosted, linux, deployment, main]
+    timeout-minutes: 8
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
@@ -250,6 +251,7 @@ jobs:
     needs: setup
     runs-on: [self-hosted, linux, deployment, sit]
     continue-on-error: true
+    timeout-minutes: 8
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
@@ -391,6 +393,7 @@ jobs:
       - name: Build and push docker image
         id: build
         uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
+        timeout-minutes: 8
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -422,6 +425,7 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
+    timeout-minutes: 3
     if: ${{ always() }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
