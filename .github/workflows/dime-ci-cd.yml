@@ -371,7 +371,7 @@ jobs:
       - unit-test
       - integration-test
       - lint
-    runs-on: [self-hosted, linux, build]
+    runs-on: [self-hosted, linux, deployment, main]
     outputs:
       docker_image: ${{ steps.build.outputs.docker_image }}
       endpoint: ${{ steps.paramater.outputs.host }}
