@@ -372,6 +372,13 @@ jobs:
       - integration-test
       - lint
     runs-on: [self-hosted, linux, deployment, main]
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     outputs:
       docker_image: ${{ steps.build.outputs.docker_image }}
       endpoint: ${{ steps.paramater.outputs.host }}
