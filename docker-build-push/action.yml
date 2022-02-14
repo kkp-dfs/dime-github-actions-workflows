@@ -48,7 +48,8 @@ runs:
           type=ref,event=branch,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
           type=ref,event=branch
         labels: |
-          org.opencontainers.image.licenses=Dime Copyright (c) 2022
+          org.opencontainers.image.description='Image of ${{ inputs.repository }}'
+          org.opencontainers.image.licenses='Dime Copyright (c) 2022'
 
     - name: Build & push docker images
       uses: kkp-dfs/dime-github-actions-workflows/kaniko@main
