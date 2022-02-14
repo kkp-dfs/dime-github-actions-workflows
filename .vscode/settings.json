@@ -1,9 +1,0 @@
-{
-    "yaml.schemas": {
-        "https://json.schemastore.org/github-workflow.json": [
-            "file:///Users/parse/workspace/dime-actions-workflows/.github/workflows/dime-app.yml",
-            "file:///Users/parse/workspace/dime-actions-workflows/.github/workflows/dime-ci-cd.yml",
-            "file:///Users/parse/workspace/dime-actions-workflows/.github/workflows/uninstall-release.yml"
-        ]
-    }
-}
