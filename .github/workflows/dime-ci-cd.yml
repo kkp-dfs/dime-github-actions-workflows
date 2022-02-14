@@ -367,7 +367,8 @@ jobs:
 
   build:
     name: Build & push docker images to registry
-    needs: 
+    needs:
+      - setup
       - unit-test
       - integration-test
       - lint
