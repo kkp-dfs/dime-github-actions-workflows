@@ -65,11 +65,11 @@ on:
         description: Name of application
         required: true
         type: string
-      platforms:
-        description: List of target platforms for build
-        required: false
-        type: string
-        default: linux/amd64
+      # platforms:
+      #   description: List of target platforms for build
+      #   required: false
+      #   type: string
+      #   default: linux/amd64
       build_args:
         description: List of build-time variables
         required: false
@@ -371,7 +371,7 @@ jobs:
       - unit-test
       - integration-test
       - lint
-    runs-on: [self-hosted, linux, build]
+    runs-on: [self-hosted, linux, deployment, main]
     outputs:
       docker_image: ${{ steps.build.outputs.docker_image }}
       endpoint: ${{ steps.paramater.outputs.host }}
@@ -392,7 +392,6 @@ jobs:
         uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
           repository: ${{ inputs.repository }}
-          platforms: ${{ inputs.platforms }}
 
       - id: paramater
         run: |

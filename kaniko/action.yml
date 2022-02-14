@@ -1,0 +1,19 @@
+name: Kaniko
+description: Build docker image by kaniko
+
+inputs:
+  image:
+    description: docker image
+    required: true
+  labels:
+    description: docker image labels
+    required: false
+outputs:
+  image:
+    description: docker image
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.image }}
+    - ${{ inputs.labels }}
