@@ -87,6 +87,23 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
       - run: flutter pub get
+      - name: Generate environment secret file
+        shell: bash
+        run: |
+          JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
+          TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/main/login | jq -r '.auth.client_token')
+          DATA=$(curl -H "X-VAULT-TOKEN:$TOKEN" https:/vault.mydime.tech/v1/secrets/data/services/dime-app/testing)
+
+          export DIRECTUS_ACCESS_TOKEN=$(echo $DATA | jq -r ".data.data.DIRECTUS_ACCESS_TOKEN")
+          export PASSWORD_HASHING_SALT=$(echo $DATA | jq -r ".data.data.PASSWORD_HASHING_SALT")
+          export SECURE_ED25519_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SECURE_ED25519_PUBLIC_KEY")
+          export SECURE_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SECURE_RSA_PUBLIC_KEY")
+          export SIGN_IN_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SIGN_IN_RSA_PUBLIC_KEY")
+          export PATH=/opt/flutter/bin:$PATH
+
+          envsubst < environment_secret_template.yaml > environment_secret.yaml
+          make gen-config-sit
       - run: flutter analyze .
 
       - name: Failure Notification
@@ -149,7 +166,7 @@ jobs:
 
           envsubst < environment_secret_template.yaml > environment_secret.yaml
           make gen-config-sit
-    
+
       - name: Run flutter unit-test
         uses: kkp-dfs/dime-github-actions-workflows/flutter-testing@main
         with:
