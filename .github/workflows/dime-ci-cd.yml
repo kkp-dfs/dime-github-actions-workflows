@@ -388,19 +388,14 @@ jobs:
       image_repo: ${{ steps.paramater.outputs.image_repo }}
       image_tag: ${{ steps.paramater.outputs.image_tag }}
     steps:
-      - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-
       - name: Build and push docker image
         id: build
         uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
           repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
       - id: paramater
         run: |
