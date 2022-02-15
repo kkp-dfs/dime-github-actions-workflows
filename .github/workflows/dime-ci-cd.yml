@@ -375,7 +375,6 @@ jobs:
       - integration-test
       - lint
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ always() }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
@@ -426,7 +425,6 @@ jobs:
       - build
     runs-on: [self-hosted, linux, deployment, main]
     timeout-minutes: 3
-    if: ${{ always() }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
