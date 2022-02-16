@@ -5,7 +5,7 @@ inputs:
   image:
     description: docker image
     required: true
-  build-args:
+  build_args:
     description: list of build arguments
     required: false
   labels:
@@ -19,5 +19,5 @@ runs:
   image: Dockerfile
   args:
     - ${{ inputs.image }}
-    - ${{ inputs.build-args }}
+    - ${{ inputs.build_args }}
     - ${{ inputs.labels }}
