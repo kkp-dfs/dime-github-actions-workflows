@@ -10,6 +10,6 @@ LABELS=$(echo $3 | tr " " "\n" | xargs -I@ echo --label=@)
     --cache \
     --dockerfile=Dockerfile \
     --context=/github/workspace \
-    $BUILD_ARGS $LABELS $DESTINATIONS
+    $BUILD_ARGS $DESTINATIONS
 
 echo "::set-output name=image::$1"
