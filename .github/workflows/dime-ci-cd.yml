@@ -146,11 +146,46 @@ jobs:
           echo "::add-mask::$TOKEN"
           echo "::set-output name=username::$(echo $TOKEN | cut -d: -f1)"
           echo "::set-output name=password::$(echo $TOKEN | cut -d: -f2)"
-  
-  lint:
-    name: Run lint
+
+  node-lint:
+    name: Run node lint
     needs: setup
     runs-on: ubuntu-latest
+    if: ${{ inputs.code_lang == 'node' }}
+    steps:
+      - name: Checkout and merge PR to base branch
+        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+      - name: Set up node version and caches
+        uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
+        with:
+          repository: ${{ inputs.repository }}
+          node-version: ${{ inputs.node-version }}
+      - name: Run node lint
+        run: |
+          npm install
+          npm run lint
+      - name: Slack Notification
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ inputs.slack_channel }}
+          SLACK_COLOR: danger
+          SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
+          SLACK_MESSAGE: Found issues in ${{ inputs.application_name }}
+          SLACK_TITLE: Lint issues found
+          SLACK_USERNAME: GitHub Actions
+          SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
+  
+  go-lint:
+    name: Run go lint
+    needs: setup
+    runs-on: ubuntu-latest
+    if: ${{ inputs.code_lang == 'golang' }}
     env: 
       GOPRIVATE: github.com/kkp-dfs/*
     strategy:
@@ -168,19 +203,7 @@ jobs:
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
           gh_access_token: ${{ secrets.gh_access_token }}
-
-      - name: Set up node version and caches
-        if: ${{ inputs.code_lang == 'node' }}
-        uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-          node-version: ${{ inputs.node-version }}
-      - name: Run node lint
-        if: ${{ inputs.code_lang == 'node' }}
-        run: npm run lint
-
       - name: Run golangci lint
-        if: ${{ inputs.code_lang == 'golang' }}
         uses: golangci/golangci-lint-action@v2
         with:
           args: -E ${{ matrix.linter }} --timeout 2m0s
@@ -372,7 +395,8 @@ jobs:
       - setup
       - unit-test
       - integration-test
-      - lint
+      - node-lint
+      - go-lint
     runs-on: [self-hosted, linux, deployment, main]
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
