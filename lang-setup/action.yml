@@ -21,7 +21,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: kkp-dfs/dime-github-actions-workflows/common@revise-pr
     # Golang setup and download modules
     - name: Setup go version ${{ inputs.go_version }}
       if: ${{ inputs.language == 'golang' }}
