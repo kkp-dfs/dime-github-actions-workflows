@@ -35,7 +35,7 @@ runs:
           $(go env GOMODCACHE)
           $(go env GOPATH)/bin
           ./vendor
-        key: ${{ runner.os }}-${{ language }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
     - name: Download go modules
       if: ${{ inputs.language == 'golang' }}
       env:
@@ -59,7 +59,7 @@ runs:
           ./node_modules
           **/node_modules
           $(yarn cache dir)
-        key: ${{ runner.os }}-${{ language }}-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}
+        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}
     - name: Download node modules
       if: ${{ inputs.language == 'node' }}
       run: npm install
@@ -76,7 +76,7 @@ runs:
       uses: actions/cache@v2
       with:
         path: /opt/flutter/.pub-cache
-        key: ${{ runner.os }}-${{ language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
+        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
     - name: Download flutter packages
       if: ${{ inputs.language == 'flutter' }}
       run: |
