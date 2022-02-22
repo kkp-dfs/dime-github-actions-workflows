@@ -1,0 +1,14 @@
+name: Get ECR credentials
+description: Get username and password for login ECR
+
+inputs:
+  repository:
+    description: The owner and repository name
+    required: false
+    default: ${{ github.repository }}
+
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.repository }}

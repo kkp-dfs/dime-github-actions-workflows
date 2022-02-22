@@ -110,8 +110,10 @@ jobs:
     name: Install dependencies and keep caches
     runs-on: [self-hosted, linux, main]
     outputs:
-      ecr_username: ${{ steps.credentials.outputs.username }}
-      ecr_password: ${{ steps.credentials.outputs.password }}
+      ecr_token: ${{ steps.ecr.outputs.token }}
+      ecr_repositoy: ${{ steps.ecr.outputs.repositoy }}
+      ecr_username: ${{ steps.ecr.outputs.username }}
+      ecr_password: ${{ steps.ecr.outputs.password }}
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
@@ -124,9 +126,9 @@ jobs:
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Get credentials
-        id: credentials
-        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-credentials@revise-pr
+      - name: Get ECR information
+        id: ecr
+        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@revise-pr
       - id: paramater
         run: |
           REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
@@ -227,8 +229,7 @@ jobs:
           go-version: ${{ inputs.go_version }}
           node-version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Run golang integration test
-        uses: kkp-dfs/dime-github-actions-workflows/integration-test@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/integration-test@revise-pr
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
@@ -259,15 +260,12 @@ jobs:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - name: Build and push docker image
-        id: build
+      - id: build
         uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         timeout-minutes: 8
         with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
+          repository: ${{ needs.setup.output.ecr_repository }}
+          token: ${{ needs.setup.outputs.ecr_token }}
 
   argocd:
     name: Apply argo application to kubernetes cluster

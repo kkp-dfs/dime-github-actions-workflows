@@ -2,6 +2,13 @@ name: Docker Build and Push
 description: Build docker image and push to registry
 
 inputs:
+  repository:
+    description: The owner and repository name
+    required: false
+    default: ${{ github.repository }}
+  token:
+    description: ECR token
+    required: true
   image:
     description: Docker image name
     required: false
@@ -24,24 +31,16 @@ runs:
       id: ecr
       shell: bash
       run: |
-        REPOSITORY=$(aws ecr describe-repositories --region ap-southeast-1 --output text \
-        --query 'repositories[].repositoryUri' --repository-name '${{ inputs.repository }}')
-        TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
-        --query 'authorizationData[].authorizationToken')
-
         mkdir -p ~/.docker
         cat > ~/.docker/config.json <<EOF
-        {"auths":{"915060398631.dkr.ecr.ap-southeast-1.amazonaws.com":{"auth":"$TOKEN"}}}
+        {"auths":{"915060398631.dkr.ecr.ap-southeast-1.amazonaws.com":{"auth":"${{ inputs.token }}"}}}
         EOF
-
-        echo "::set-output name=repository::$REPOSITORY"
-        cp ~/.netrc ./
     
     - name: Set docker metadata
       id: meta
       uses: docker/metadata-action@v3
       with:
-        images: ${{ inputs.image || steps.ecr.outputs.repository }}
+        images: ${{ inputs.image || inputs.repository }}
         tags: |
           type=ref,event=pr,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
           type=ref,event=pr,suffix=-latest
