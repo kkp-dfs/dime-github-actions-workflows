@@ -9,24 +9,24 @@ inputs:
   language:
     description: The program language of this repository
     required: true
-  go-version:
+  go_version:
     description: Version of golang
     required: false
-    default: '^1.17.2'
-  node-version:
+    default: '^1.17'
+  node_version:
     description: Version of node
-    required: true
+    required: false
     default: '16'
 
 runs:
   using: composite
   steps:
     # Golang setup and download modules
-    - name: Setup go version ${{ inputs.go-version }}
+    - name: Setup go version ${{ inputs.go_version }}
       if: ${{ inputs.language == 'golang' }}
       uses: actions/setup-go@v2
       with:
-        go-version: ${{ inputs.go-version }}
+        go-version: ${{ inputs.go_version }}
     - name: Cache go module and tools
       if: ${{ inputs.language == 'golang' }}
       uses: actions/cache@v2
@@ -46,11 +46,11 @@ runs:
       shell: bash
 
     # Node setup and download modules
-    - name: Setup node version ${{ inputs.node-version }}
+    - name: Setup node version ${{ inputs.node_version }}
       if: ${{ inputs.language == 'node' }}
       uses: actions/setup-node@v2
       with:
-        node-version: ${{ inputs.node-version }}
+        node-version: ${{ inputs.node_version }}
     - name: Cache node module
       if: ${{ inputs.language == 'node' }}
       uses: actions/cache@v2
@@ -66,7 +66,7 @@ runs:
       shell: bash
 
     # Flutter setup and download packages
-    - name: Setup flutter version ${{ inputs.flutter-version }}
+    - name: Setup flutter
       if: ${{ inputs.language == 'flutter' }}
       uses: subosito/flutter-action@v2
       with:

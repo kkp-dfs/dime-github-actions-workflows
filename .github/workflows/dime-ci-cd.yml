@@ -122,8 +122,8 @@ jobs:
         with:
           repository: ${{ inputs.repository }}
           language: ${{ inputs.code_lang }}
-          go-version: ${{ inputs.go_version }}
-          node-version: ${{ inputs.node-version }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
       - name: Get credentials
         id: credentials
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-credentials@revise-pr
