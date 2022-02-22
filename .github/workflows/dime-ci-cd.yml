@@ -199,9 +199,9 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
       - uses: kkp-dfs/dime-github-actions-workflows/unit-test@revise-pr
         with:
+          minimum_coverage: 80
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
-          minimum_coverage: 80
           slack_webhook: ${{ secrets.slack_webhook }}
           slack_channel: ${{ inputs.slack_channel }}
 

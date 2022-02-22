@@ -28,56 +28,59 @@ on:
         required: true
 
     secrets:
+      gh_access_token:
+        required: true
       slack_webhook:
         required: true
 
 jobs:
   setup:
     name: Install dependencies and keep caches
-    runs-on: [self-hosted, linux, build]
+    runs-on: [self-hosted, linux, main]
     outputs:
       ecr_username: ${{ steps.credentials.outputs.username }}
       ecr_password: ${{ steps.credentials.outputs.password }}
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
+          language: flutter
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
-        with:
-          repository: ${{ inputs.repository }}
-          language: flutter
-      - name: Get credentials
-        id: credentials
-        uses: kkp-dfs/dime-github-actions-workflows/get-credentials@revise-pr
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+      - name: Get ECR information
+        id: ecr
+        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@revise-pr
 
   analyze:
     name: Run analyze
     needs: setup
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, main]
     continue-on-error: true
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
+          language: flutter
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
-        with:
-          repository: ${{ inputs.repository }}
-          language: flutter
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
         with:
+          language: flutter
           application_name: ${{ inputs.application_name }}
           slack_channel: ${{ inputs.slack_channel }}
-          slack_webhook: ${{ secrets.slack_webhook }}
-          language: flutter
+          slack_webhook: ${{ inputs.slack_webhook }}
 
   unit-test:
     name: Run unit testing
     needs: setup
-    runs-on: [self-hosted, linux, deployment, main]
+    runs-on: [self-hosted, linux, main]
+    continue-on-error: true
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/flutter:2.8.1-stable
       credentials:
@@ -85,17 +88,16 @@ jobs:
         password: ${{ needs.setup.outputs.ecr_password }}
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
-    continue-on-error: true
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
+          language: flutter
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
-        with:
-          repository: ${{ inputs.repository }}
-          language: flutter
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - name: Generate environment secret file
         run: |
           JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
@@ -114,8 +116,8 @@ jobs:
           make gen-config-sit
       - uses: kkp-dfs/dime-github-actions-workflows/unit-test@revise-pr
         with:
-          application_name: ${{ inputs.application_name }}
-          slack_channel: ${{ inputs.slack_channel }}
-          slack_webhook: ${{ secrets.slack_webhook }}
-          minimum_coverage: 80
           language: flutter
+          minimum_coverage: 80
+          application_name: ${{ inputs.application_name }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          slack_channel: ${{ inputs.slack_channel }}
