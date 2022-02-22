@@ -265,7 +265,7 @@ jobs:
         uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@revise-pr
         timeout-minutes: 8
         with:
-          repository: ${{ needs.setup.output.ecr_repository }}
+          repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
 
   argocd:

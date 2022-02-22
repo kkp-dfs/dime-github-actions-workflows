@@ -7,6 +7,16 @@ inputs:
     required: false
     default: ${{ github.repository }}
 
+outputs:
+  repository:
+    description: ECR repository
+  token:
+    description: ECR token
+  username:
+    description: ECR username
+  password:
+    description: ECR pasword
+
 runs:
   using: docker
   image: Dockerfile
