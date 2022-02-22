@@ -22,118 +22,81 @@ on:
         required: false
         type: string
         default: ${{ github.head_ref || github.ref_name }}
-      minimum_coverage:
-        description: "The minimum coverage to pass the check. Optional. Default: `0` (always passes)"
-        required: false
-        type: number
-        default: 80
       slack_channel:
         description: The slack channel that send notification.
         type: string
         required: true
 
     secrets:
-      gh_access_token:
-        required: true
       slack_webhook:
         required: true
 
 jobs:
-  prepare:
-    name: Prepare parameters
+  setup:
+    name: Install dependencies and keep caches
     runs-on: [self-hosted, linux, build]
     outputs:
-      ecr_username: ${{ steps.paramater.outputs.username }}
-      ecr_password: ${{ steps.paramater.outputs.password }}
-      matrix: ${{ steps.paramater.outputs.matrix }}
+      ecr_username: ${{ steps.credentials.outputs.username }}
+      ecr_password: ${{ steps.credentials.outputs.password }}
     steps:
-      - id: paramater
-        run: |
-          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
-          --query 'authorizationData[].authorizationToken' | base64 -d)
-          echo "::add-mask::$TOKEN"
-          echo "::set-output name=username::$(echo $TOKEN | cut -d: -f1)"
-          echo "::set-output name=password::$(echo $TOKEN | cut -d: -f2)"
-          echo "::set-output name=matrix::$(echo "{\"include\": ${{ secrets.SLACK_CHANNELS }} }")"
-
-  analyze:
-    name: Run analyze
-    needs: prepare
-    runs-on: ubuntu-latest
-    env:
-      SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
-      SLACK_USERNAME: GitHub Actions
-      SLACK_CHANNEL: ${{ inputs.slack_channel }}
-      SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
-    continue-on-error: true
-    steps:
-      - name: Cache module and tools
-        uses: actions/cache@v2
-        with:
-          path: |
-            /opt/flutter/.pub-cache
-          key: ${{ runner.os }}-flutter-${{ inputs.repository }}-${{ hashFiles('**/pubspec.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-${{ inputs.repository }}-
-
-      - name: Checkout branch
-        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+        with:
+          repository: ${{ inputs.repository }}
+          language: flutter
+      - name: Get credentials
+        id: credentials
+        uses: kkp-dfs/dime-github-actions-workflows/get-credentials@revise-pr
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-      - run: flutter pub get
-      - run: flutter analyze .
-
-      - name: Failure Notification
-        if: ${{ failure() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_COLOR: danger
-          SLACK_MESSAGE: Flutter analyze found issues
-          SLACK_TITLE: ${{ inputs.application_name }} analyze is FAIL
+  analyze:
+    name: Run analyze
+    needs: setup
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+        with:
+          repository: ${{ inputs.repository }}
+          language: flutter
+      - uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
+        with:
+          application_name: ${{ inputs.application_name }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          language: flutter
 
   unit-test:
     name: Run unit testing
-    needs: prepare
+    needs: setup
     runs-on: [self-hosted, linux, deployment, main]
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/flutter:2.8.1-stable
       credentials:
-        username: ${{ needs.prepare.outputs.ecr_username }}
-        password: ${{ needs.prepare.outputs.ecr_password }}
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
-    env:
-      SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
-      SLACK_USERNAME: GitHub Actions
-      SLACK_CHANNEL: ${{ inputs.slack_channel }}
-      SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
     continue-on-error: true
     steps:
-      - name: Cache module and tools
-        uses: actions/cache@v2
-        with:
-          path: |
-            /opt/flutter/.pub-cache
-          key: ${{ runner.os }}-flutter-${{ inputs.repository }}-${{ hashFiles('**/pubspec.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-${{ inputs.repository }}-
-
-      - name: Checkout branch
-        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
+      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+        with:
+          repository: ${{ inputs.repository }}
+          language: flutter
       - name: Generate environment secret file
-        shell: bash
         run: |
           JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
           echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
@@ -149,30 +112,10 @@ jobs:
 
           envsubst < environment_secret_template.yaml > environment_secret.yaml
           make gen-config-sit
-    
-      - name: Run flutter unit-test
-        uses: kkp-dfs/dime-github-actions-workflows/flutter-testing@main
+      - uses: kkp-dfs/dime-github-actions-workflows/unit-test@revise-pr
         with:
           application_name: ${{ inputs.application_name }}
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          artifact_name: unittest-coverage-report
-          gh_access_token: ${{ secrets.gh_access_token }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
           minimum_coverage: 80
-
-      - name: Success Notification
-        if: ${{ success() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_COLOR: good
-          SLACK_MESSAGE: This repo passed all test cases of unit-test and there is coverage over than ${{ inputs.minimum_coverage }}%
-          SLACK_TITLE: ${{ inputs.application_name }} unit-test is PASS
-
-      - name: Failure Notification
-        if: ${{ failure() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_COLOR: danger
-          SLACK_MESSAGE: This repo fail on some test cases of unit-test or there is coverage less than ${{ inputs.minimum_coverage }}%
-          SLACK_TITLE: ${{ inputs.application_name }} unit-test is FAIL
+          language: flutter

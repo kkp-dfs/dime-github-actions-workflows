@@ -2,41 +2,24 @@ name: Docker Build and Push
 description: Build docker image and push to registry
 
 inputs:
-  repository:
-    description: The owner and repository name
-    required: true
   image:
     description: Docker image name
     required: false
   build_args:
     description: List of build-time variables
     required: false
-  base_ref:
-    description: The branch or tag ref or commit SHA that be base code.
-    required: true
-  target_ref:
-    description: The branch or tag ref or commit SHA that will be merged to base code.
-    required: true
-  gh_access_token:
-    description: GitHub access token
-    required: true
 
 outputs:
-  docker_image:
-    description: Docker image metadata
-    value: ${{ steps.meta.outputs.json }}
+  image_repo:
+    description: Docker image repository
+    value: ${{ steps.image.outputs.repo }}
+  image_tag:
+    description: Docker image's tag
+    value: ${{ steps.image.outputs.tag }}
 
 runs:
   using: composite
   steps:
-    - name: Checkout and merge PR to base branch
-      uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
-      with:
-        repository: ${{ inputs.repository }}
-        base_ref: ${{ inputs.base_ref }}
-        target_ref: ${{ inputs.target_ref }}
-        gh_access_token: ${{ inputs.gh_access_token }}
-
     - name: Get ECR details and copy .netrc file to context directory
       id: ecr
       shell: bash
@@ -71,3 +54,10 @@ runs:
         image: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build_args: ${{ inputs.build_args }}
+
+    - id: image
+      shell: bash
+      run: |
+        IMAGE=$(echo '${{ steps.meta.outputs.json }}' | jq -r '.tags[0]')
+        echo "::set-output name=repo::$(echo $IMAGE | cut -d: -f1)"
+        echo "::set-output name=tag::$(echo $IMAGE | cut -d: -f2)"
