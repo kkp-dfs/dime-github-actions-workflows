@@ -52,8 +52,8 @@ runs:
       uses: actions/cache@v2
       with:
         path: |
-          $(go env GOMODCACHE)
-          $(go env GOPATH)/bin
+          $HOME/go/pkg/mod/cache
+          $HOME/go/bin
           ./vendor
         key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
     - name: Download go modules
