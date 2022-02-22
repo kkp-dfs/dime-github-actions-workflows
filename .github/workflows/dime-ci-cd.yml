@@ -261,7 +261,7 @@ jobs:
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
       - id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@revise-pr
         timeout-minutes: 8
         with:
           repository: ${{ needs.setup.output.ecr_repository }}
