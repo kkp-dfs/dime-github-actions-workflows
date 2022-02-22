@@ -100,6 +100,8 @@ on:
         default: ./db/schema.sql
 
     secrets:
+      gh_access_token:
+        required: true
       slack_webhook:
         required: true
 
@@ -120,7 +122,7 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
       - uses: kkp-dfs/dime-github-actions-workflows/common@revise-pr
         with:
-          gh_access_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
           repository: ${{ inputs.repository }}
