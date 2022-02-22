@@ -59,9 +59,9 @@ runs:
       uses: zgosalvez/github-actions-report-lcov@v1
       with:
         coverage-files: unitcoverage.lcov
-        minimum-coverage: unittest-coverage-report
-        artifact-name: ${{ inputs.minimum_coverage }}
+        artifact-name: unittest-coverage-report
         github-token: ${{ inputs.gh_access_token }}
+        minimum-coverage: ${{ inputs.minimum_coverage }}
 
     - id: success_coverage
       if: ${{ success() }}
