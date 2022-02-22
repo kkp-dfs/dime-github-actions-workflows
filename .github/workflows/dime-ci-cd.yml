@@ -126,7 +126,7 @@ jobs:
           node-version: ${{ inputs.node-version }}
       - name: Get credentials
         id: credentials
-        uses: kkp-dfs/dime-github-actions-workflows/get-credentials@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-credentials@revise-pr
       - id: paramater
         run: |
           REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
