@@ -22,19 +22,19 @@ runs:
   using: composite
   steps:
     - name: Go lint
-      if: ${{ inputs.language == "golang" }}
+      if: ${{ inputs.language == 'golang' }}
       uses: golangci/golangci-lint-action@v2
       with:
         args: -E ${{ inputs.linter }} --timeout 2m0s
         version: latest
 
     - name: Node lint
-      if: ${{ inputs.language == "node" }}
+      if: ${{ inputs.language == 'node' }}
       run: npm run lint
       shell: bash
 
     - name: Flutter analyze
-      if: ${{ inputs.language == "flutter" }}
+      if: ${{ inputs.language == 'flutter' }}
       run: flutter analyze .
       shell: bash
 

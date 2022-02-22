@@ -23,12 +23,12 @@ runs:
   steps:
     # Golang setup and download modules
     - name: Setup go version ${{ inputs.go-version }}
-      if: ${{ inputs.language == "golang" }}
+      if: ${{ inputs.language == 'golang' }}
       uses: actions/setup-go@v2
       with:
         go-version: ${{ inputs.go-version }}
     - name: Cache go module and tools
-      if: ${{ inputs.language == "golang" }}
+      if: ${{ inputs.language == 'golang' }}
       uses: actions/cache@v2
       with:
         path: |
@@ -37,7 +37,7 @@ runs:
           ./vendor
         key: ${{ runner.os }}-${{ language }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
     - name: Download go modules
-      if: ${{ inputs.language == "golang" }}
+      if: ${{ inputs.language == 'golang' }}
       env:
         GOPRIVATE: github.com/kkp-dfs/*
       run: |
@@ -47,12 +47,12 @@ runs:
 
     # Node setup and download modules
     - name: Setup node version ${{ inputs.node-version }}
-      if: ${{ inputs.language == "node" }}
+      if: ${{ inputs.language == 'node' }}
       uses: actions/setup-node@v2
       with:
         node-version: ${{ inputs.node-version }}
     - name: Cache node module
-      if: ${{ inputs.language == "node" }}
+      if: ${{ inputs.language == 'node' }}
       uses: actions/cache@v2
       with:
         path: |
@@ -61,24 +61,24 @@ runs:
           $(yarn cache dir)
         key: ${{ runner.os }}-${{ language }}-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}
     - name: Download node modules
-      if: ${{ inputs.language == "node" }}
+      if: ${{ inputs.language == 'node' }}
       run: npm install
       shell: bash
 
     # Flutter setup and download packages
     - name: Setup flutter version ${{ inputs.flutter-version }}
-      if: ${{ inputs.language == "flutter" }}
+      if: ${{ inputs.language == 'flutter' }}
       uses: subosito/flutter-action@v2
       with:
         cache: true
     - name: Cache flutter package
-      if: ${{ inputs.language == "flutter" }}
+      if: ${{ inputs.language == 'flutter' }}
       uses: actions/cache@v2
       with:
         path: /opt/flutter/.pub-cache
         key: ${{ runner.os }}-${{ language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
     - name: Download flutter packages
-      if: ${{ inputs.language == "flutter" }}
+      if: ${{ inputs.language == 'flutter' }}
       run: |
         export PATH=/opt/flutter/bin:$PATH
         flutter config --no-analytics

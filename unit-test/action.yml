@@ -27,7 +27,7 @@ runs:
   using: composite
   steps:
     - name: Run go unit test
-      if: ${{ inputs.language == "golang" }}
+      if: ${{ inputs.language == 'golang' }}
       shell: bash
       run: |
         export PATH=$HOME/go/bin:$(go env GOPATH)/bin:/go/bin:$PATH
@@ -36,12 +36,12 @@ runs:
         make generate-unitcoverage
 
     - name: Run node unit test
-      if: ${{ inputs.language == "node" }}
+      if: ${{ inputs.language == 'node' }}
       run: npm run unit-test
       shell: bash
 
     - name: Run flutter unit test
-      if: ${{ inputs.language == "flutter" }}
+      if: ${{ inputs.language == 'flutter' }}
       shell: bash
       run: |
         flutter test --coverage test

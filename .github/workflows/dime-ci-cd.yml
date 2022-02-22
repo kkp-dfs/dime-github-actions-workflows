@@ -161,16 +161,16 @@ jobs:
       - uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
         with:
           application_name: ${{ inputs.application_name }}
-          language: ${{ inputs.language }}
+          language: ${{ inputs.code_lang }}
           slack_channel: ${{ inputs.slack_channel }}
           slack_webhook: ${{ inputs.slack_webhook }}
           linter: gosec
       - uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
-        if: ${{ inputs.language == "golang" }}
+        if: ${{ inputs.code_lang == 'golang' }}
         continue-on-error: true
         with:
           application_name: ${{ inputs.application_name }}
-          language: ${{ inputs.language }}
+          language: ${{ inputs.code_lang }}
           slack_channel: ${{ inputs.slack_channel }}
           slack_webhook: ${{ inputs.slack_webhook }}
           linter: gocyclo
