@@ -63,7 +63,7 @@ runs:
       run: |
         make tidy
         make tools-install
-        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.2
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.44.2
       shell: bash
 
     # Node setup and download modules

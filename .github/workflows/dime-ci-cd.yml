@@ -146,13 +146,6 @@ jobs:
     name: Run lint
     needs: setup
     runs-on: [self-hosted, linux, main]
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
@@ -185,6 +178,13 @@ jobs:
     needs: setup
     runs-on: [self-hosted, linux, main]
     timeout-minutes: 8
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
