@@ -235,6 +235,7 @@ jobs:
           language: ${{ inputs.code_lang }}
           slack_webhook: ${{ secrets.slack_webhook }}
           slack_channel: ${{ inputs.slack_channel }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
   build:
     name: Build & push docker images to registry

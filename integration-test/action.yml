@@ -27,7 +27,7 @@ runs:
   steps:
     - name: prepare integration test environment
       id: setup
-      if: ${{ inputs.code_lang == 'golang' }}
+      if: ${{ inputs.language == 'golang' }}
       shell: bash
       run: |
         JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
