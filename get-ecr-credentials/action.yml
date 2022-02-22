@@ -1,0 +1,6 @@
+name: Get ECR credentials
+description: Get username and password for login ECR
+
+runs:
+  using: docker
+  image: Dockerfile
