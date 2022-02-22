@@ -6,6 +6,14 @@ inputs:
     description: The owner and repository name
     required: false
     default: ${{ github.repository }}
+  base_ref:
+    description: The branch or tag ref or commit SHA that be base code.
+    required: false
+    default: ${{ github.base_ref || 'main' }}
+  target_ref:
+    description: The branch or tag ref or commit SHA that will be merged to base code.
+    required: false
+    default: ${{ github.head_ref || github.ref_name }}
   language:
     description: The program language of this repository
     required: true
@@ -17,10 +25,22 @@ inputs:
     description: Version of node
     required: false
     default: '16'
+  gh_access_token:
+    description: GitHub access token
+    required: true
 
 runs:
   using: composite
   steps:
+    - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+      with:
+        repository: ${{ inputs.repository }}
+        base_ref: ${{ inputs.base_ref }}
+        target_ref: ${{ inputs.target_ref }}
+    - uses: kkp-dfs/dime-github-actions-workflows/common@revise-pr
+      with:
+        gh_access_token: ${{ inputs.gh_access_token }}
+
     # Golang setup and download modules
     - name: Setup go version ${{ inputs.go_version }}
       if: ${{ inputs.language == 'golang' }}

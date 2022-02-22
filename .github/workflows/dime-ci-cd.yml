@@ -115,20 +115,15 @@ jobs:
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - uses: kkp-dfs/dime-github-actions-workflows/common@revise-pr
-        with:
-          gh_access_token: ${{ secrets.gh_access_token }}
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
-        with:
-          repository: ${{ inputs.repository }}
           language: ${{ inputs.code_lang }}
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - name: Get credentials
         id: credentials
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-credentials@revise-pr
@@ -152,17 +147,15 @@ jobs:
     runs-on: [self-hosted, linux, main]
     needs: setup
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
-        with:
-          repository: ${{ inputs.repository }}
           language: ${{ inputs.code_lang }}
           go-version: ${{ inputs.go_version }}
           node-version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
         with:
           application_name: ${{ inputs.application_name }}
@@ -186,17 +179,15 @@ jobs:
     runs-on: [self-hosted, linux, main]
     timeout-minutes: 8
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
-        with:
-          repository: ${{ inputs.repository }}
           language: ${{ inputs.code_lang }}
           go-version: ${{ inputs.go_version }}
           node-version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - uses: kkp-dfs/dime-github-actions-workflows/unit-test@revise-pr
         with:
           application_name: ${{ inputs.application_name }}
@@ -220,17 +211,15 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
-        with:
-          repository: ${{ inputs.repository }}
           language: ${{ inputs.code_lang }}
           go-version: ${{ inputs.go_version }}
           node-version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run golang integration test
         uses: kkp-dfs/dime-github-actions-workflows/integration-testing@revise-pr
         with:
