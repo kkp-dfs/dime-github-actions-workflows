@@ -228,7 +228,7 @@ jobs:
           node-version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run golang integration test
-        uses: kkp-dfs/dime-github-actions-workflows/integration-testing@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@revise-pr
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
