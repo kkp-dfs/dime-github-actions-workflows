@@ -310,6 +310,7 @@ jobs:
           image_tag: ${{ needs.build.outputs.image_tag }}
           slack_webhook: ${{ secrets.slack_webhook }}
           slack_channel: ${{ inputs.slack_channel }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
   db_migration:
     name: Migrate database
