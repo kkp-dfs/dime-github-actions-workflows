@@ -155,8 +155,8 @@ jobs:
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
           language: ${{ inputs.code_lang }}
-          go-version: ${{ inputs.go_version }}
-          node-version: ${{ inputs.node-version }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
         with:
@@ -194,8 +194,8 @@ jobs:
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
           language: ${{ inputs.code_lang }}
-          go-version: ${{ inputs.go_version }}
-          node-version: ${{ inputs.node-version }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - uses: kkp-dfs/dime-github-actions-workflows/unit-test@revise-pr
         with:
@@ -226,8 +226,8 @@ jobs:
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
           language: ${{ inputs.code_lang }}
-          go-version: ${{ inputs.go_version }}
-          node-version: ${{ inputs.node-version }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - uses: kkp-dfs/dime-github-actions-workflows/integration-test@revise-pr
         with:
