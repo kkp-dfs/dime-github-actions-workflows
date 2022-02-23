@@ -15,6 +15,9 @@ inputs:
   build_args:
     description: List of build-time variables
     required: false
+  gh_access_token:
+    description: GitHub access token
+    required: true
 
 outputs:
   image_repo:
@@ -27,8 +30,10 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Get ECR details and copy .netrc file to context directory
-      id: ecr
+    - uses: kkp-dfs/dime-github-actions-workflows/common@revise-pr
+      with:
+        gh_access_token: ${{ inputs.gh_access_token }}
+    - name: Generate .docker file
       shell: bash
       run: |
         mkdir -p ~/.docker

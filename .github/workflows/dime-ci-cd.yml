@@ -267,6 +267,7 @@ jobs:
         with:
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
   argocd:
     name: Apply argo application to kubernetes cluster
