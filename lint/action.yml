@@ -27,6 +27,7 @@ runs:
       with:
         args: -E ${{ inputs.linter }} --timeout 2m0s
         version: latest
+        skip-pkg-cache: false
 
     - name: Node lint
       if: ${{ inputs.language == 'node' }}
