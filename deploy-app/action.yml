@@ -84,7 +84,7 @@ runs:
       uses: rtCamp/action-slack-notify@v2
       env:
         SLACK_CHANNEL: ${{ inputs.slack_channel }}
-        SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
+        SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
         SLACK_USERNAME: GitHub Actions
         SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
         SLACK_COLOR: ${{ steps.fail_message.outputs.color || steps.success_message.outputs.color }}
