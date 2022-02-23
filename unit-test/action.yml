@@ -34,10 +34,10 @@ runs:
         make unit-test
         make generate-unitcoverage
 
-    - name: Run node unit test
-      if: ${{ inputs.language == 'node' }}
-      run: npm run test:e2e
-      shell: bash
+    # - name: Run node unit test
+    #   if: ${{ inputs.language == 'node' }}
+    #   run: npm run test:e2e
+    #   shell: bash
 
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}
