@@ -117,7 +117,8 @@ jobs:
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -129,7 +130,8 @@ jobs:
       - name: Get ECR information
         id: ecr
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@revise-pr
-      - id: paramater
+      - name: Get parameters
+        id: paramater
         run: |
           REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
           if [ "${{ inputs.event_name }}" == "pull_request" ]; then
@@ -149,7 +151,8 @@ jobs:
     needs: setup
     runs-on: [self-hosted, linux, main]
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -158,14 +161,16 @@ jobs:
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      - uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
+      - name: Run ${{ inputs.code_lang }} lint
+        uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
           slack_channel: ${{ inputs.slack_channel }}
           slack_webhook: ${{ inputs.slack_webhook }}
           linter: gosec
-      - uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
+      - name: Run gocyclo linter
+        uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
         if: ${{ inputs.code_lang == 'golang' }}
         continue-on-error: true
         with:
@@ -188,7 +193,8 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -197,7 +203,8 @@ jobs:
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      - uses: kkp-dfs/dime-github-actions-workflows/unit-test@revise-pr
+      - name: Run unit tests
+        uses: kkp-dfs/dime-github-actions-workflows/unit-test@revise-pr
         with:
           minimum_coverage: 80
           application_name: ${{ inputs.application_name }}
@@ -220,7 +227,8 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -229,7 +237,8 @@ jobs:
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      - uses: kkp-dfs/dime-github-actions-workflows/integration-test@revise-pr
+      - name: Run integration tests
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@revise-pr
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
@@ -256,12 +265,14 @@ jobs:
       image_repo: ${{ steps.build.outputs.image_repo }}
       image_tag: ${{ steps.build.outputs.image_tag }}
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+      - name: Checkout
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - id: build
+      - name: Build and push docker image
+        id: build
         uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@revise-pr
         timeout-minutes: 8
         with:
@@ -284,7 +295,8 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - id: destination
+      - name: Get application namespace
+        id: destination
         run: |
           if [ "${{ needs.setup.outputs.ref }}" = "main" ]; then
             DESTINATION_NAMESPACE=${{ inputs.namespace }}
