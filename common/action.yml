@@ -12,9 +12,10 @@ runs:
     - name: Create .netrc file
       shell: bash
       run: |
-        cat <<EOF > $HOME/.netrc
+        cat <<EOF > .netrc
         machine github.com
           login ${{ inputs.gh_access_token }}
           password x-oauth-basic
         EOF
-        chmod 600 $HOME/.netrc
+        chmod 600 .netrc
+        cp .netrc $HOME/.netrc
