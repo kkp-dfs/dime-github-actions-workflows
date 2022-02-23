@@ -5,6 +5,10 @@ inputs:
   release_name:
     description: Service release name
     required: true
+  helm_ref:
+    description: commit reference of helm repository
+    required: false
+    default: main
   namespace:
     description: Kubernetes namespace
     required: true
@@ -37,6 +41,16 @@ inputs:
 runs:
   using: composite
   steps:
+    - uses: kkp-dfs/dime-github-actions-workflows/common@revise-pr
+      with:
+        gh_access_token: ${{ inputs.gh_access_token }}
+    - name: Checkout Dime helm repository
+      shell: bash
+      run: |
+        git clone https://github.com/kkp-dfs/dime-helm.git
+        cd dime-helm
+        git fetch
+        git reset ${{ inputs.helm_ref }} --hard
     - name: Setup kubernetes context
       shell: bash
       env:

@@ -284,13 +284,6 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/common@revise-pr
-      - name: Checkout Dime helm repository
-        run: |
-          git clone https://github.com/kkp-dfs/dime-helm.git
-          cd dime-helm
-          git fetch
-          git reset ${{ inputs.helm_ref }} --hard
       - id: destination
         run: |
           if [ "${{ needs.setup.outputs.ref }}" = "main" ]; then
@@ -303,14 +296,15 @@ jobs:
         uses: kkp-dfs/dime-github-actions-workflows/deploy-app@revise-pr
         with:
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
+          helm_ref: ${{ inputs.helm_ref }}
           namespace: ${{ steps.destination.outputs.namespace }}
           application_name: ${{ inputs.application_name }}
           environment: ${{ inputs.environment }}
           endpoint: ${{ needs.setup.outputs.endpoint }}
           image_repo: ${{ needs.build.outputs.image_repo }}
           image_tag: ${{ needs.build.outputs.image_tag }}
-          slack_webhook: ${{ secrets.slack_webhook }}
           slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
           gh_access_token: ${{ secrets.gh_access_token }}
 
   db_migration:
