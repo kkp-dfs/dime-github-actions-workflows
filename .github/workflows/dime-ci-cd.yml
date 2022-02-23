@@ -303,7 +303,7 @@ jobs:
           else
             DESTINATION_NAMESPACE=${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
           fi
-          echo "::set-output name::namespace::$DESTINATION_NAMESPACE"
+          echo "::set-output name=namespace::$DESTINATION_NAMESPACE"
       - name: Apply Dime ArgoCD Application Helm
         uses: kkp-dfs/dime-github-actions-workflows/deploy-app@revise-pr
         with:
