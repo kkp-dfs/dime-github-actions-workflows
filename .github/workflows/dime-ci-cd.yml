@@ -167,7 +167,7 @@ jobs:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
           slack_channel: ${{ inputs.slack_channel }}
-          slack_webhook: ${{ inputs.slack_webhook }}
+          slack_webhook: ${{ secrets.slack_webhook }}
           linter: gosec
       - name: Run gocyclo linter
         uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
@@ -209,8 +209,8 @@ jobs:
           minimum_coverage: 80
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
-          slack_webhook: ${{ secrets.slack_webhook }}
           slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
 
   integration-test:
     name: Run integration test
@@ -242,8 +242,8 @@ jobs:
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
-          slack_webhook: ${{ secrets.slack_webhook }}
           slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
           gh_access_token: ${{ secrets.gh_access_token }}
 
   build:

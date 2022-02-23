@@ -36,7 +36,7 @@ runs:
 
     - name: Run node unit test
       if: ${{ inputs.language == 'node' }}
-      run: npm run unit-test
+      run: npm run test:e2e
       shell: bash
 
     - name: Run flutter unit test
