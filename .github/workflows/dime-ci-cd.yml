@@ -337,7 +337,7 @@ jobs:
       - name: Apply Dime ArgoCD Application Helm
         uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
-          environment: uat
+          environment: ${{ matrix.environment }}
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
           helm_ref: ${{ inputs.helm_ref }}
           namespace: ${{ inputs.namespace }}

@@ -55,7 +55,7 @@ jobs:
         id: ecr
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
         with:
-          repository: flutter:2.8.1-stable
+          repository: flutter
 
   analyze:
     name: Run analyze
