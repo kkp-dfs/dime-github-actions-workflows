@@ -37,17 +37,13 @@ runs:
     - name: node build
       if: ${{ inputs.language == 'node' }}
       shell: bash
-      run: |
-        npm run optimize-assets
-        npm run build:test
-        mkdir /github/workspace/e2e
-        chmod 766 /github/workspace/e2e
+      run: yarn build:test
 
     - name: Run node unit test
       if: ${{ inputs.language == 'node' }}
       uses: docker://mcr.microsoft.com/playwright:focal
       with:
-        args: npm run test:e2e
+        args: yarn test:e2e --reporter list --output /tmp/test-reports
 
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}
