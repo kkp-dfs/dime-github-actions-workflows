@@ -119,5 +119,5 @@ jobs:
           language: flutter
           minimum_coverage: 80
           application_name: ${{ inputs.application_name }}
-          slack_webhook: ${{ secrets.slack_webhook }}
           slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ inputs.slack_webhook }}
