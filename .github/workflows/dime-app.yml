@@ -57,7 +57,7 @@ jobs:
   analyze:
     name: Run analyze
     needs: setup
-    runs-on: [self-hosted, linux, main]
+    runs-on: ubuntu-latest
     continue-on-error: true
     steps:
       - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr

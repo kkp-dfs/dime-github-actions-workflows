@@ -149,7 +149,7 @@ jobs:
   lint:
     name: Run lint
     needs: setup
-    runs-on: [self-hosted, linux, main]
+    runs-on: ubuntu-latest
     steps:
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
