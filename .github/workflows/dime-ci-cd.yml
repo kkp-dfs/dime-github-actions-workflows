@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: '16'
+      go-version:
+        description: Version of node that would like to install
+        required: false
+        type: string
+        default: '^1.17.2'
       base_ref:
         description: The branch or tag ref or commit SHA that be base code.
         required: false
@@ -103,302 +108,30 @@ on:
 jobs:
   setup:
     name: Install dependencies and keep caches
-    runs-on: [self-hosted, linux, build]
-    env: 
-      GOPRIVATE: github.com/kkp-dfs/*
+    runs-on: [self-hosted, linux, main]
     outputs:
-      ecr_username: ${{ steps.credentials.outputs.username }}
-      ecr_password: ${{ steps.credentials.outputs.password }}
-    steps:
-      - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-
-      - name: Set up node version and caches
-        if: ${{ inputs.code_lang == 'node' }}
-        uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-          node-version: ${{ inputs.node-version }}
-      - name: Install node modules
-        if: ${{ inputs.code_lang == 'node' }}
-        run: npm install
-
-      - name: Set up go version and caches
-        if: ${{ inputs.code_lang == 'golang' }}
-        uses: kkp-dfs/dime-github-actions-workflows/golang-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-      - name: Install go modules
-        if: ${{ inputs.code_lang == 'golang' }}
-        run: |
-          make tidy
-          make tools-install
-      - name: Get credentials
-        id: credentials
-        run: |
-          TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
-          --query 'authorizationData[].authorizationToken' | base64 -d)
-          echo "::add-mask::$TOKEN"
-          echo "::set-output name=username::$(echo $TOKEN | cut -d: -f1)"
-          echo "::set-output name=password::$(echo $TOKEN | cut -d: -f2)"
-  
-  lint:
-    name: Run lint
-    needs: setup
-    runs-on: ubuntu-latest
-    env: 
-      GOPRIVATE: github.com/kkp-dfs/*
-    strategy:
-      matrix:
-        include:
-          - linter: gosec
-            ignore: false
-          - linter: gocyclo
-            ignore: true
-    steps:
-      - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-
-      - name: Set up node version and caches
-        if: ${{ inputs.code_lang == 'node' }}
-        uses: kkp-dfs/dime-github-actions-workflows/node-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-          node-version: ${{ inputs.node-version }}
-      - name: Run node lint
-        if: ${{ inputs.code_lang == 'node' }}
-        run: npm run lint
-
-      - name: Run golangci lint
-        if: ${{ inputs.code_lang == 'golang' }}
-        uses: golangci/golangci-lint-action@v2
-        with:
-          args: -E ${{ matrix.linter }} --timeout 2m0s
-          version: latest
-      - name: Slack Notification
-        if: ${{ failure() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: ${{ inputs.slack_channel }}
-          SLACK_COLOR: danger
-          SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
-          SLACK_MESSAGE: Found issues in ${{ inputs.application_name }}
-          SLACK_TITLE: Lint issues found
-          SLACK_USERNAME: GitHub Actions
-          SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
-
-  unit-test:
-    name: Run unit testing
-    needs: setup
-    runs-on: [self-hosted, linux, deployment, main]
-    timeout-minutes: 8
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
-    env: 
-      GOPRIVATE: github.com/kkp-dfs/*
-    steps:
-      - name: Run golang unit-test
-        if: ${{ inputs.code_lang == 'golang' }}
-        uses: kkp-dfs/dime-github-actions-workflows/golang-testing@main
-        with:
-          application_name: ${{ inputs.application_name }}
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-          test_name: unit-test
-          coverage_generator: generate-unitcoverage
-          coverage_files: unitcoverage.lcov
-          artifact_name: unittest-coverage-report
-          minimum_coverage: 80
-          slack_webhook: ${{ secrets.slack_webhook }}
-          slack_channel: ${{ inputs.slack_channel }}
-      - name: Run nodejs unit-test
-        if: ${{ inputs.code_lang == 'node' }}
-        uses: kkp-dfs/dime-github-actions-workflows/node-testing@main
-        with:
-          application_name: ${{ inputs.application_name }}
-          repository: ${{ inputs.repository }}
-          node-version: ${{ inputs.node-version }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-          test_name: unit-test
-          coverage_files: unitcoverage.lcov
-          artifact_name: unittest-coverage-report
-          minimum_coverage: 80
-          slack_webhook: ${{ secrets.slack_webhook }}
-          slack_channel: ${{ inputs.slack_channel }}
-
-  integration-test:
-    name: Run integration test
-    needs: setup
-    runs-on: [self-hosted, linux, deployment, sit]
-    continue-on-error: true
-    timeout-minutes: 8
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
-    env: 
-      GOPRIVATE: github.com/kkp-dfs/*
-    steps:
-      - name: Checkout and merge PR to base branch
-        uses: kkp-dfs/dime-github-actions-workflows/merge-test-pr@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Setup integration test environment
-        id: setup
-        if: ${{ inputs.code_lang == 'golang' }}
-        shell: bash
-        run: |
-          JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-          echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
-          TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/sit/login | jq -r '.auth.client_token')
-
-          DB=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/database/sit)
-          DB_HOST=dime-default-db.csi5ylritr1l.ap-southeast-1.rds.amazonaws.com
-          DB_ADMIN_USER=$(echo $DB | jq -r '.data.data.username')
-          DB_ADMIN_PASS=$(echo $DB | jq -r '.data.data.password')
-          DB_NAME=${{ inputs.application_name }}-${{ github.sha }}
-          DB_USER=${{ inputs.application_name }}-${{ github.sha }}
-          DB_PASS=${{ github.sha }}
-          echo "::set-output name=db_host::${DB_HOST}"
-          echo "::set-output name=db_admin_user::$(echo ${DB_ADMIN_USER} | base64)"
-          echo "::set-output name=db_admin_pass::$(echo ${DB_ADMIN_PASS} | base64)"
-          echo "::set-output name=db_name::${DB_NAME//-/_}"
-          echo "::set-output name=db_user::${DB_USER:0:32}"
-          echo "::set-output name=db_pass::${DB_PASS}"
-
-          mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME//-/_} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
-          mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE USER IF NOT EXISTS '${DB_USER:0:32}'@'%' IDENTIFIED BY '${DB_PASS}';"
-          mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "GRANT ALL PRIVILEGES ON ${DB_NAME//-/_}.* TO '${DB_USER:0:32}'@'%'; FLUSH PRIVILEGES;"
-          if [ "${{ inputs.migration }}" == "true" ]; then
-            dbmate --wait -d ${{ inputs.migrate_dir }} -s ${{ inputs.migrate_schema }} -u mysql://${DB_ADMIN_USER}:${DB_ADMIN_PASS}@${DB_HOST}/${DB_NAME//-/_} up
-          fi
-
-          RMQ=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/rabbitmq/sit)
-          RMQ_HOST=rmq-server-rabbitmq.rabbitmq.svc.cluster.local
-          RMQ_PORT=5672
-          RMQ_ADMIN_USER=$(echo $RMQ | jq -r '.data.data.admin_username')
-          RMQ_ADMIN_PASS=$(echo $RMQ | jq -r '.data.data.admin_password')
-          RMQ_VHOST=${{ inputs.application_name }}-${{ github.sha }}
-          RMQ_USER=${{ inputs.application_name }}-${{ github.sha }}
-          RMQ_PASS=${{ github.sha }}
-          echo "::set-output name=rmq_host::${RMQ_HOST}"
-          echo "::set-output name=rmq_port::${RMQ_PORT}"
-          echo "::set-output name=rmq_admin_user::$(echo ${RMQ_ADMIN_USER} | base64)"
-          echo "::set-output name=rmq_admin_pass::$(echo ${RMQ_ADMIN_PASS} | base64)"
-          echo "::set-output name=rmq_vhost::${RMQ_VHOST}"
-          echo "::set-output name=rmq_user::${RMQ_USER}"
-          echo "::set-output name=rmq_pass::${RMQ_PASS}"
-
-          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/vhosts/${RMQ_VHOST}
-          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"password\":\"${RMQ_PASS}\",\"tags\":\"management\"}" http://${RMQ_HOST}:15672/api/users/${RMQ_USER}
-          curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"configure\":\".*\",\"write\":\".*\",\"read\":\".*\"}" http://${RMQ_HOST}:15672/api/permissions/${RMQ_VHOST}/${RMQ_USER}
-      - name: Run golang integration test
-        if: ${{ inputs.code_lang == 'golang' }}
-        uses: kkp-dfs/dime-github-actions-workflows/golang-testing@main
-        continue-on-error: true
-        env:
-          INTEGRATION_ON_SIT: "true"
-          DB_HOST: ${{ steps.setup.outputs.db_host }}
-          DB_DATABASE: ${{ steps.setup.outputs.db_name }}
-          DB_USERNAME: ${{ steps.setup.outputs.db_user }}
-          DB_PASSWORD: ${{ steps.setup.outputs.db_pass }}
-          RABBITMQ_HOST: ${{ steps.setup.outputs.rmq_host }}
-          RABBITMQ_PORT: ${{ steps.setup.outputs.rmq_port }}
-          RABBITMQ_VHOST: ${{ steps.setup.outputs.rmq_vhost }}
-          RABBITMQ_USERNAME: ${{ steps.setup.outputs.rmq_user }}
-          RABBITMQ_PASSWORD: ${{ steps.setup.outputs.rmq_pass }}
-        with:
-          application_name: ${{ inputs.application_name }}
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-          test_name: integration-test
-          coverage_generator: generate-intcoverage
-          coverage_files: integrationcoverage.lcov
-          artifact_name: integation-coverage-report
-          minimum_coverage: 60
-          slack_webhook: ${{ secrets.slack_webhook }}
-          slack_channel: ${{ inputs.slack_channel }}
-      - name: Tear down integration test environment
-        if: ${{ inputs.code_lang == 'golang' && always() }}
-        run: |
-          DB_HOST=${{ steps.setup.outputs.db_host }}
-          DB_ADMIN_USER=$(echo ${{ steps.setup.outputs.db_admin_user }} | base64 -d)
-          DB_ADMIN_PASS=$(echo ${{ steps.setup.outputs.db_admin_pass }} | base64 -d)
-          DB_NAME=${{ steps.setup.outputs.db_name }}
-          DB_USER=${{ steps.setup.outputs.db_user }}
-          mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '${DB_USER}'@'%';"
-          mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP USER '${DB_USER}'@'%';"
-          mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP DATABASE ${DB_NAME};"
-
-          RMQ_HOST=${{ steps.setup.outputs.rmq_host }}
-          RMQ_VHOST=${{ steps.setup.outputs.rmq_vhost }}
-          RMQ_USER=${{ steps.setup.outputs.rmq_user }}
-          RMQ_ADMIN_USER=$(echo ${{ steps.setup.outputs.rmq_admin_user }} | base64 -d)
-          RMQ_ADMIN_PASS=$(echo ${{ steps.setup.outputs.rmq_admin_pass }} | base64 -d)
-          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/permissions/${RMQ_VHOST}/${RMQ_USER}
-          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/users/${RMQ_USER}
-          curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/vhosts/${RMQ_VHOST}
-
-  build:
-    name: Build & push docker images to registry
-    needs:
-      - setup
-      - unit-test
-      - integration-test
-      - lint
-    runs-on: [self-hosted, linux, deployment, main]
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
-    outputs:
-      docker_image: ${{ steps.build.outputs.docker_image }}
+      ecr_token: ${{ steps.ecr.outputs.token }}
+      ecr_repository: ${{ steps.ecr.outputs.repository }}
+      ecr_username: ${{ steps.ecr.outputs.username }}
+      ecr_password: ${{ steps.ecr.outputs.password }}
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
-      image_repo: ${{ steps.paramater.outputs.image_repo }}
-      image_tag: ${{ steps.paramater.outputs.image_tag }}
     steps:
-      - name: Build and push docker image
-        id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
-        timeout-minutes: 8
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
+          language: ${{ inputs.code_lang }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-
-      - id: paramater
+      - name: Get ECR information
+        id: ecr
+        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
+      - name: Get parameters
+        id: paramater
         run: |
           REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
           if [ "${{ inputs.event_name }}" == "pull_request" ]; then
@@ -413,17 +146,150 @@ jobs:
           echo "::set-output name=ref::$REF_NAME"
           echo "::set-output name=host::$HOST"
 
-          IMAGE=$(echo '${{ steps.build.outputs.docker_image }}' | jq -r '.tags[0]')
-          echo "::set-output name=image_repo::$(echo $IMAGE | cut -d: -f1)"
-          echo "::set-output name=image_tag::$(echo $IMAGE | cut -d: -f2)"
+  lint:
+    name: Run lint
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          language: ${{ inputs.code_lang }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+      - name: Run ${{ inputs.code_lang }} lint
+        uses: kkp-dfs/dime-github-actions-workflows/lint@main
+        with:
+          application_name: ${{ inputs.application_name }}
+          language: ${{ inputs.code_lang }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          linter: gosec
+      - name: Run gocyclo linter
+        uses: kkp-dfs/dime-github-actions-workflows/lint@main
+        if: ${{ inputs.code_lang == 'golang' }}
+        continue-on-error: true
+        with:
+          application_name: ${{ inputs.application_name }}
+          language: ${{ inputs.code_lang }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ inputs.slack_webhook }}
+          linter: gocyclo
 
-  argocd:
+  unit-test:
+    name: Run unit testing
+    if: ${{ inputs.code_lang == 'golang' }}
+    needs: setup
+    runs-on: [self-hosted, linux, main]
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          language: ${{ inputs.code_lang }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+      - name: Run unit tests
+        uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
+        with:
+          minimum_coverage: 80
+          application_name: ${{ inputs.application_name }}
+          language: ${{ inputs.code_lang }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+
+  integration-test:
+    name: Run integration test
+    if: ${{ inputs.code_lang == 'golang' }}
+    needs: setup
+    runs-on: [self-hosted, linux, sit]
+    continue-on-error: true
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          language: ${{ inputs.code_lang }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+      - name: Run integration tests
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@main
+        with:
+          application_name: ${{ inputs.application_name }}
+          language: ${{ inputs.code_lang }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+  build:
+    name: Build & push docker images to registry
+    needs:
+      - setup
+      - lint
+      - unit-test
+      - integration-test
+    runs-on: [self-hosted, linux,  main]
+    if: ${{ (inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success') }}
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    outputs:
+      image_repo: ${{ steps.build.outputs.image_repo }}
+      image_tag: ${{ steps.build.outputs.image_tag }}
+    steps:
+      - name: Checkout
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+      - name: Build and push docker image
+        id: build
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
+        with:
+          repository: ${{ needs.setup.outputs.ecr_repository }}
+          token: ${{ needs.setup.outputs.ecr_token }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+  deploy_pr:
     name: Apply argo application to kubernetes cluster
     needs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
+    if: ${{ needs.setup.outputs.ref != 'main' }}
     timeout-minutes: 3
+    environment:
+      name: ${{ needs.setup.outputs.ref }}
+      url: https://${{ needs.setup.outputs.endpoint }}"
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
@@ -432,73 +298,56 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - name: Checkout Dime helm repository
-        run: |
-          cat <<EOF > ~/.netrc
-          machine github.com
-            login ${{ secrets.gh_access_token }}
-            password x-oauth-basic
-          EOF
-          git clone https://github.com/kkp-dfs/dime-helm.git
-          cd dime-helm
-          git fetch
-          git reset ${{ inputs.helm_ref }} --hard
-
       - name: Apply Dime ArgoCD Application Helm
-        run: |
-          export APISERVER=https://kubernetes.default.svc
-          export SERVICEACCOUNT=/var/run/secrets/kubernetes.io/serviceaccount
-          export NAMESPACE=$(cat ${SERVICEACCOUNT}/namespace)
-          export TOKEN=$(cat ${SERVICEACCOUNT}/token)
-          export CACERT=${SERVICEACCOUNT}/ca.crt
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        with:
+          environment: sit
+          release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
+          helm_ref: ${{ inputs.helm_ref }}
+          namespace: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
+          application_name: ${{ inputs.application_name }}
+          endpoint: ${{ needs.setup.outputs.endpoint }}
+          image_repo: ${{ needs.build.outputs.image_repo }}
+          image_tag: ${{ needs.build.outputs.image_tag }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
-          kubectl config set-credentials eks-account --token=$TOKEN
-          kubectl config set-cluster eks --server=$APISERVER --certificate-authority=$CACERT
-          kubectl config set-context default --cluster=eks --user=eks-account --namespace=$NAMESPACE
-          kubectl config use-context default
-
-          if [ "${{ needs.build.outputs.ref }}" = "main" ]; then
-            export DESTINATION_NAMESPACE=${{ inputs.namespace }}
-          else
-            export DESTINATION_NAMESPACE=${{ inputs.application_name }}-${{ needs.build.outputs.ref }}
-          fi
-
-          helm upgrade -i ${{ inputs.application_name }}-${{ needs.build.outputs.ref }} dime-helm/charts/dime-application \
-          -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
-          -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
-          --set "fullnameOverride=${{ inputs.application_name }}" \
-          --set "nameOverride=${{ inputs.application_name }}" \
-          --set "source.username=${{ secrets.gh_access_token }}" \
-          --set "source.password=x-oauth-basic" \
-          --set "destination.cluster=${{ inputs.environment }}" \
-          --set "destination.namespace=$DESTINATION_NAMESPACE" \
-          --set "application.values.virtualService.hosts={${{ needs.build.outputs.endpoint }}}" \
-          --set "application.values.image.repository=${{ needs.build.outputs.image_repo }}" \
-          --set "application.values.image.tag=${{ needs.build.outputs.image_tag }}"
-
-      - name: Slack Notification
-        if: ${{ success() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: ${{ inputs.slack_channel }}
-          SLACK_COLOR: good
-          SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
-          SLACK_MESSAGE: You can access to this deployment at https://${{ needs.build.outputs.endpoint }}
-          SLACK_TITLE: Successfully deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment
-          SLACK_USERNAME: GitHub Actions
-          SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
-
-      - name: Slack Notification
-        if: ${{ failure() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: ${{ inputs.slack_channel }}
-          SLACK_COLOR: danger
-          SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
-          SLACK_MESSAGE: Cannot deploy ${{ inputs.application_name }} from $GITHUB_REF to ${{ inputs.environment }} environment
-          SLACK_TITLE: Fail to deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment
-          SLACK_USERNAME: GitHub Actions
-          SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
+  deploy:
+    name: Apply argo application to kubernetes cluster
+    needs:
+      - setup
+      - build
+    runs-on: [self-hosted, linux, deployment, main]
+    timeout-minutes: 3
+    strategy:
+      matrix:
+        environment: ["sit", "uat"]
+    environment:
+      name: ${{ matrix.environment }}
+      url: https://${{ needs.setup.outputs.endpoint }}"
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Apply Dime ArgoCD Application Helm
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        with:
+          environment: uat
+          release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
+          helm_ref: ${{ inputs.helm_ref }}
+          namespace: ${{ inputs.namespace }}
+          application_name: ${{ inputs.application_name }}
+          endpoint: ${{ needs.setup.outputs.endpoint }}
+          image_repo: ${{ needs.build.outputs.image_repo }}
+          image_tag: ${{ needs.build.outputs.image_tag }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
   db_migration:
     name: Migrate database
@@ -507,6 +356,11 @@ jobs:
       - build
     runs-on: [self-hosted, linux, deployment, main]
     if: ${{ inputs.migration }}
+    strategy:
+      matrix:
+        environment: ["sit", "uat"]
+    environment:
+      name: ${{ matrix.environment }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/dbmate:1.12
       credentials:
@@ -522,4 +376,4 @@ jobs:
           directory: ${{ inputs.migrate_dir }}
           schema: ${{ inputs.migrate_schema }}
           helm_ref: ${{ inputs.helm_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
+          gh_access_token: ${{ secrets.GH_ACCESS_TOKEN }}

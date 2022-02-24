@@ -4,7 +4,8 @@ description: Install node version and set cache of node modules
 inputs:
   repository:
     description: The owner and repository name
-    required: true
+    required: false
+    default: ${{ github.repository }}
   node-version:
     description: Version of node that would like to install
     required: true
@@ -27,11 +28,7 @@ runs:
       uses: actions/cache@v2
       with:
         path: |
-          ~/.npm
-          ~/node_modules
           ./node_modules
-          ./*/*/node_modules
+          **/node_modules
           ${{ steps.yarn-cache-dir-path.outputs.dir }}
         key: ${{ runner.os }}-node-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-${{ inputs.repository }}-

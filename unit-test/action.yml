@@ -1,0 +1,92 @@
+name: Unit test
+description: Run unit test
+
+inputs:
+  application_name:
+    description: Name of application
+    required: true
+  language:
+    description: The program language of this repository
+    required: true
+  minimum_coverage:
+    description: "The minimum coverage to pass the check. Optional. Default: `0` (always passes)"
+    required: false
+    default: "0"
+  slack_channel:
+    description: The slack channel that send notification.
+    required: true
+  slack_webhook:
+    description: The slack webhook url
+    required: true
+  gh_access_token:
+    description: GitHub access token
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Run go unit test
+      if: ${{ inputs.language == 'golang' }}
+      shell: bash
+      run: |
+        export PATH=$HOME/go/bin:$(go env GOPATH)/bin:/go/bin:$PATH
+        touch $HOME/.ack-ginkgo-rc
+        make unit-test
+        make generate-unitcoverage
+
+    - name: Run node unit test
+      if: ${{ inputs.language == 'node' }}
+      shell: bash
+      run: yarn test
+
+    - name: Run flutter unit test
+      if: ${{ inputs.language == 'flutter' }}
+      shell: bash
+      run: |
+        flutter test --coverage test
+        make lcov-remove-coverage
+
+    - id: fail_message
+      if: ${{ failure() }}
+      shell: bash
+      run: |
+        echo "::set-output name=color::danger"
+        echo "::set-output name=title::'${{ inputs.application_name }} unit test is FAIL'"
+        echo "::set-output name=message::'Found some failed test cases'"
+
+    - name: Create coverage report
+      if: ${{ success() }}
+      uses: zgosalvez/github-actions-report-lcov@v1
+      with:
+        coverage-files: unitcoverage.lcov
+        artifact-name: unittest-coverage-report
+        github-token: ${{ inputs.gh_access_token }}
+        minimum-coverage: ${{ inputs.minimum_coverage }}
+
+    - id: success_coverage
+      if: ${{ success() }}
+      shell: bash
+      run: |
+        echo "::set-output name=color::good"
+        echo "::set-output name=title::'Test coverage of ${{ inputs.application_name }} is PASS'"
+        echo "::set-output name=message::'Coverage rate is more than ${{ inputs.minimum_coverage }}%'"
+
+    - id: fail_coverage
+      if: ${{ failure() }}
+      shell: bash
+      run: |
+        echo "::set-output name=color::danger"
+        echo "::set-output name=title::'Test coverage of ${{ inputs.application_name }} is FAIL'"
+        echo "::set-output name=message::'Coverage rate is less than ${{ inputs.minimum_coverage }}%'"
+
+    - name: Slack Notification
+      if: ${{ always() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ inputs.slack_channel }}
+        SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
+        SLACK_USERNAME: GitHub Actions
+        SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
+        SLACK_COLOR: ${{ steps.fail_message.outputs.color || steps.fail_coverage.outputs.color || steps.success_coverage.outputs.color }}
+        SLACK_TITLE: ${{ steps.fail_message.outputs.title || steps.fail_coverage.outputs.title || steps.success_coverage.outputs.title }}
+        SLACK_MESSAGE: ${{ steps.fail_message.outputs.message || steps.fail_coverage.outputs.message || steps.success_coverage.outputs.message }}

@@ -1,0 +1,162 @@
+name: Integration test
+description: Run integration test
+
+inputs:
+  application_name:
+    description: Name of application
+    required: true
+  language:
+    description: The program language of this repository
+    required: true
+  minimum_coverage:
+    description: "The minimum coverage to pass the check. Optional. Default: `0` (always passes)"
+    required: false
+    default: "0"
+  slack_channel:
+    description: The slack channel that send notification.
+    required: true
+  slack_webhook:
+    description: The slack webhook url
+    required: true
+  gh_access_token:
+    description: GitHub access token
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: prepare integration test environment
+      id: setup
+      if: ${{ inputs.language == 'golang' }}
+      shell: bash
+      run: |
+        JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+        echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
+        TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/sit/login | jq -r '.auth.client_token')
+
+        DB=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/database/sit)
+        DB_HOST=dime-default-db.csi5ylritr1l.ap-southeast-1.rds.amazonaws.com
+        DB_ADMIN_USER=$(echo $DB | jq -r '.data.data.username')
+        DB_ADMIN_PASS=$(echo $DB | jq -r '.data.data.password')
+        DB_NAME=${{ inputs.application_name }}-${{ github.sha }}
+        DB_USER=${{ inputs.application_name }}-${{ github.sha }}
+        DB_PASS=${{ github.sha }}
+        echo "::set-output name=db_host::${DB_HOST}"
+        echo "::set-output name=db_admin_user::$(echo ${DB_ADMIN_USER} | base64)"
+        echo "::set-output name=db_admin_pass::$(echo ${DB_ADMIN_PASS} | base64)"
+        echo "::set-output name=db_name::${DB_NAME//-/_}"
+        echo "::set-output name=db_user::${DB_USER:0:32}"
+        echo "::set-output name=db_pass::${DB_PASS}"
+
+        mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME//-/_} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+        mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE USER IF NOT EXISTS '${DB_USER:0:32}'@'%' IDENTIFIED BY '${DB_PASS}';"
+        mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "GRANT ALL PRIVILEGES ON ${DB_NAME//-/_}.* TO '${DB_USER:0:32}'@'%'; FLUSH PRIVILEGES;"
+        if [ "${{ inputs.migration }}" == "true" ]; then
+          dbmate --wait -d ${{ inputs.migrate_dir }} -s ${{ inputs.migrate_schema }} -u mysql://${DB_ADMIN_USER}:${DB_ADMIN_PASS}@${DB_HOST}/${DB_NAME//-/_} up
+        fi
+
+        RMQ=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/rabbitmq/sit)
+        RMQ_HOST=rmq-server-rabbitmq.rabbitmq.svc.cluster.local
+        RMQ_PORT=5672
+        RMQ_ADMIN_USER=$(echo $RMQ | jq -r '.data.data.admin_username')
+        RMQ_ADMIN_PASS=$(echo $RMQ | jq -r '.data.data.admin_password')
+        RMQ_VHOST=${{ inputs.application_name }}-${{ github.sha }}
+        RMQ_USER=${{ inputs.application_name }}-${{ github.sha }}
+        RMQ_PASS=${{ github.sha }}
+        echo "::set-output name=rmq_host::${RMQ_HOST}"
+        echo "::set-output name=rmq_port::${RMQ_PORT}"
+        echo "::set-output name=rmq_admin_user::$(echo ${RMQ_ADMIN_USER} | base64)"
+        echo "::set-output name=rmq_admin_pass::$(echo ${RMQ_ADMIN_PASS} | base64)"
+        echo "::set-output name=rmq_vhost::${RMQ_VHOST}"
+        echo "::set-output name=rmq_user::${RMQ_USER}"
+        echo "::set-output name=rmq_pass::${RMQ_PASS}"
+
+        curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/vhosts/${RMQ_VHOST}
+        curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"password\":\"${RMQ_PASS}\",\"tags\":\"management\"}" http://${RMQ_HOST}:15672/api/users/${RMQ_USER}
+        curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"configure\":\".*\",\"write\":\".*\",\"read\":\".*\"}" http://${RMQ_HOST}:15672/api/permissions/${RMQ_VHOST}/${RMQ_USER}
+
+    - name: Run go integration test
+      if: ${{ inputs.language == 'golang' }}
+      shell: bash
+      env:
+        INTEGRATION_ON_SIT: "true"
+        DB_HOST: ${{ steps.setup.outputs.db_host }}
+        DB_DATABASE: ${{ steps.setup.outputs.db_name }}
+        DB_USERNAME: ${{ steps.setup.outputs.db_user }}
+        DB_PASSWORD: ${{ steps.setup.outputs.db_pass }}
+        RABBITMQ_HOST: ${{ steps.setup.outputs.rmq_host }}
+        RABBITMQ_PORT: ${{ steps.setup.outputs.rmq_port }}
+        RABBITMQ_VHOST: ${{ steps.setup.outputs.rmq_vhost }}
+        RABBITMQ_USERNAME: ${{ steps.setup.outputs.rmq_user }}
+        RABBITMQ_PASSWORD: ${{ steps.setup.outputs.rmq_pass }}
+      run: |
+        export PATH=$HOME/go/bin:$(go env GOPATH)/bin:/go/bin:$PATH
+        touch $HOME/.ack-ginkgo-rc
+        make integration-test
+
+    - name: Run node unit test
+      if: ${{ inputs.language == 'node' }}
+      uses: docker://mcr.microsoft.com/playwright:focal
+      with:
+        args: >-
+          yarn test:e2e --reporter list
+          --output /tmp/test-reports
+          --project Galaxy-S5
+          --project iphone-se
+          --project iphone-12-pro-max
+          --project ipad-mini
+
+    - name: Run flutter integration test
+      if: ${{ inputs.language == 'flutter' }}
+      shell: bash
+      run: flutter test integration_test
+
+    - id: success_message
+      if: ${{ success() }}
+      shell: bash
+      run: |
+        echo "::set-output name=color::good"
+        echo "::set-output name=title::'${{ inputs.application_name }} integration test is PASS'"
+        echo "::set-output name=message::'All test case is PASS'"
+
+    - id: fail_message
+      if: ${{ failure() }}
+      shell: bash
+      run: |
+        echo "::set-output name=color::danger"
+        echo "::set-output name=title::'${{ inputs.application_name }} integration test is FAIL'"
+        echo "::set-output name=message::'Found some failed test cases'"
+
+    - name: Slack Notification
+      if: ${{ always() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ inputs.slack_channel }}
+        SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
+        SLACK_USERNAME: GitHub Actions
+        SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
+        SLACK_COLOR: ${{ steps.fail_message.outputs.color || steps.success_message.outputs.color }}
+        SLACK_TITLE: ${{ steps.fail_message.outputs.title || steps.success_message.outputs.title }}
+        SLACK_MESSAGE: ${{ steps.fail_message.outputs.message || steps.success_message.outputs.message }}
+
+    - name: Tear down integration test environment
+      if: ${{ always() }}
+      shell: bash
+      run: |
+        DB_HOST=${{ steps.setup.outputs.db_host }}
+        DB_ADMIN_USER=$(echo ${{ steps.setup.outputs.db_admin_user }} | base64 -d)
+        DB_ADMIN_PASS=$(echo ${{ steps.setup.outputs.db_admin_pass }} | base64 -d)
+        DB_NAME=${{ steps.setup.outputs.db_name }}
+        DB_USER=${{ steps.setup.outputs.db_user }}
+        mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '${DB_USER}'@'%';"
+        mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP USER '${DB_USER}'@'%';"
+        mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP DATABASE ${DB_NAME};"
+
+        RMQ_HOST=${{ steps.setup.outputs.rmq_host }}
+        RMQ_VHOST=${{ steps.setup.outputs.rmq_vhost }}
+        RMQ_USER=${{ steps.setup.outputs.rmq_user }}
+        RMQ_ADMIN_USER=$(echo ${{ steps.setup.outputs.rmq_admin_user }} | base64 -d)
+        RMQ_ADMIN_PASS=$(echo ${{ steps.setup.outputs.rmq_admin_pass }} | base64 -d)
+        curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/permissions/${RMQ_VHOST}/${RMQ_USER}
+        curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/users/${RMQ_USER}
+        curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/vhosts/${RMQ_VHOST}
