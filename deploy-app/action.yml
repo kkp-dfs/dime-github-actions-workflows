@@ -72,7 +72,7 @@ runs:
         --set "nameOverride=${{ inputs.application_name }}" \
         --set "source.username=${{ inputs.gh_access_token }}" \
         --set "source.password=x-oauth-basic" \
-        --set "destination.cluster=${{ inputs.environment }}" \
+        --set "destination.cluster=dime-${{ inputs.environment }}" \
         --set "destination.namespace=${{ inputs.namespace }}" \
         --set "application.values.virtualService.hosts={${{ inputs.endpoint }}}" \
         --set "application.values.image.repository=${{ inputs.image_repo }}" \
