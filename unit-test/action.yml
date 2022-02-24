@@ -38,7 +38,13 @@ runs:
       if: ${{ inputs.language == 'node' }}
       uses: docker://mcr.microsoft.com/playwright:focal
       with:
-        args: apt update && apt-get install -y wget sudo dumb-init && npx playwright install chrome && yarn test:e2e --reporter list --output /tmp/test-reports
+        args: >-
+          yarn test:e2e --reporter list
+          --output /tmp/test-reports
+          --project Galaxy-S5
+          --project iphone-se
+          --project iphone-12-pro-max
+          --project ipad-mini
 
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}
