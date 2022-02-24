@@ -279,13 +279,17 @@ jobs:
           token: ${{ needs.setup.outputs.ecr_token }}
           gh_access_token: ${{ secrets.gh_access_token }}
 
-  argocd:
+  deploy_pr:
     name: Apply argo application to kubernetes cluster
     needs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
+    if: ${{ needs.setup.outputs.ref != 'main' }}
     timeout-minutes: 3
+    environment:
+      name: ${{ needs.setup.outputs.ref }}
+      url: https://${{ needs.setup.outputs.endpoint }}"
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
@@ -294,23 +298,50 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - name: Get application namespace
-        id: destination
-        run: |
-          if [ "${{ needs.setup.outputs.ref }}" = "main" ]; then
-            DESTINATION_NAMESPACE=${{ inputs.namespace }}
-          else
-            DESTINATION_NAMESPACE=${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
-          fi
-          echo "::set-output name=namespace::$DESTINATION_NAMESPACE"
       - name: Apply Dime ArgoCD Application Helm
         uses: kkp-dfs/dime-github-actions-workflows/deploy-app@revise-pr
         with:
+          environment: sit
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
           helm_ref: ${{ inputs.helm_ref }}
-          namespace: ${{ steps.destination.outputs.namespace }}
+          namespace: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
           application_name: ${{ inputs.application_name }}
-          environment: ${{ inputs.environment }}
+          endpoint: ${{ needs.setup.outputs.endpoint }}
+          image_repo: ${{ needs.build.outputs.image_repo }}
+          image_tag: ${{ needs.build.outputs.image_tag }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+  deploy:
+    name: Apply argo application to kubernetes cluster
+    needs:
+      - setup
+      - build
+    runs-on: [self-hosted, linux, deployment, main]
+    timeout-minutes: 3
+    strategy:
+      matrix:
+        environment: ["sit", "uat"]
+    environment:
+      name: ${{ matrix.environment }}
+      url: https://${{ needs.setup.outputs.endpoint }}"
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Apply Dime ArgoCD Application Helm
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@revise-pr
+        with:
+          environment: uat
+          release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
+          helm_ref: ${{ inputs.helm_ref }}
+          namespace: ${{ inputs.namespace }}
+          application_name: ${{ inputs.application_name }}
           endpoint: ${{ needs.setup.outputs.endpoint }}
           image_repo: ${{ needs.build.outputs.image_repo }}
           image_tag: ${{ needs.build.outputs.image_tag }}
@@ -325,6 +356,11 @@ jobs:
       - build
     runs-on: [self-hosted, linux, deployment, main]
     if: ${{ inputs.migration }}
+    strategy:
+      matrix:
+        environment: ["sit", "uat"]
+    environment:
+      name: ${{ matrix.environment }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/dbmate:1.12
       credentials:
