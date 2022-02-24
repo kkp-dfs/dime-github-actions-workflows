@@ -34,6 +34,11 @@ runs:
         make unit-test
         make generate-unitcoverage
 
+    - name: node build
+      if: ${{ inputs.language == 'node' }}
+      shell: bash
+      run: npm run build:test
+
     - name: Run node unit test
       if: ${{ inputs.language == 'node' }}
       uses: docker://mcr.microsoft.com/playwright:focal
