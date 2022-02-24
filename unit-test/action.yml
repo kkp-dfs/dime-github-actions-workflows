@@ -37,7 +37,11 @@ runs:
     - name: node build
       if: ${{ inputs.language == 'node' }}
       shell: bash
-      run: npm run build:test
+      run: |
+        npm run optimize-assets
+        npm run build:test
+        mkdir /github/workspace/e2e
+        chmod 766 /github/workspace/e2e
 
     - name: Run node unit test
       if: ${{ inputs.language == 'node' }}
