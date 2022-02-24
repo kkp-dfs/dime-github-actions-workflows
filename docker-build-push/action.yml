@@ -30,7 +30,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - uses: kkp-dfs/dime-github-actions-workflows/common@revise-pr
+    - uses: kkp-dfs/dime-github-actions-workflows/common@main
       with:
         gh_access_token: ${{ inputs.gh_access_token }}
     - name: Generate .docker file

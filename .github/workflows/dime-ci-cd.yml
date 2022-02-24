@@ -118,7 +118,7 @@ jobs:
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -129,7 +129,7 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Get ECR information
         id: ecr
-        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
       - name: Get parameters
         id: paramater
         run: |
@@ -152,7 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -162,7 +162,7 @@ jobs:
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run ${{ inputs.code_lang }} lint
-        uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/lint@main
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
@@ -170,7 +170,7 @@ jobs:
           slack_webhook: ${{ secrets.slack_webhook }}
           linter: gosec
       - name: Run gocyclo linter
-        uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/lint@main
         if: ${{ inputs.code_lang == 'golang' }}
         continue-on-error: true
         with:
@@ -194,7 +194,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -204,7 +204,7 @@ jobs:
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run unit tests
-        uses: kkp-dfs/dime-github-actions-workflows/unit-test@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
         with:
           minimum_coverage: 80
           application_name: ${{ inputs.application_name }}
@@ -227,7 +227,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -237,7 +237,7 @@ jobs:
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run integration tests
-        uses: kkp-dfs/dime-github-actions-workflows/integration-test@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@main
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
@@ -266,14 +266,14 @@ jobs:
       image_tag: ${{ steps.build.outputs.image_tag }}
     steps:
       - name: Checkout
-        uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
       - name: Build and push docker image
         id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
@@ -299,7 +299,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
@@ -335,7 +335,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
           environment: uat
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}

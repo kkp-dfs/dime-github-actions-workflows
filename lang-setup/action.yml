@@ -32,12 +32,12 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: kkp-dfs/dime-github-actions-workflows/checkout@revise-pr
+    - uses: kkp-dfs/dime-github-actions-workflows/checkout@main
       with:
         repository: ${{ inputs.repository }}
         base_ref: ${{ inputs.base_ref }}
         target_ref: ${{ inputs.target_ref }}
-    - uses: kkp-dfs/dime-github-actions-workflows/common@revise-pr
+    - uses: kkp-dfs/dime-github-actions-workflows/common@main
       with:
         gh_access_token: ${{ inputs.gh_access_token }}
 

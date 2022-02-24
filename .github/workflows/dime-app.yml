@@ -41,7 +41,7 @@ jobs:
       ecr_username: ${{ steps.ecr.outputs.username }}
       ecr_password: ${{ steps.ecr.outputs.password }}
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           language: flutter
           repository: ${{ inputs.repository }}
@@ -52,7 +52,7 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Get ECR information
         id: ecr
-        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@revise-pr
+        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
 
   analyze:
     name: Run analyze
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           language: flutter
           repository: ${{ inputs.repository }}
@@ -69,7 +69,7 @@ jobs:
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      - uses: kkp-dfs/dime-github-actions-workflows/lint@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lint@main
         with:
           language: flutter
           application_name: ${{ inputs.application_name }}
@@ -89,7 +89,7 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           language: flutter
           repository: ${{ inputs.repository }}
@@ -114,7 +114,7 @@ jobs:
 
           envsubst < environment_secret_template.yaml > environment_secret.yaml
           make gen-config-sit
-      - uses: kkp-dfs/dime-github-actions-workflows/unit-test@revise-pr
+      - uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
         with:
           language: flutter
           minimum_coverage: 80
