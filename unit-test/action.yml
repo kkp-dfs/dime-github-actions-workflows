@@ -43,7 +43,7 @@ runs:
       if: ${{ inputs.language == 'flutter' }}
       shell: bash
       run: |
-        flutter test --coverage test
+        flutter test -j 8 --coverage test
         make lcov-remove-coverage
 
     - id: fail_message
