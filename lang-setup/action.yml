@@ -71,12 +71,6 @@ runs:
       uses: actions/setup-node@v2
       with:
         node-version: ${{ inputs.node_version }}
-    - name: Download node modules
-      if: ${{ inputs.language == 'node' }}
-      run: |
-        npm install -g yarn
-        yarn install
-      shell: bash
     - name: Cache node module
       if: ${{ inputs.language == 'node' }}
       uses: actions/cache@v2
@@ -84,8 +78,13 @@ runs:
         path: |
           ./node_modules
           **/node_modules
-          $(yarn cache dir)
         key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}
+    - name: Download node modules
+      if: ${{ inputs.language == 'node' }}
+      run: |
+        npm install -g yarn
+        yarn install
+      shell: bash
 
     # Flutter setup and download packages
     - name: Setup flutter

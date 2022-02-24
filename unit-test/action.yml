@@ -34,16 +34,11 @@ runs:
         make unit-test
         make generate-unitcoverage
 
-    - name: node build
-      if: ${{ inputs.language == 'node' }}
-      shell: bash
-      run: yarn build:test
-
     - name: Run node unit test
       if: ${{ inputs.language == 'node' }}
       uses: docker://mcr.microsoft.com/playwright:focal
       with:
-        args: yarn test:e2e --reporter list --output /tmp/test-reports
+        args: apt update && apt-get install -y wget sudo dumb-init && npx playwright install chrome && yarn test:e2e --reporter list --output /tmp/test-reports
 
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}

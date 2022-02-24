@@ -184,7 +184,6 @@ jobs:
     name: Run unit testing
     needs: setup
     runs-on: [self-hosted, linux, main]
-    timeout-minutes: 10
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
       credentials:
@@ -218,7 +217,6 @@ jobs:
     needs: setup
     runs-on: [self-hosted, linux, sit]
     continue-on-error: true
-    timeout-minutes: 8
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
       credentials:
