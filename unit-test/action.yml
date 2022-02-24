@@ -36,15 +36,8 @@ runs:
 
     - name: Run node unit test
       if: ${{ inputs.language == 'node' }}
-      uses: docker://mcr.microsoft.com/playwright:focal
-      with:
-        args: >-
-          yarn test:e2e --reporter list
-          --output /tmp/test-reports
-          --project Galaxy-S5
-          --project iphone-se
-          --project iphone-12-pro-max
-          --project ipad-mini
+      shell: bash
+      run: yarn test
 
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}

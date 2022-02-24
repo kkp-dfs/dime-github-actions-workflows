@@ -182,6 +182,7 @@ jobs:
 
   unit-test:
     name: Run unit testing
+    if: ${{ inputs.code_lang == 'golang' }}
     needs: setup
     runs-on: [self-hosted, linux, main]
     container:
