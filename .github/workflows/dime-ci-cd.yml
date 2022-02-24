@@ -217,6 +217,7 @@ jobs:
     if: ${{ inputs.code_lang == 'golang' }}
     needs: setup
     runs-on: [self-hosted, linux, sit]
+    continue-on-error: true
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
       credentials:
