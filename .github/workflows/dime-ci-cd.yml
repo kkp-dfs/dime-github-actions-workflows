@@ -319,7 +319,7 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ (inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success') }}
+    if: ${{ (needs.setup.outputs.ref == 'main') && ((inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success')) }}
     timeout-minutes: 3
     strategy:
       matrix:
