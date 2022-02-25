@@ -289,7 +289,7 @@ jobs:
     timeout-minutes: 3
     environment:
       name: ${{ needs.setup.outputs.ref }}
-      url: https://${{ needs.setup.outputs.endpoint }}"
+      url: ${{ needs.setup.outputs.endpoint }}"
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
@@ -326,7 +326,7 @@ jobs:
         environment: ["sit", "uat"]
     environment:
       name: ${{ matrix.environment }}
-      url: https://${{ needs.setup.outputs.endpoint }}"
+      url: ${{ needs.setup.outputs.endpoint }}"
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
