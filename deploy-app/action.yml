@@ -64,7 +64,7 @@ runs:
     - name: Deply by helm
       shell: bash
       run: |
-        helm upgrade -i ${{ inputs.release_name }} dime-helm/charts/dime-application \
+        helm upgrade -i ${{ inputs.release_name }}-${{ inputs.environment }} dime-helm/charts/dime-application \
         -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
         -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
         --set "project.name=${{ inputs.environment }}" \
