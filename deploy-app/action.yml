@@ -67,7 +67,7 @@ runs:
         helm upgrade -i ${{ inputs.release_name }}-${{ inputs.environment }} dime-helm/charts/dime-application \
         -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
         -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
-        --set "project.name=${{ inputs.environment }}" \
+        --set "project.name=${{ inputs.namespace }}" \
         --set "fullnameOverride=${{ inputs.application_name }}" \
         --set "nameOverride=${{ inputs.application_name }}" \
         --set "source.username=${{ inputs.gh_access_token }}" \
