@@ -55,7 +55,7 @@ runs:
         echo "::set-output name=message::'Found some failed test cases'"
 
     - name: Create coverage report
-      if: ${{ success() }}
+      if: ${{ success() && (inputs.language != 'flutter') }}
       uses: zgosalvez/github-actions-report-lcov@v1
       with:
         coverage-files: unitcoverage.lcov
