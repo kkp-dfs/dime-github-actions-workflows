@@ -285,7 +285,7 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ needs.setup.outputs.ref != 'main' }}
+    if: ${{ (needs.setup.outputs.ref != 'main') && ((inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success')) }}
     timeout-minutes: 3
     environment:
       name: ${{ needs.setup.outputs.ref }}
@@ -319,6 +319,7 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
+    if: ${{ (inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success') }}
     timeout-minutes: 3
     strategy:
       matrix:
@@ -355,7 +356,7 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ inputs.migration }}
+    if: ${{ inputs.migration && ((inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success')) }}
     strategy:
       matrix:
         environment: ["sit", "uat"]
