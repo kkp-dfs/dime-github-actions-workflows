@@ -52,7 +52,7 @@ runs:
       uses: actions/cache@v2
       with:
         path: |
-          $HOME/go/pkg/mod/cache
+          $HOME/go/pkg/mod
           $HOME/go/bin
           ./vendor
         key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
