@@ -35,9 +35,10 @@ runs:
         TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/sit/login | jq -r '.auth.client_token')
 
         DB=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/database/sit)
+        echo $DB
         DB_HOST=dime-default-db.csi5ylritr1l.ap-southeast-1.rds.amazonaws.com
-        DB_ADMIN_USER=$(echo $DB | jq -r '.data.data.username')
-        DB_ADMIN_PASS=$(echo $DB | jq -r '.data.data.password')
+        DB_ADMIN_USER=$(echo $DB | jq -r '.data.username')
+        DB_ADMIN_PASS=$(echo $DB | jq -r '.data.password')
         DB_NAME=${{ inputs.application_name }}-${{ github.sha }}
         DB_USER=${{ inputs.application_name }}-${{ github.sha }}
         DB_PASS=${{ github.sha }}
