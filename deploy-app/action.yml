@@ -66,7 +66,7 @@ runs:
       run: |
         ENDPOINTS=$(echo ${{ inputs.endpoint }} | sed -e 's/sit/${{ matrix.environment }}/g')
 
-        helm upgrade -i ${{ inputs.application_name }}-${{ inputs.environment }} dime-helm/charts/dime-application \
+        helm upgrade -i ${{ inputs.release_name }}-${{ inputs.environment }} dime-helm/charts/dime-application \
         -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
         -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
         --set "fullnameOverride=${{ inputs.application_name }}" \
