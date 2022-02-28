@@ -339,7 +339,7 @@ jobs:
         uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
           environment: ${{ matrix.environment }}
-          release_name: ${{ inputs.application_name }}-${{ needs.environment }}
+          release_name: ${{ inputs.application_name }}-${{ matrix.environment }}
           helm_ref: ${{ inputs.helm_ref }}
           namespace: ${{ inputs.namespace }}
           application_name: ${{ inputs.application_name }}
