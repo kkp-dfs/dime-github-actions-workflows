@@ -41,7 +41,6 @@ jobs:
       ecr_username: ${{ steps.ecr.outputs.username }}
       ecr_password: ${{ steps.ecr.outputs.password }}
     steps:
-      - uses: AutoModality/action-clean@v1
       - name: Setup flutter
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
@@ -64,7 +63,6 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: AutoModality/action-clean@v1
       - name: Setup flutter
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
@@ -95,7 +93,6 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - uses: AutoModality/action-clean@v1
       - name: Setup flutter
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
