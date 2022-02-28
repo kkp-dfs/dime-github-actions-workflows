@@ -117,6 +117,7 @@ jobs:
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
+      - uses: AutoModality/action-clean@v1
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
@@ -151,6 +152,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
+      - uses: AutoModality/action-clean@v1
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
@@ -193,6 +195,7 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
+      - uses: AutoModality/action-clean@v1
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
@@ -226,6 +229,7 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
+      - uses: AutoModality/action-clean@v1
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
@@ -265,6 +269,7 @@ jobs:
       image_repo: ${{ steps.build.outputs.image_repo }}
       image_tag: ${{ steps.build.outputs.image_tag }}
     steps:
+      - uses: AutoModality/action-clean@v1
       - name: Checkout
         uses: kkp-dfs/dime-github-actions-workflows/checkout@main
         with:
@@ -298,6 +303,7 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
+      - uses: AutoModality/action-clean@v1
       - name: Apply Dime ArgoCD Application Helm
         uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
@@ -335,6 +341,7 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
+      - uses: AutoModality/action-clean@v1
       - name: Apply Dime ArgoCD Application Helm
         uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
@@ -370,6 +377,7 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
+      - uses: AutoModality/action-clean@v1
       - name: Migrate database
         uses: kkp-dfs/dime-github-actions-workflows/db-migration@main
         with:
