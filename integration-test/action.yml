@@ -75,6 +75,13 @@ runs:
         curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"password\":\"${RMQ_PASS}\",\"tags\":\"management\"}" http://${RMQ_HOST}:15672/api/users/${RMQ_USER}
         curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"configure\":\".*\",\"write\":\".*\",\"read\":\".*\"}" http://${RMQ_HOST}:15672/api/permissions/${RMQ_VHOST}/${RMQ_USER}
 
+        REDIS=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/redis/sit)
+        REDIS_HOST: redis-master.shared.svc.cluster.local
+        REDIS_ADMIN_USER=admin
+        REDIS_ADMIN_PASS=$(echo $REDIS | jq -r '.data.data.admin_password')
+        echo "::set-output name=redis_host::${REDIS_HOST}"
+        echo "::set-output name=redis_user::${REDIS_ADMIN_USER}"
+        echo "::set-output name=redis_pass::${REDIS_ADMIN_PASS}"
     - name: Run go integration test
       if: ${{ inputs.language == 'golang' }}
       shell: bash
@@ -89,6 +96,9 @@ runs:
         RABBITMQ_VHOST: ${{ steps.setup.outputs.rmq_vhost }}
         RABBITMQ_USERNAME: ${{ steps.setup.outputs.rmq_user }}
         RABBITMQ_PASSWORD: ${{ steps.setup.outputs.rmq_pass }}
+        REDIS_HOST: ${{ steps.setup.outputs.redis_host }}
+        REDIS_USERNAME: ${{ steps.setup.outputs.redis_user }}
+        REDIS_PASSWORD: ${{ steps.setup.outputs.redis_pass }}
       run: |
         export PATH=$HOME/go/bin:$(go env GOPATH)/bin:/go/bin:$PATH
         touch $HOME/.ack-ginkgo-rc
