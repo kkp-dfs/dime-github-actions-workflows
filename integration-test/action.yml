@@ -77,10 +77,10 @@ runs:
 
         REDIS=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/redis/sit)
         REDIS_HOST: redis-master.shared.svc.cluster.local
-        REDIS_ADMIN_USER=admin
+        REDIS_PORT=6379
         REDIS_ADMIN_PASS=$(echo $REDIS | jq -r '.data.data.admin_password')
         echo "::set-output name=redis_host::${REDIS_HOST}"
-        echo "::set-output name=redis_user::${REDIS_ADMIN_USER}"
+        echo "::set-output name=redis_port::${REDIS_PORT}"
         echo "::set-output name=redis_pass::${REDIS_ADMIN_PASS}"
     - name: Run go integration test
       if: ${{ inputs.language == 'golang' }}
@@ -97,7 +97,7 @@ runs:
         RABBITMQ_USERNAME: ${{ steps.setup.outputs.rmq_user }}
         RABBITMQ_PASSWORD: ${{ steps.setup.outputs.rmq_pass }}
         REDIS_HOST: ${{ steps.setup.outputs.redis_host }}
-        REDIS_USERNAME: ${{ steps.setup.outputs.redis_user }}
+        REDIS_PORT: ${{ steps.setup.outputs.redis_port }}
         REDIS_PASSWORD: ${{ steps.setup.outputs.redis_pass }}
       run: |
         export PATH=$HOME/go/bin:$(go env GOPATH)/bin:/go/bin:$PATH
