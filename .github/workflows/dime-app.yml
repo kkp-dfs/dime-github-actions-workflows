@@ -117,7 +117,7 @@ jobs:
           export SIGN_IN_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SIGN_IN_RSA_PUBLIC_KEY")
           export PATH=/opt/flutter/bin:$PATH
 
-          envsubst < environment_secret_template.yaml > environment_secret.yaml
+          envsubst < environment_secret_template.yaml > environment_secret_sit.yaml
           make gen-config-sit
       - name: Run unit tests
         uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
