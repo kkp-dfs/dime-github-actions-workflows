@@ -64,7 +64,7 @@ runs:
     - name: Deply by helm
       shell: bash
       run: |
-        ENDPOINTS=$(echo ${{ inputs.endpoint }} | sed -e 's/sit/${{ matrix.environment }}/g')
+        ENDPOINTS=$(echo ${{ inputs.endpoint }} | sed -e 's/sit/${{ inputs.environment }}/g')
 
         helm upgrade -i ${{ inputs.release_name }} dime-helm/charts/dime-application \
         -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
