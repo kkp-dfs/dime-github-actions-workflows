@@ -33,13 +33,13 @@ runs:
     - uses: kkp-dfs/dime-github-actions-workflows/common@main
       with:
         gh_access_token: ${{ inputs.gh_access_token }}
-    - name: Generate .docker file
-      shell: bash
-      run: |
-        mkdir -p ~/.docker
-        cat > ~/.docker/config.json <<EOF
-        {"auths":{"915060398631.dkr.ecr.ap-southeast-1.amazonaws.com":{"auth":"${{ inputs.token }}"}}}
-        EOF
+    # - name: Generate .docker file
+    #   shell: bash
+    #   run: |
+    #     mkdir -p ~/.docker
+    #     cat > ~/.docker/config.json <<EOF
+    #     {"auths":{"915060398631.dkr.ecr.ap-southeast-1.amazonaws.com":{"auth":"${{ inputs.token }}"}}}
+    #     EOF
     
     - name: Set docker metadata
       id: meta
@@ -58,6 +58,7 @@ runs:
         image: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build_args: ${{ inputs.build_args }}
+        token: ${{ inputs.token }}
 
     - id: image
       shell: bash

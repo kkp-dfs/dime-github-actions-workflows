@@ -2,6 +2,13 @@ name: Kaniko
 description: Build docker image by kaniko
 
 inputs:
+  registry:
+    description: docker registry
+    required: false
+    default: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com
+  token:
+    description: registry authentication token
+    required: true
   image:
     description: docker image
     required: true
@@ -18,6 +25,8 @@ runs:
   using: docker
   image: Dockerfile
   args:
+    - ${{ inputs.registry }}
+    - ${{ inputs.token }}
     - ${{ inputs.image }}
     - ${{ inputs.build_args }}
     - ${{ inputs.labels }}
