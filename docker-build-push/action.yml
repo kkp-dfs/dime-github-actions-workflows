@@ -46,13 +46,13 @@ runs:
           type=ref,event=branch,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
           type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-    # - name: Build & push docker images
-    #   uses: kkp-dfs/dime-github-actions-workflows/kaniko@main
-    #   with:
-    #     image: ${{ steps.meta.outputs.tags }}
-    #     labels: ${{ steps.meta.outputs.labels }}
-    #     build_args: ${{ inputs.build_args }}
-    #     token: ${{ inputs.token }}
+    - name: Build & push docker images
+      uses: kkp-dfs/dime-github-actions-workflows/kaniko@main
+      with:
+        image: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build_args: ${{ inputs.build_args }}
+        token: ${{ inputs.token }}
 
     - id: image
       shell: bash
