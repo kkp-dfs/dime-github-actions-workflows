@@ -15,6 +15,9 @@ inputs:
   build_args:
     description: List of build-time variables
     required: false
+  target:
+    description: Indicate which build stage is the target build stage
+    required: false
   gh_access_token:
     description: GitHub access token
     required: true
@@ -49,12 +52,13 @@ runs:
       shell: bash
       run: echo "::add-mask::${{ inputs.token }}"
     - name: Build & push docker images
-      uses: kkp-dfs/dime-github-actions-workflows/kaniko@main
+      uses: kkp-dfs/dime-github-actions-workflows/kaniko@build-corp-web-multi-env
       with:
         image: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build_args: ${{ inputs.build_args }}
         token: ${{ inputs.token }}
+        target: ${{ inputs.target }}
 
     - id: image
       shell: bash

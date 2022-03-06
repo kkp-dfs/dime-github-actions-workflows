@@ -15,6 +15,9 @@ inputs:
   build_args:
     description: list of build arguments
     required: false
+  target:
+    description: indicate which build stage is the target build stage.
+    required: false
   labels:
     description: docker image labels
     required: false
@@ -30,3 +33,4 @@ runs:
     - ${{ inputs.image }}
     - ${{ inputs.build_args }}
     - ${{ inputs.labels }}
+    - ${{ inputs.target }}

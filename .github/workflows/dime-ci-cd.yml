@@ -273,11 +273,12 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
       - name: Build and push docker image
         id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@build-corp-web-multi-env
         with:
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
           gh_access_token: ${{ secrets.gh_access_token }}
+          target: ${{ (inputs.repository == 'kkp-dfs/dime-corporate-web' && 'source') || '' }}
 
   deploy_pr:
     name: Apply argo application to kubernetes cluster
@@ -285,7 +286,7 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ (needs.setup.outputs.ref != 'main') && ((inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success')) }}
+    if: ${{ needs.setup.outputs.ref != 'main' && needs.build.result == 'success' }}
     timeout-minutes: 3
     environment:
       name: ${{ needs.setup.outputs.ref }}
@@ -299,7 +300,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@build-corp-web-multi-env
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
@@ -336,7 +337,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@build-corp-web-multi-env
         with:
           environment: ${{ matrix.environment }}
           release_name: ${{ inputs.application_name }}-${{ matrix.environment }}
