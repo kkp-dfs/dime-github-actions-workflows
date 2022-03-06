@@ -67,6 +67,12 @@ runs:
       run: |
         ENDPOINTS=$(echo ${{ inputs.endpoint }} | sed -e 's/sit/${{ inputs.environment }}/g')
 
+        if [ "${{ inputs.application_name }}" = "corporate-web" ]; then
+          export IMAGE_SETS="--set 'application.values.initContainers[0].image=${{ inputs.image_repo }}:${{ inputs.image_tag }}'"
+        else
+          export IMAGE_SETS="--set 'application.values.image.repository=${{ inputs.image_repo }}' --set 'application.values.image.tag=${{ inputs.image_tag }}'"
+        fi
+
         helm upgrade -i ${{ inputs.release_name }} dime-helm/charts/dime-application \
         -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
         -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
@@ -77,8 +83,7 @@ runs:
         --set "destination.cluster=dime-${{ inputs.environment }}" \
         --set "destination.namespace=${{ inputs.namespace }}" \
         --set "application.values.virtualService.hosts={$ENDPOINTS}" \
-        --set "application.values.image.repository=${{ inputs.image_repo }}" \
-        --set "application.values.image.tag=${{ inputs.image_tag }}"
+        $IMAGE_SETS
 
     - id: success_message
       if: ${{ success() }}
