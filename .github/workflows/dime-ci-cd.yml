@@ -253,7 +253,7 @@ jobs:
       - unit-test
       - integration-test
     runs-on: [self-hosted, linux,  main]
-    if: ${{ (inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success') }}
+    if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
       credentials:
@@ -278,14 +278,15 @@ jobs:
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
           gh_access_token: ${{ secrets.gh_access_token }}
+          target: ${{ (inputs.repository == 'kkp-dfs/dime-corporate-web' && 'source') || '' }}
 
   deploy_pr:
-    name: Apply argo application to kubernetes cluster
+    name: Deploy application from pull-request
     needs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ (needs.setup.outputs.ref != 'main') && ((inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success')) }}
+    if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref != 'main' }}
     timeout-minutes: 3
     environment:
       name: ${{ needs.setup.outputs.ref }}
@@ -314,12 +315,12 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
 
   deploy:
-    name: Apply argo application to kubernetes cluster
+    name: Deploy applicaton from main branch
     needs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ (needs.setup.outputs.ref == 'main') && ((inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success')) }}
+    if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref == 'main' }}
     timeout-minutes: 3
     strategy:
       matrix:
@@ -356,7 +357,7 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ inputs.migration && ((inputs.code_lang == 'golang' && success()) || (inputs.code_lang == 'node' && needs.lint.result == 'success')) }}
+    if: ${{ inputs.migration && ((inputs.code_lang == 'node' && needs.lint.result == 'success') || success()) }}
     strategy:
       matrix:
         environment: ["sit", "uat"]
