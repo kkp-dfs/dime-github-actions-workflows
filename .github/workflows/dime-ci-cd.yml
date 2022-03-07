@@ -273,7 +273,7 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
       - name: Build and push docker image
         id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@retagging-image
         with:
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}

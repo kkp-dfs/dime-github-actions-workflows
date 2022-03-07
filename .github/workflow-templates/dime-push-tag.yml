@@ -1,0 +1,15 @@
+name: Dime push tag workflow
+
+on:
+  push:
+    tags:
+      - 'v**.**'
+      - 'v**.**.**'
+
+jobs:
+  tag:
+    name: Retagging to docker image
+    runs-on: [self-hosted, linux, main]
+    steps:
+    #   - uses: kkp-dfs/dime-github-actions-workflows/retagging-image@retagging-image
+      - run: ${{ toJSON(github.event) }}

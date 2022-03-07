@@ -1,0 +1,24 @@
+name: Docker image retagging
+description: Retag to docker image
+
+inputs:
+  image:
+    description: Docker image name
+    required: false
+    default: ${{ github.repository }}
+  current:
+    description: The current tag of docker image
+    required: false
+    default: ${{ github.sha }}
+  tag:
+    description: Tag name that attach to image
+    required: false
+    default: ${{ github.ref_name }}
+
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.image }}
+    - ${{ inputs.current }}
+    - ${{ inputs.tag }}
