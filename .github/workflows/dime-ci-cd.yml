@@ -287,7 +287,6 @@ jobs:
       - build
     runs-on: [self-hosted, linux, deployment, main]
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref != 'main' }}
-    timeout-minutes: 3
     environment:
       name: ${{ needs.setup.outputs.ref }}
       url: ${{ needs.setup.outputs.endpoint }}"
@@ -321,7 +320,6 @@ jobs:
       - build
     runs-on: [self-hosted, linux, deployment, main]
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref == 'main' }}
-    timeout-minutes: 3
     strategy:
       matrix:
         environment: ["sit", "uat"]
