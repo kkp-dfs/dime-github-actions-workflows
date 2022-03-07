@@ -51,7 +51,6 @@ runs:
         cd dime-helm
         git fetch
         git reset ${{ inputs.helm_ref }} --hard
-        git checkout revise-corporate-web
     - name: Setup kubernetes context
       shell: bash
       env:

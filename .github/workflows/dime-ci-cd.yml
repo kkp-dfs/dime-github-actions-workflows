@@ -273,7 +273,7 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
       - name: Build and push docker image
         id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@build-corp-web-multi-env
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
@@ -300,7 +300,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@build-corp-web-multi-env
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
@@ -337,7 +337,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@build-corp-web-multi-env
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
           environment: ${{ matrix.environment }}
           release_name: ${{ inputs.application_name }}-${{ matrix.environment }}
