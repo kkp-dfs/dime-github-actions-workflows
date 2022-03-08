@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 REPOSITORY=$1
 COMMIT=$(echo $2 | cut -c-7)
