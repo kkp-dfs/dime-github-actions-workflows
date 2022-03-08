@@ -1,4 +1,4 @@
-name: Dime push tag workflow
+name: Dime Push Tag Workflow
 
 on:
   push:
