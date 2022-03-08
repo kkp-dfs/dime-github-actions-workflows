@@ -1,0 +1,4 @@
+{
+    "name": "Dime Push Tag Workflow",
+    "description": "Attach tag to docker image."
+}
