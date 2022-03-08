@@ -3,8 +3,7 @@ name: Dime push tag workflow
 on:
   push:
     tags:
-      - 'v**.**'
-      - 'v**.**.**'
+      - '*.*.*'
 
 jobs:
   tag:
