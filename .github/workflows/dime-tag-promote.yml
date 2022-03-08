@@ -33,6 +33,7 @@ jobs:
   promote:
     name: Promote docker image's tag
     runs-on: [self-hosted, linux, main]
+    needs: [setup]
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
       credentials:
