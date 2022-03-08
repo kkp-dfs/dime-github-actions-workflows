@@ -320,11 +320,8 @@ jobs:
       - build
     runs-on: [self-hosted, linux, deployment, main]
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref == 'main' }}
-    strategy:
-      matrix:
-        environment: ["sit", "uat"]
     environment:
-      name: ${{ matrix.environment }}
+      name: sit
       url: ${{ needs.setup.outputs.endpoint }}"
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
@@ -337,8 +334,8 @@ jobs:
       - name: Apply Dime ArgoCD Application Helm
         uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
-          environment: ${{ matrix.environment }}
-          release_name: ${{ inputs.application_name }}-${{ matrix.environment }}
+          environment: sit
+          release_name: ${{ inputs.application_name }}-sit
           helm_ref: ${{ inputs.helm_ref }}
           namespace: ${{ inputs.namespace }}
           application_name: ${{ inputs.application_name }}
