@@ -11,5 +11,4 @@ jobs:
     name: Retagging to docker image
     runs-on: [self-hosted, linux, main]
     steps:
-    #   - uses: kkp-dfs/dime-github-actions-workflows/retagging-image@retagging-image
-      - run: ${{ toJSON(github.event) }}
+      - uses: kkp-dfs/dime-github-actions-workflows/dime-tag-promote@main

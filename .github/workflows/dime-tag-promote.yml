@@ -1,0 +1,35 @@
+name: Dime CI/CD workflow
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: Docker image name
+        required: false
+        type: string
+        default: ${{ github.repository }}
+      current:
+        description: The current tag of docker image
+        required: false
+        type: string
+        default: ${{ github.sha }}
+      tag:
+        description: Tag name that attach to image
+        required: false
+        type: string
+        default: ${{ github.ref_name }}
+
+jobs:
+  promote:
+    name: Promote docker image's tag
+    runs-on: [self-hosted, linux, main]
+    steps:
+      - run: |
+          REPOSITORY=${{ github.repository }}
+          CURRENT=${{ github.sha }}
+          TAG=${GITHUB_REF#refs/*/}
+
+          yum install -y jq
+          MANIFEST=$(aws ecr batch-get-image --repository-name $REPOSITORY --image-ids imageTag=$CURRENT --output json | jq --raw-output '.images[0].imageManifest')
+          aws ecr batch-delete-image --repository-name $REPOSITORY --image-ids imageTag=$TAG | jq -r .
+          aws ecr put-image --repository-name $REPOSITORY --image-tag $TAG --image-manifest "$MANIFEST" | jq -r .
