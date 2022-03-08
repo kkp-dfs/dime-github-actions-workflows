@@ -20,33 +20,8 @@ on:
         default: ${{ github.ref_name }}
 
 jobs:
-  setup:
-    name: Install dependencies and keep caches
-    runs-on: [self-hosted, linux, main]
-    outputs:
-      ecr_username: ${{ steps.ecr.outputs.username }}
-      ecr_password: ${{ steps.ecr.outputs.password }}
-    steps:
-      - name: Get ECR information
-        id: ecr
-        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
   promote:
     name: Promote docker image's tag
     runs-on: [self-hosted, linux, main]
-    needs: [setup]
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - run: |
-          REPOSITORY=${{ github.repository }}
-          CURRENT=${{ github.sha }}
-          TAG=${GITHUB_REF#refs/*/}
-
-          MANIFEST=$(aws ecr batch-get-image --repository-name $REPOSITORY --image-ids imageTag=$CURRENT --output json | jq --raw-output '.images[0].imageManifest')
-          aws ecr batch-delete-image --repository-name $REPOSITORY --image-ids imageTag=$TAG | jq -r .
-          aws ecr put-image --repository-name $REPOSITORY --image-tag $TAG --image-manifest "$MANIFEST" | jq -r .
+      - uses: kkp-dfs/dime-github-actions-workflows/retagging-image@retagging-image
