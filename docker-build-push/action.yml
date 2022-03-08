@@ -4,6 +4,10 @@ description: Build docker image and push to registry
 inputs:
   repository:
     description: The owner and repository name
+    required: false
+    default: ${{ github.repository }}
+  token:
+    description: ECR token
     required: true
   image:
     description: Docker image name
@@ -11,45 +15,54 @@ inputs:
   build_args:
     description: List of build-time variables
     required: false
+  target:
+    description: Indicate which build stage is the target build stage
+    required: false
+  gh_access_token:
+    description: GitHub access token
+    required: true
 
 outputs:
-  docker_image:
-    description: Docker image metadata
-    value: ${{ steps.meta.outputs.json }}
+  image_repo:
+    description: Docker image repository
+    value: ${{ steps.image.outputs.repo }}
+  image_tag:
+    description: Docker image's tag
+    value: ${{ steps.image.outputs.tag }}
 
 runs:
   using: composite
   steps:
-    - name: Get ECR details and copy .netrc file to context directory
-      id: ecr
-      shell: bash
-      run: |
-        REPOSITORY=$(aws ecr describe-repositories --region ap-southeast-1 --output text \
-        --query 'repositories[].repositoryUri' --repository-name '${{ inputs.repository }}')
-        TOKEN=$(aws ecr get-authorization-token --region ap-southeast-1 --output text \
-        --query 'authorizationData[].authorizationToken')
+    - uses: kkp-dfs/dime-github-actions-workflows/common@main
+      with:
+        gh_access_token: ${{ inputs.gh_access_token }}
 
-        mkdir -p ~/.docker
-        cat > ~/.docker/config.json <<EOF
-        {"auths":{"915060398631.dkr.ecr.ap-southeast-1.amazonaws.com":{"auth":"$TOKEN"}}}
-        EOF
-
-        echo "::set-output name=repository::$REPOSITORY"
-        cp ~/.netrc ./
-    
     - name: Set docker metadata
       id: meta
       uses: docker/metadata-action@v3
       with:
-        images: ${{ inputs.image || steps.ecr.outputs.repository }}
+        images: ${{ inputs.image || inputs.repository }}
         tags: |
+          type=semver,pattern={{version}}
           type=ref,event=pr,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
           type=ref,event=pr,suffix=-latest
           type=ref,event=branch,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
-          type=ref,event=branch
-
+          type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+    - name: mask token
+      shell: bash
+      run: echo "::add-mask::${{ inputs.token }}"
     - name: Build & push docker images
       uses: kkp-dfs/dime-github-actions-workflows/kaniko@main
       with:
         image: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        build_args: ${{ inputs.build_args }}
+        token: ${{ inputs.token }}
+        target: ${{ inputs.target }}
+
+    - id: image
+      shell: bash
+      run: |
+        IMAGE=$(echo '${{ steps.meta.outputs.json }}' | jq -r '.tags[0]')
+        echo "::set-output name=repo::$(echo $IMAGE | cut -d: -f1)"
+        echo "::set-output name=tag::$(echo $IMAGE | cut -d: -f2)"

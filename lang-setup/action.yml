@@ -1,0 +1,107 @@
+name: Setup code language
+description: Setup programming languages and get dependency packages
+
+inputs:
+  repository:
+    description: The owner and repository name
+    required: false
+    default: ${{ github.repository }}
+  base_ref:
+    description: The branch or tag ref or commit SHA that be base code.
+    required: false
+    default: ${{ github.base_ref || 'main' }}
+  target_ref:
+    description: The branch or tag ref or commit SHA that will be merged to base code.
+    required: false
+    default: ${{ github.head_ref || github.ref_name }}
+  language:
+    description: The program language of this repository
+    required: true
+  go_version:
+    description: Version of golang
+    required: false
+    default: '^1.17'
+  node_version:
+    description: Version of node
+    required: false
+    default: '16'
+  gh_access_token:
+    description: GitHub access token
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+      with:
+        repository: ${{ inputs.repository }}
+        base_ref: ${{ inputs.base_ref }}
+        target_ref: ${{ inputs.target_ref }}
+    - uses: kkp-dfs/dime-github-actions-workflows/common@main
+      with:
+        gh_access_token: ${{ inputs.gh_access_token }}
+
+    # Golang setup and download modules
+    - name: Setup go version ${{ inputs.go_version }}
+      if: ${{ inputs.language == 'golang' }}
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ inputs.go_version }}
+    - name: Cache go module and tools
+      if: ${{ inputs.language == 'golang' }}
+      uses: actions/cache@v2
+      with:
+        path: |
+          $HOME/go/pkg/mod
+          $HOME/go/bin
+          ./vendor
+        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+    - name: Download go modules
+      if: ${{ inputs.language == 'golang' }}
+      env:
+        GOPRIVATE: github.com/kkp-dfs/*
+      run: |
+        make tidy
+        make tools-install
+      shell: bash
+
+    # Node setup and download modules
+    - name: Setup node version ${{ inputs.node_version }}
+      if: ${{ inputs.language == 'node' }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ inputs.node_version }}
+    - name: Cache node module
+      if: ${{ inputs.language == 'node' }}
+      uses: actions/cache@v2
+      with:
+        path: |
+          ./node_modules
+          **/node_modules
+        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}
+    - name: Download node modules
+      if: ${{ inputs.language == 'node' }}
+      run: |
+        npm install -g yarn
+        yarn install
+      shell: bash
+
+    # Flutter setup and download packages
+    - name: Setup flutter
+      if: ${{ inputs.language == 'flutter' }}
+      uses: subosito/flutter-action@v2
+      with:
+        cache: true
+    - name: Cache flutter package
+      if: ${{ inputs.language == 'flutter' }}
+      uses: actions/cache@v2
+      with:
+        path: /opt/flutter/.pub-cache
+        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
+    - name: Download flutter packages
+      if: ${{ inputs.language == 'flutter' }}
+      run: |
+        export PATH=/opt/flutter/bin:$PATH
+        flutter config --no-analytics
+        flutter pub get
+      shell: bash

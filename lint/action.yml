@@ -1,0 +1,52 @@
+name: Lint
+description: Lint programming language
+
+inputs:
+  application_name:
+    description: Name of application
+    required: true
+  language:
+    description: The program language of this repository
+    required: true
+  linter:
+    description: The go linter
+    required: false
+  slack_channel:
+    description: The slack channel that send notification.
+    required: true
+  slack_webhook:
+    description: The slack webhook url
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Go lint
+      if: ${{ inputs.language == 'golang' }}
+      uses: golangci/golangci-lint-action@v2
+      with:
+        args: -E ${{ inputs.linter }} --timeout 2m0s
+        version: latest
+        skip-pkg-cache: true
+
+    - name: Node lint
+      if: ${{ inputs.language == 'node' }}
+      run: npm run lint
+      shell: bash
+
+    - name: Flutter analyze
+      if: ${{ inputs.language == 'flutter' }}
+      run: flutter analyze .
+      shell: bash
+
+    - name: Slack Notification
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ${{ inputs.slack_channel }}
+        SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
+        SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
+        SLACK_COLOR: danger
+        SLACK_USERNAME: GitHub Actions
+        SLACK_TITLE: Lint issues found
+        SLACK_MESSAGE: Found issues in ${{ inputs.application_name }}

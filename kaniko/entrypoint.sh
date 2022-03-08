@@ -1,14 +1,21 @@
 #!/busybox/sh
 
-cp -R ~/.docker/config.json /kaniko/.docker/config.json
+PATH=/usr/local/bin:/kaniko:/busybox
 
-DESTINATIONS=$(echo $1 | sed -e "s| | --destination=|g")
-LABELS=$(echo $2 | sed -e "s| | --label=|g")
+set -e
+
+cat > /kaniko/.docker/config.json <<EOF
+{"auths":{"$1":{"auth":"$2"}}}
+EOF
+
+DESTINATIONS=$(echo $3 | tr " " "\n" | xargs -I@ echo --destination=@)
+BUILD_ARGS=$(echo $4 | tr " " "\n" | xargs -I@ echo --build-arg=@)
+LABELS=$(echo $5 | tr " " "\n" | xargs -I@ echo --label=@)
+TARGET=$(echo $6 | xargs -I@ echo --target=@)
 
 /kaniko/executor \
     --cache \
-    --dockerfile=Dockerfile \
-    --destination=$DESTINATIONS \
-    --label=$LABELS
+    --context=$PWD \
+    $BUILD_ARGS $TARGET $DESTINATIONS
 
-echo "::set-output name=image::$1"
+echo "::set-output name=image::$3"
