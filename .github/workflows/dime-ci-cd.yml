@@ -353,11 +353,8 @@ jobs:
       - build
     runs-on: [self-hosted, linux, deployment, main]
     if: ${{ inputs.migration && ((inputs.code_lang == 'node' && needs.lint.result == 'success') || success()) }}
-    strategy:
-      matrix:
-        environment: ["sit", "uat"]
     environment:
-      name: ${{ matrix.environment }}
+      name: sit
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/dbmate:1.12
       credentials:
@@ -369,7 +366,7 @@ jobs:
       - name: Migrate database
         uses: kkp-dfs/dime-github-actions-workflows/db-migration@main
         with:
-          environment: ${{ matrix.environment }}
+          environment: sit
           application_name: ${{ inputs.application_name }}
           directory: ${{ inputs.migrate_dir }}
           schema: ${{ inputs.migrate_schema }}
