@@ -8,7 +8,4 @@ on:
 
 jobs:
   tag:
-    name: Retagging to docker image
-    runs-on: [self-hosted, linux, main]
-    steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/dime-tag-promote@main
+    uses: kkp-dfs/dime-github-actions-workflows/.github/workflows/dime-tag-promote.yml@main

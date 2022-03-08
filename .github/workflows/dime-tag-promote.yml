@@ -24,4 +24,4 @@ jobs:
     name: Promote docker image's tag
     runs-on: [self-hosted, linux, main]
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/retagging-image@retagging-image
+      - uses: kkp-dfs/dime-github-actions-workflows/retagging-image@main
