@@ -1,0 +1,10 @@
+name: Dime push tag workflow
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  tag:
+    uses: kkp-dfs/dime-github-actions-workflows/.github/workflows/dime-tag-promote.yml@main
