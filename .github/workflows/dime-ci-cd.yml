@@ -241,6 +241,9 @@ jobs:
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
+          migration: ${{ inputs.migration }}
+          migrate_dir: ${{ inputs.migrate_dir }}
+          migrate_schema: ${{ inputs.migrate_schema }}
           slack_channel: ${{ inputs.slack_channel }}
           slack_webhook: ${{ secrets.slack_webhook }}
           gh_access_token: ${{ secrets.gh_access_token }}

@@ -12,6 +12,17 @@ inputs:
     description: "The minimum coverage to pass the check. Optional. Default: `0` (always passes)"
     required: false
     default: "0"
+  migration:
+    description: Enable/disable to run database migration job
+    required: true
+  migrate_dir:
+    description: Specify the directory containing migration files
+    required: false
+    default: ./db/migrations
+  migrate_schema:
+    description: Specify the schema file location
+    required: false
+    default: ./db/schema.sql
   slack_channel:
     description: The slack channel that send notification.
     required: true
