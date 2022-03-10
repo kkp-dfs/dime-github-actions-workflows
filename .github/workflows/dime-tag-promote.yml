@@ -25,3 +25,7 @@ jobs:
     runs-on: [self-hosted, linux, main]
     steps:
       - uses: kkp-dfs/dime-github-actions-workflows/retagging-image@main
+        with:
+          image: ${{ inputs.image }}
+          current: ${{ inputs.current }}
+          tag: ${{ inputs.tag }}
