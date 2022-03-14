@@ -60,95 +60,30 @@ on:
         description: GitHub access token
         required: true
 
-  workflow_dispatch:
-    inputs:
-      release_name:
-        description: Service release name
-        type: string
-        required: true
-      helm_ref:
-        description: commit reference of helm repository
-        type: string
-        required: false
-        default: main
-      namespace:
-        description: Kubernetes namespace
-        required: true
-        type: string
-      environment:
-        description: Environment that would like to deploy services
-        type: string
-        required: true
-        default: sit
-        options:
-          - sit
-          - uat
-          - prod
-      endpoint:
-        description: Service endpoint
-        type: string
-        required: true
-      image_repo:
-        description: Docker image repository
-        type: string
-        required: true
-      image_tag:
-        description: Docker image's tag
-        type: string
-        required: true
-      migration:
-        description: Enable/disable to run database migration job
-        type: boolean
-        required: false
-        default: false
-      migrate_dir:
-        description: Specify the directory containing migration files
-        type: string
-        required: false
-        default: ./db/migrations
-      migrate_schema:
-        description: Specify the schema file location
-        type: string
-        required: false
-        default: ./db/schema.sql
-      slack_channel:
-        description: The slack channel that send notification.
-        type: string
-        required: true
-    secrets:
-      slack_webhook:
-        description: The slack webhook url
-        type: string
-        required: true
-      gh_access_token:
-        description: GitHub access token
-        type: string
-        required: true
-
 env:
   SERVICEACCOUNT: /var/run/secrets/kubernetes.io/serviceaccount
   SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
   SLACK_USERNAME: GitHub Actions
-  SLACK_CHANNEL: ${{ github.event.inputs.slack_channel }}
-  SLACK_WEBHOOK: ${{ github.event.secrets.slack_webhook }}
+  SLACK_CHANNEL: ${{ inputs.slack_channel }}
+  SLACK_WEBHOOK: ${{ secrets.slack_webhook }}
 
 jobs:
   migration:
     name: Migrate database
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ github.event.inputs.migration }}
+    if: ${{ inputs.migration }}
     environment:
-      name: ${{ github.event.inputs.environment }}
+      name: ${{ inputs.environment }}
     steps:
       - name: Migrate database
         uses: kkp-dfs/dime-github-actions-workflows/db-migration@main
         with:
-          environment: ${{ github.event.inputs.environment }}
-          application_name: ${{ github.event.inputs.application_name }}
-          directory: ${{ github.event.inputs.migrate_dir }}
-          schema: ${{ github.event.inputs.migrate_schema }}
-          helm_ref: ${{ github.event.inputs.helm_ref }}
-          gh_access_token: ${{ github.event.secrets.gh_access_token }}
+          environment: ${{ inputs.environment }}
+          application_name: ${{ inputs.application_name }}
+          directory: ${{ inputs.migrate_dir }}
+          schema: ${{ inputs.migrate_schema }}
+          helm_ref: ${{ inputs.helm_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
   deploy:
     name: Deploy applicaton from main branch
@@ -156,11 +91,11 @@ jobs:
     needs:
       - migration
     environment:
-      name: ${{ github.event.inputs.environment }}
+      name: ${{ inputs.environment }}
     steps:
       - uses: kkp-dfs/dime-github-actions-workflows/common@main
         with:
-          gh_access_token: ${{ github.event.inputs.gh_access_token }}
+          gh_access_token: ${{ inputs.gh_access_token }}
       - run: git clone https://github.com/kkp-dfs/dime-helm.git
       - run: cd dime-helm
       - run: git fetch
@@ -171,23 +106,23 @@ jobs:
       - run: kubectl config use-context default
       - name: Deply by helm
         run: |
-          ENDPOINTS=$(echo ${{ github.event.inputs.endpoint }} | sed -e 's/sit/${{ github.event.inputs.environment }}/g')
+          ENDPOINTS=$(echo ${{ inputs.endpoint }} | sed -e 's/sit/${{ inputs.environment }}/g')
 
-          if [ "${{ github.event.inputs.application_name }}" = "corporate-web" ]; then
-            export IMAGE_SETS='--set application.values.initContainers[0].image=${{ github.event.inputs.image_repo }}:${{ github.event.inputs.image_tag }}'
+          if [ "${{ inputs.application_name }}" = "corporate-web" ]; then
+            export IMAGE_SETS='--set application.values.initContainers[0].image=${{ inputs.image_repo }}:${{ inputs.image_tag }}'
           else
-            export IMAGE_SETS='--set application.values.image.repository=${{ github.event.inputs.image_repo }} --set application.values.image.tag=${{ github.event.inputs.image_tag }}'
+            export IMAGE_SETS='--set application.values.image.repository=${{ inputs.image_repo }} --set application.values.image.tag=${{ inputs.image_tag }}'
           fi
 
-          helm upgrade -i ${{ github.event.inputs.release_name }} dime-helm/charts/dime-application \
-          -f dime-helm/values/${{ github.event.inputs.application_name }}/values.yaml \
-          -f dime-helm/values/${{ github.event.inputs.application_name }}/values-${{ github.event.inputs.environment }}.yaml \
-          --set "fullnameOverride=${{ github.event.inputs.application_name }}" \
-          --set "nameOverride=${{ github.event.inputs.application_name }}" \
-          --set "source.username=${{ github.event.inputs.gh_access_token }}" \
+          helm upgrade -i ${{ inputs.release_name }} dime-helm/charts/dime-application \
+          -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
+          -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
+          --set "fullnameOverride=${{ inputs.application_name }}" \
+          --set "nameOverride=${{ inputs.application_name }}" \
+          --set "source.username=${{ inputs.gh_access_token }}" \
           --set "source.password=x-oauth-basic" \
-          --set "destination.cluster=dime-${{ github.event.inputs.environment }}" \
-          --set "destination.namespace=${{ github.event.inputs.namespace }}" \
+          --set "destination.cluster=dime-${{ inputs.environment }}" \
+          --set "destination.namespace=${{ inputs.namespace }}" \
           --set "application.version=revise-corporate-web" \
           --set "application.values.virtualService.hosts={$ENDPOINTS}" \
           $IMAGE_SETS
@@ -195,14 +130,14 @@ jobs:
         if: ${{ success() }}
         run: |
           echo "::set-output name=color::good"
-          echo "::set-output name=title::'Successfully deploy ${{ github.event.inputs.application_name }} on ${{ github.event.inputs.environment }} environment'"
-          echo "::set-output name=message::'You can access to this deployment at https://${{ github.event.inputs.endpoint }}'"
+          echo "::set-output name=title::'Successfully deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment'"
+          echo "::set-output name=message::'You can access to this deployment at https://${{ inputs.endpoint }}'"
       - id: fail_message
         if: ${{ failure() }}
         run: |
           echo "::set-output name=color::danger"
-          echo "::set-output name=title::'Fail to deploy ${{ github.event.inputs.application_name }} on ${{ github.event.inputs.environment }} environment'"
-          echo "::set-output name=message::'Cannot deploy ${{ github.event.inputs.application_name }} from $GITHUB_REF to ${{ github.event.inputs.environment }} environment'"
+          echo "::set-output name=title::'Fail to deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment'"
+          echo "::set-output name=message::'Cannot deploy ${{ inputs.application_name }} from $GITHUB_REF to ${{ inputs.environment }} environment'"
 
       - name: Slack Notification
         if: ${{ always() }}
