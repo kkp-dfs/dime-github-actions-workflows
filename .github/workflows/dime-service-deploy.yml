@@ -74,6 +74,8 @@ jobs:
     if: ${{ inputs.migration }}
     environment:
       name: ${{ inputs.environment }}
+    container:
+      image: public.ecr.aws/c2u4x1k5/ubuntu:21.04
     steps:
       - name: Migrate database
         uses: kkp-dfs/dime-github-actions-workflows/db-migration@main
@@ -92,6 +94,8 @@ jobs:
       - migration
     environment:
       name: ${{ inputs.environment }}
+    container:
+      image: public.ecr.aws/c2u4x1k5/ubuntu:21.04
     steps:
       - uses: kkp-dfs/dime-github-actions-workflows/common@main
         with:
