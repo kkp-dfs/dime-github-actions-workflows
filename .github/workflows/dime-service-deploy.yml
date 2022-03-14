@@ -100,7 +100,7 @@ jobs:
     steps:
       - uses: kkp-dfs/dime-github-actions-workflows/common@main
         with:
-          gh_access_token: ${{ inputs.gh_access_token }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - run: git clone https://github.com/kkp-dfs/dime-helm.git
       - run: cd dime-helm
       - run: git fetch
