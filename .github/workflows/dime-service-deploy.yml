@@ -143,10 +143,10 @@ jobs:
           echo "::set-output name=title::'Fail to deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment'"
           echo "::set-output name=message::'Cannot deploy ${{ inputs.application_name }} from $GITHUB_REF to ${{ inputs.environment }} environment'"
 
-      - name: Slack Notification
-        if: ${{ always() }}
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_COLOR: ${{ steps.fail_message.outputs.color || steps.success_message.outputs.color }}
-          SLACK_TITLE: ${{ steps.fail_message.outputs.title || steps.success_message.outputs.title }}
-          SLACK_MESSAGE: ${{ steps.fail_message.outputs.message || steps.success_message.outputs.message }}
+      # - name: Slack Notification
+      #   if: ${{ always() }}
+      #   uses: rtCamp/action-slack-notify@v2
+      #   env:
+      #     SLACK_COLOR: ${{ steps.fail_message.outputs.color || steps.success_message.outputs.color }}
+      #     SLACK_TITLE: ${{ steps.fail_message.outputs.title || steps.success_message.outputs.title }}
+      #     SLACK_MESSAGE: ${{ steps.fail_message.outputs.message || steps.success_message.outputs.message }}
