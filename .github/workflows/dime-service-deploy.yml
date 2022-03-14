@@ -103,7 +103,7 @@ jobs:
           gh_access_token: ${{ secrets.gh_access_token }}
       - run: git clone https://github.com/kkp-dfs/dime-helm.git
       - run: git -C dime-helm fetch
-      - run: git -C dime-helm reset --hard ${{ inputs.helm_ref }}
+      - run: git -C dime-helm checkout ${{ inputs.helm_ref }}
       - run: kubectl config set-credentials eks-account --token=$(cat ${SERVICEACCOUNT}/token)
       - run: kubectl config set-cluster eks --server=https://kubernetes.default.svc --certificate-authority=${SERVICEACCOUNT}/ca.crt
       - run: kubectl config set-context default --cluster=eks --user=eks-account --namespace=$(cat ${SERVICEACCOUNT}/namespace)
