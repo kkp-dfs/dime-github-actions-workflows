@@ -122,7 +122,7 @@ jobs:
             export IMAGE_SETS='--set application.values.image.repository=${{ inputs.image_repo }} --set application.values.image.tag=${{ inputs.image_tag }}'
           fi
 
-          helm upgrade -i ${{ inputs.release_name }} dime-helm/charts/dime-application \
+          helm upgrade -i ${{ inputs.release_name }}-${{ inputs.environment }} dime-helm/charts/dime-application \
           -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
           -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
           --set "fullnameOverride=${{ inputs.application_name }}" \
