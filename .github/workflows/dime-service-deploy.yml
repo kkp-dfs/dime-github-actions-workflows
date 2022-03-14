@@ -90,6 +90,7 @@ jobs:
   deploy:
     name: Deploy applicaton from main branch
     runs-on: [self-hosted, linux, deployment, main]
+    if: ${{ (!inputs.migration) || (inputs.migration && success()) }}
     needs:
       - migration
     environment:
