@@ -7,6 +7,10 @@ on:
         description: Service release name
         type: string
         required: true
+      application_name:
+        description: Name of application
+        type: string
+        required: true
       helm_ref:
         description: commit reference of helm repository
         type: string
