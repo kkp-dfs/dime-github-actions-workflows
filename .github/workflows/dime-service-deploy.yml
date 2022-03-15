@@ -102,7 +102,7 @@ jobs:
     environment:
       name: ${{ inputs.environment }}
     container:
-      image: alpine/helm:3.8.1
+      image: public.ecr.aws/c2u4x1k5/helm:3-alpine
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
