@@ -103,7 +103,6 @@ runs:
       with:
         flutter-version: ${{ inputs.flutter_version }}
         channel: 'stable'
-        cache: true
     - name: Download flutter packages
       if: ${{ inputs.language == 'flutter' }}
       run: |
