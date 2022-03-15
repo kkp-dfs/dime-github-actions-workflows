@@ -106,7 +106,7 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/common@main
+      - uses: kkp-dfs/dime-github-actions-workflows/common@improve-deploy
         with:
           gh_access_token: ${{ secrets.gh_access_token }}
       - run: git clone https://github.com/kkp-dfs/dime-helm.git
