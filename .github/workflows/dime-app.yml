@@ -110,8 +110,9 @@ jobs:
           export SIGN_IN_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SIGN_IN_RSA_PUBLIC_KEY")
           export PATH=/opt/flutter/bin:$PATH
 
-          apt-get install -y gettext-base
-          envsubst < environment_secret_template.yaml > environment_secret_sit.yaml
+          curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-`uname -s`-`uname -m` -o envsubst
+          chmod +x envsubst
+          ./envsubst < environment_secret_template.yaml > environment_secret_sit.yaml
           make gen-config-sit
       - name: Run unit tests
         uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
