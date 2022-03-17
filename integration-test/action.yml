@@ -82,9 +82,9 @@ runs:
         echo "::set-output name=rmq_user::${RMQ_USER}"
         echo "::set-output name=rmq_pass::${RMQ_PASS}"
 
-        curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:443/api/vhosts/${RMQ_VHOST}
-        curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"password\":\"${RMQ_PASS}\",\"tags\":\"management\"}" http://${RMQ_HOST}:443/api/users/${RMQ_USER}
-        curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"configure\":\".*\",\"write\":\".*\",\"read\":\".*\"}" http://${RMQ_HOST}:443/api/permissions/${RMQ_VHOST}/${RMQ_USER}
+        curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://${RMQ_HOST}/api/vhosts/${RMQ_VHOST}
+        curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"password\":\"${RMQ_PASS}\",\"tags\":\"management\"}" https://${RMQ_HOST}/api/users/${RMQ_USER}
+        curl -X PUT -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" -d "{\"configure\":\".*\",\"write\":\".*\",\"read\":\".*\"}" https://${RMQ_HOST}/api/permissions/${RMQ_VHOST}/${RMQ_USER}
 
         REDIS=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/redis/sit)
         REDIS_HOST=redis-master.shared.svc.cluster.local
@@ -178,6 +178,6 @@ runs:
         RMQ_USER=${{ steps.setup.outputs.rmq_user }}
         RMQ_ADMIN_USER=$(echo ${{ steps.setup.outputs.rmq_admin_user }} | base64 -d)
         RMQ_ADMIN_PASS=$(echo ${{ steps.setup.outputs.rmq_admin_pass }} | base64 -d)
-        curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:443/api/permissions/${RMQ_VHOST}/${RMQ_USER}
-        curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:443/api/users/${RMQ_USER}
-        curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:443/api/vhosts/${RMQ_VHOST}
+        curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://${RMQ_HOST}api/permissions/${RMQ_VHOST}/${RMQ_USER}
+        curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://${RMQ_HOST}api/users/${RMQ_USER}
+        curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" https://${RMQ_HOST}api/vhosts/${RMQ_VHOST}
