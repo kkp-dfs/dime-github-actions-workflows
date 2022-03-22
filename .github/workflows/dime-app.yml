@@ -34,32 +34,8 @@ on:
         required: true
 
 jobs:
-  setup:
-    name: Install dependencies and keep caches
-    runs-on: [self-hosted, linux, main]
-    outputs:
-      ecr_username: ${{ steps.ecr.outputs.username }}
-      ecr_password: ${{ steps.ecr.outputs.password }}
-    steps:
-      - name: Setup flutter
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-        with:
-          language: flutter
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Get ECR information
-        id: ecr
-        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
-        with:
-          repository: flutter
-
   analyze:
     name: Run analyze
-    needs: setup
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -82,7 +58,6 @@ jobs:
 
   unit-test:
     name: Run unit testing
-    needs: setup
     runs-on: [self-hosted, linux, main]
     continue-on-error: true
     steps:

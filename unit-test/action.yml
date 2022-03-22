@@ -44,9 +44,7 @@ runs:
       shell: bash
       run: |
         sh scripts/generate_dart_isolate_testing.sh
-        echo "FLUTTER TESTING"
-        ls -l test/isolate
-        flutter test --coverage ./test/coverage_helper_test.dart
+        flutter test -v --coverage ./test/coverage_helper_test.dart
 
     - id: fail_message
       if: ${{ failure() }}
