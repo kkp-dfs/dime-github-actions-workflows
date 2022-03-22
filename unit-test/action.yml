@@ -42,9 +42,7 @@ runs:
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}
       shell: bash
-      run: |
-        sh scripts/generate_dart_isolate_testing.sh
-        flutter test -v --coverage ./test/coverage_helper_test.dart
+      run: make test
 
     - id: fail_message
       if: ${{ failure() }}
