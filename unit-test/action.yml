@@ -42,9 +42,7 @@ runs:
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}
       shell: bash
-      run: |
-        flutter test -j 8
-      #  make lcov-remove-coverage
+      run: make test
 
     - id: fail_message
       if: ${{ failure() }}
