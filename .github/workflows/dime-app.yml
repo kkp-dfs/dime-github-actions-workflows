@@ -115,7 +115,7 @@ jobs:
           ./envsubst < environment_secret_template.yaml > environment_secret_sit.yaml
           make gen-config-sit
       - name: Run unit tests
-        uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
+        uses: kkp-dfs/dime-github-actions-workflows/unit-test@flutter-make-test
         with:
           language: flutter
           minimum_coverage: 80
