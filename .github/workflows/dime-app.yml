@@ -36,7 +36,6 @@ on:
 jobs:
   analyze:
     name: Run analyze
-    needs: setup
     runs-on: [self-hosted, linux, main]
     continue-on-error: true
     steps:
