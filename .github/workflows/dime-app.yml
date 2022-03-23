@@ -76,7 +76,7 @@ jobs:
 
   unit-test:
     name: Run unit testing
-    runs-on: [self-hosted, linux, main, deployment]
+    runs-on: [self-hosted, fastlane]
     steps:
       - name: Setup flutter
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
