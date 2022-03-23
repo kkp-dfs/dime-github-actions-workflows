@@ -36,7 +36,7 @@ on:
 jobs:
   analyze:
     name: Run analyze
-    runs-on: [self-hosted, linux, main]
+    runs-on: [self-hosted, flutter]
     continue-on-error: true
     steps:
       - name: Setup flutter
@@ -76,7 +76,7 @@ jobs:
 
   unit-test:
     name: Run unit testing
-    runs-on: [self-hosted, linux, main]
+    runs-on: [self-hosted, flutter]
     continue-on-error: true
     steps:
       - name: Setup flutter
