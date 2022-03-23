@@ -61,30 +61,30 @@ runs:
         github-token: ${{ inputs.gh_access_token }}
         minimum-coverage: ${{ inputs.minimum_coverage }}
 
-    - id: success_coverage
-      if: ${{ success() }}
-      shell: bash
-      run: |
-        echo "::set-output name=color::good"
-        echo "::set-output name=title::'Test coverage of ${{ inputs.application_name }} is PASS'"
-        echo "::set-output name=message::'Coverage rate is more than ${{ inputs.minimum_coverage }}%'"
+    # - id: success_coverage
+    #   if: ${{ success() }}
+    #   shell: bash
+    #   run: |
+    #     echo "::set-output name=color::good"
+    #     echo "::set-output name=title::'Test coverage of ${{ inputs.application_name }} is PASS'"
+    #     echo "::set-output name=message::'Coverage rate is more than ${{ inputs.minimum_coverage }}%'"
 
-    - id: fail_coverage
-      if: ${{ failure() }}
-      shell: bash
-      run: |
-        echo "::set-output name=color::danger"
-        echo "::set-output name=title::'Test coverage of ${{ inputs.application_name }} is FAIL'"
-        echo "::set-output name=message::'Coverage rate is less than ${{ inputs.minimum_coverage }}%'"
+    # - id: fail_coverage
+    #   if: ${{ failure() }}
+    #   shell: bash
+    #   run: |
+    #     echo "::set-output name=color::danger"
+    #     echo "::set-output name=title::'Test coverage of ${{ inputs.application_name }} is FAIL'"
+    #     echo "::set-output name=message::'Coverage rate is less than ${{ inputs.minimum_coverage }}%'"
 
-    - name: Slack Notification
-      if: ${{ always() }}
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ${{ inputs.slack_channel }}
-        SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
-        SLACK_USERNAME: GitHub Actions
-        SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
-        SLACK_COLOR: ${{ steps.fail_message.outputs.color || steps.fail_coverage.outputs.color || steps.success_coverage.outputs.color }}
-        SLACK_TITLE: ${{ steps.fail_message.outputs.title || steps.fail_coverage.outputs.title || steps.success_coverage.outputs.title }}
-        SLACK_MESSAGE: ${{ steps.fail_message.outputs.message || steps.fail_coverage.outputs.message || steps.success_coverage.outputs.message }}
+    # - name: Slack Notification
+    #   if: ${{ always() }}
+    #   uses: rtCamp/action-slack-notify@v2
+    #   env:
+    #     SLACK_CHANNEL: ${{ inputs.slack_channel }}
+    #     SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
+    #     SLACK_USERNAME: GitHub Actions
+    #     SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
+    #     SLACK_COLOR: ${{ steps.fail_message.outputs.color || steps.fail_coverage.outputs.color || steps.success_coverage.outputs.color }}
+    #     SLACK_TITLE: ${{ steps.fail_message.outputs.title || steps.fail_coverage.outputs.title || steps.success_coverage.outputs.title }}
+    #     SLACK_MESSAGE: ${{ steps.fail_message.outputs.message || steps.fail_coverage.outputs.message || steps.success_coverage.outputs.message }}
