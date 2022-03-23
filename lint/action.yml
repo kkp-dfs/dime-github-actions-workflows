@@ -39,14 +39,14 @@ runs:
       run: flutter analyze .
       shell: bash
 
-    - name: Slack Notification
-      if: ${{ failure() }}
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ${{ inputs.slack_channel }}
-        SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
-        SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
-        SLACK_COLOR: danger
-        SLACK_USERNAME: GitHub Actions
-        SLACK_TITLE: Lint issues found
-        SLACK_MESSAGE: Found issues in ${{ inputs.application_name }}
+    # - name: Slack Notification
+    #   if: ${{ failure() }}
+    #   uses: rtCamp/action-slack-notify@v2
+    #   env:
+    #     SLACK_CHANNEL: ${{ inputs.slack_channel }}
+    #     SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
+    #     SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
+    #     SLACK_COLOR: danger
+    #     SLACK_USERNAME: GitHub Actions
+    #     SLACK_TITLE: Lint issues found
+    #     SLACK_MESSAGE: Found issues in ${{ inputs.application_name }}
