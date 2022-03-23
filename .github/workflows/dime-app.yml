@@ -36,7 +36,7 @@ on:
 jobs:
   analyze:
     name: Run analyze
-    runs-on: [self-hosted, flutter]
+    runs-on: [self-hosted, flutter-action-runner]
     continue-on-error: true
     steps:
       - name: Setup flutter
