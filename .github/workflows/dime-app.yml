@@ -108,7 +108,6 @@ jobs:
           ./envsubst < environment_secret_template.yaml > environment_secret_sit.yaml
           make gen-config-sit
       - name: Run unit tests
-        timeout-minutes: 600
         uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
         with:
           language: flutter
