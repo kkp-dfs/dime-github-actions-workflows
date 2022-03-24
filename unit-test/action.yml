@@ -21,6 +21,10 @@ inputs:
   gh_access_token:
     description: GitHub access token
     required: true
+  coverage_file:
+    description: The coverage file
+    required: false
+    default: unitcoverage.lcov
 
 runs:
   using: composite
@@ -55,7 +59,7 @@ runs:
     - name: Create coverage report
       uses: zgosalvez/github-actions-report-lcov@v1
       with:
-        coverage-files: unitcoverage.lcov
+        coverage-files: ${{ inputs.coverage_file }}
         artifact-name: unittest-coverage-report
         github-token: ${{ inputs.gh_access_token }}
         minimum-coverage: ${{ inputs.minimum_coverage }}
