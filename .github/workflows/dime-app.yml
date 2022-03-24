@@ -77,7 +77,6 @@ jobs:
   unit-test:
     name: Run unit testing
     runs-on: [self-hosted, flutter-action-runner]
-    continue-on-error: true
     steps:
       - name: Setup flutter
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
