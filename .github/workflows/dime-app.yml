@@ -78,16 +78,16 @@ jobs:
     name: Run unit testing
     runs-on: [self-hosted, flutter-action-runner]
     steps:
-      - name: Setup flutter
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@flutter-runner-image
-        with:
-          language: flutter
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
+      # - name: Setup flutter
+      #   uses: kkp-dfs/dime-github-actions-workflows/lang-setup@flutter-runner-image
+      #   with:
+      #     language: flutter
+      #     repository: ${{ inputs.repository }}
+      #     base_ref: ${{ inputs.base_ref }}
+      #     target_ref: ${{ inputs.target_ref }}
+      #     go_version: ${{ inputs.go-version }}
+      #     node_version: ${{ inputs.node-version }}
+      #     gh_access_token: ${{ secrets.gh_access_token }}
       - name: Generate environment secret file
         run: |
           JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)

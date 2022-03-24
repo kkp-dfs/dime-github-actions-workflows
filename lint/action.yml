@@ -34,6 +34,14 @@ runs:
       run: npm run lint
       shell: bash
 
+    - name: Cache flutter package
+      if: ${{ inputs.language == 'flutter' }}
+      uses: actions/cache@v2
+      with:
+        path: |
+          /opt/flutter/.pub-cache
+          /runner/.pub-cache
+        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
     - name: Flutter analyze
       if: ${{ inputs.language == 'flutter' }}
       run: flutter analyze .

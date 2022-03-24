@@ -90,25 +90,25 @@ runs:
         yarn install
       shell: bash
 
-    # Flutter setup and download packages
-    - name: Cache flutter package
-      if: ${{ inputs.language == 'flutter' }}
-      uses: actions/cache@v2
-      with:
-        path: |
-          /opt/flutter/.pub-cache
-          /runner/.pub-cache
-        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
+    # # Flutter setup and download packages
+    # - name: Cache flutter package
+    #   if: ${{ inputs.language == 'flutter' }}
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: |
+    #       /opt/flutter/.pub-cache
+    #       /runner/.pub-cache
+    #     key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
     # - name: Setup flutter
     #   if: ${{ inputs.language == 'flutter' }}
     #   uses: subosito/flutter-action@v2
     #   with:
     #     flutter-version: ${{ inputs.flutter_version }}
     #     channel: 'stable'
-    - name: Download flutter packages
-      if: ${{ inputs.language == 'flutter' }}
-      run: |
-        export PATH=/opt/flutter/bin:$PATH
-        flutter config --no-analytics
-        flutter pub get
-      shell: bash
+    # - name: Download flutter packages
+    #   if: ${{ inputs.language == 'flutter' }}
+    #   run: |
+    #     export PATH=/opt/flutter/bin:$PATH
+    #     flutter config --no-analytics
+    #     flutter pub get
+    #   shell: bash
