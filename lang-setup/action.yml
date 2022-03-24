@@ -109,4 +109,5 @@ runs:
         export PATH=/opt/flutter/bin:$PATH
         flutter config --no-analytics
         flutter pub get
+        flutter doctor -v
       shell: bash

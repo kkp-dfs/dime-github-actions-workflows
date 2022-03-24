@@ -80,7 +80,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Setup flutter
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@new-runner
         with:
           language: flutter
           repository: ${{ inputs.repository }}
