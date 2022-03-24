@@ -95,14 +95,16 @@ runs:
       if: ${{ inputs.language == 'flutter' }}
       uses: actions/cache@v2
       with:
-        path: /opt/flutter/.pub-cache
+        path: |
+          /opt/flutter/.pub-cache
+          /runner/.pub-cache
         key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
-    - name: Setup flutter
-      if: ${{ inputs.language == 'flutter' }}
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: ${{ inputs.flutter_version }}
-        channel: 'stable'
+    # - name: Setup flutter
+    #   if: ${{ inputs.language == 'flutter' }}
+    #   uses: subosito/flutter-action@v2
+    #   with:
+    #     flutter-version: ${{ inputs.flutter_version }}
+    #     channel: 'stable'
     - name: Download flutter packages
       if: ${{ inputs.language == 'flutter' }}
       run: |
