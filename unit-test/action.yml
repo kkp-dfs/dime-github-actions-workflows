@@ -43,10 +43,20 @@ runs:
       shell: bash
       run: yarn test
 
+    - name: Cache flutter package
+      if: ${{ inputs.language == 'flutter' }}
+      uses: actions/cache@v2
+      with:
+        path: |
+          /opt/flutter/.pub-cache
+          /runner/.pub-cache
+        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}
       shell: bash
-      run: make test
+      run: |
+        export PATH=/opt/flutter/bin:$PATH
+        make test
 
     - id: fail_message
       if: ${{ failure() }}
