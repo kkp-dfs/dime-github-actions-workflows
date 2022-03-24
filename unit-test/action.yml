@@ -46,7 +46,9 @@ runs:
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}
       shell: bash
-      run: make test
+      run: |
+        export PATH=/opt/flutter/bin:$PATH
+        make test
 
     - id: fail_message
       if: ${{ failure() }}
