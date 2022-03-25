@@ -90,7 +90,11 @@ runs:
         yarn install
       shell: bash
 
-    # # Flutter setup and download packages
+    # # Flutter setup
+    - name: Set flutter bin path
+      if: ${{ inputs.language == 'flutter' }}
+      run: echo "/opt/flutter/bin" >> $GITHUB_PATH
+      shell: bash
     # - name: Cache flutter package
     #   if: ${{ inputs.language == 'flutter' }}
     #   uses: actions/cache@v2
