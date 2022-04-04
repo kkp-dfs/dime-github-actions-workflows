@@ -199,6 +199,7 @@ jobs:
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
       - run: echo "/usr/local/go/bin" >> $GITHUB_PATH
+      - run: echo "$HOME/go/bin" >> $GITHUB_PATH
       - name: Cache go module and tools
         uses: actions/cache@v2
         with:
@@ -260,6 +261,7 @@ jobs:
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
       - run: echo "/usr/local/go/bin" >> $GITHUB_PATH
+      - run: echo "$HOME/go/bin" >> $GITHUB_PATH
       - name: Cache go module and tools
         uses: actions/cache@v2
         with:
