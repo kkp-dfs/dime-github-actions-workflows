@@ -108,7 +108,7 @@ on:
 jobs:
   setup:
     name: Install dependencies and keep caches
-    runs-on: [self-hosted, go-action-runner]
+    runs-on: ubuntu-latest
     outputs:
       # ecr_token: ${{ steps.ecr.outputs.token }}
       # ecr_repository: ${{ steps.ecr.outputs.repository }}
@@ -117,16 +117,16 @@ jobs:
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
-      - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          language: ${{ inputs.code_lang }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
+      # - name: Setup ${{ inputs.code_lang }}
+      #   uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+      #   with:
+      #     repository: ${{ inputs.repository }}
+      #     base_ref: ${{ inputs.base_ref }}
+      #     target_ref: ${{ inputs.target_ref }}
+      #     language: ${{ inputs.code_lang }}
+      #     go_version: ${{ inputs.go-version }}
+      #     node_version: ${{ inputs.node-version }}
+      #     gh_access_token: ${{ secrets.gh_access_token }}
       # - name: Get ECR information
       #   id: ecr
       #   uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
@@ -145,7 +145,6 @@ jobs:
           fi
           echo "::set-output name=ref::$REF_NAME"
           echo "::set-output name=host::$HOST"
-          which ginkgo
 
   # lint:
   #   name: Run lint
@@ -192,22 +191,16 @@ jobs:
     env:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
-      - name: Checkout
-        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - run: echo "/usr/local/go/bin" >> $GITHUB_PATH
-      - run: echo "$HOME/go/bin" >> $GITHUB_PATH
-      - name: Cache go module and tools
-        uses: actions/cache@v2
-        with:
-          path: |
-            $HOME/go/pkg/mod
-            $HOME/go/bin
-            ./vendor
-          key: ${{ runner.os }}-${{ inputs.code_lang }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+          language: ${{ inputs.code_lang }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - uses: golangci/golangci-lint-action@v2
         with:
           args: -E ${{ matrix.linter }} --timeout 5m0s
@@ -254,22 +247,16 @@ jobs:
     env:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
-      - name: Checkout
-        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - run: echo "/usr/local/go/bin" >> $GITHUB_PATH
-      - run: echo "$HOME/go/bin" >> $GITHUB_PATH
-      - name: Cache go module and tools
-        uses: actions/cache@v2
-        with:
-          path: |
-            $HOME/go/pkg/mod
-            $HOME/go/bin
-            ./vendor
-          key: ${{ runner.os }}-${{ inputs.code_lang }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+          language: ${{ inputs.code_lang }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}∂
       - run: touch $HOME/.ack-ginkgo-rc
       - run: make unit-test
       - run: make generate-unitcoverage
@@ -317,7 +304,7 @@ jobs:
       - go-lint
       - go-unittest
       - integration-test
-    runs-on: [self-hosted, kaniko-action-runner]
+    runs-on: [self-hosted, linux, main, deployment]
     if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
     outputs:
       image_repo: ${{ steps.build.outputs.image_repo }}
