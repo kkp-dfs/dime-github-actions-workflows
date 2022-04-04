@@ -108,7 +108,7 @@ on:
 jobs:
   setup:
     name: Install dependencies and keep caches
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, go-action-runner]
     outputs:
       # ecr_token: ${{ steps.ecr.outputs.token }}
       # ecr_repository: ${{ steps.ecr.outputs.repository }}
