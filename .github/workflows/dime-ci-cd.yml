@@ -197,6 +197,7 @@ jobs:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
+      - run: echo "/usr/local/go/bin" >> $GITHUB_PATH
       - run: make tidy
       - run: make tools-install
       - uses: golangci/golangci-lint-action@v2
@@ -251,6 +252,9 @@ jobs:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
+      - run: echo "/usr/local/go/bin" >> $GITHUB_PATH
+      - run: make tidy
+      - run: make tools-install
       - run: touch $HOME/.ack-ginkgo-rc
       - run: make unit-test
       - run: make generate-unitcoverage
