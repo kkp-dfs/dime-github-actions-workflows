@@ -183,7 +183,7 @@ jobs:
   go-lint:
     name: Run go lint
     needs: setup
-    runs-on: [self-hosted, linux, main, go]
+    runs-on: [self-hosted, go-action-runner]
     if: ${{ inputs.code_lang == 'golang' }}
     container:
       image: public.ecr.aws/c2u4x1k5/go-runner:1.17.2
@@ -238,7 +238,7 @@ jobs:
   go-unittest:
     name: Run go unit test
     needs: setup
-    runs-on: [self-hosted, linux, main, go]
+    runs-on: [self-hosted, go-action-runner]
     if: ${{ inputs.code_lang == 'golang' }}
     container:
       image: public.ecr.aws/c2u4x1k5/go-runner:1.17.2
@@ -296,7 +296,7 @@ jobs:
       - go-lint
       - go-unittest
       - integration-test
-    runs-on: [self-hosted, linux, main, deployment]
+    runs-on: [self-hosted, kaniko-action-runner]
     if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
     container:
       image: public.ecr.aws/c2u4x1k5/kaniko-runner:debug
@@ -396,7 +396,7 @@ jobs:
     needs:
       - setup
       - build
-    runs-on: [self-hosted, linux, main, dbmate]
+    runs-on: [self-hosted, dbmate-action-runner]
     if: ${{ inputs.migration && ((inputs.code_lang == 'node' && needs.lint.result == 'success') || success()) }}
     environment:
       name: sit
