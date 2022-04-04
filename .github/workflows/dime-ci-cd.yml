@@ -108,28 +108,28 @@ on:
 jobs:
   setup:
     name: Install dependencies and keep caches
-    runs-on: [self-hosted, linux, main, deployment]
+    runs-on: ubuntu-latest
     outputs:
-      ecr_token: ${{ steps.ecr.outputs.token }}
-      ecr_repository: ${{ steps.ecr.outputs.repository }}
-      ecr_username: ${{ steps.ecr.outputs.username }}
-      ecr_password: ${{ steps.ecr.outputs.password }}
+      # ecr_token: ${{ steps.ecr.outputs.token }}
+      # ecr_repository: ${{ steps.ecr.outputs.repository }}
+      # ecr_username: ${{ steps.ecr.outputs.username }}
+      # ecr_password: ${{ steps.ecr.outputs.password }}
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
-      - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          language: ${{ inputs.code_lang }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Get ECR information
-        id: ecr
-        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
+      # - name: Setup ${{ inputs.code_lang }}
+      #   uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+      #   with:
+      #     repository: ${{ inputs.repository }}
+      #     base_ref: ${{ inputs.base_ref }}
+      #     target_ref: ${{ inputs.target_ref }}
+      #     language: ${{ inputs.code_lang }}
+      #     go_version: ${{ inputs.go-version }}
+      #     node_version: ${{ inputs.node-version }}
+      #     gh_access_token: ${{ secrets.gh_access_token }}
+      # - name: Get ECR information
+      #   id: ecr
+      #   uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
       - name: Get parameters
         id: paramater
         run: |
@@ -146,71 +146,112 @@ jobs:
           echo "::set-output name=ref::$REF_NAME"
           echo "::set-output name=host::$HOST"
 
-  lint:
-    name: Run lint
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          language: ${{ inputs.code_lang }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Run ${{ inputs.code_lang }} lint
-        uses: kkp-dfs/dime-github-actions-workflows/lint@main
-        with:
-          application_name: ${{ inputs.application_name }}
-          language: ${{ inputs.code_lang }}
-          slack_channel: ${{ inputs.slack_channel }}
-          slack_webhook: ${{ secrets.slack_webhook }}
-          linter: gosec
-      - name: Run gocyclo linter
-        uses: kkp-dfs/dime-github-actions-workflows/lint@main
-        if: ${{ inputs.code_lang == 'golang' }}
-        continue-on-error: true
-        with:
-          application_name: ${{ inputs.application_name }}
-          language: ${{ inputs.code_lang }}
-          slack_channel: ${{ inputs.slack_channel }}
-          slack_webhook: ${{ inputs.slack_webhook }}
-          linter: gocyclo
+  # lint:
+  #   name: Run lint
+  #   needs: setup
+  #   runs-on: [self-hosted, linux, main, deployment]
+  #   steps:
+  #     - name: Setup ${{ inputs.code_lang }}
+  #       uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+  #       with:
+  #         repository: ${{ inputs.repository }}
+  #         base_ref: ${{ inputs.base_ref }}
+  #         target_ref: ${{ inputs.target_ref }}
+  #         language: ${{ inputs.code_lang }}
+  #         go_version: ${{ inputs.go-version }}
+  #         node_version: ${{ inputs.node-version }}
+  #         gh_access_token: ${{ secrets.gh_access_token }}
+  #     - name: Run ${{ inputs.code_lang }} lint
+  #       uses: kkp-dfs/dime-github-actions-workflows/lint@main
+  #       with:
+  #         application_name: ${{ inputs.application_name }}
+  #         language: ${{ inputs.code_lang }}
+  #         slack_channel: ${{ inputs.slack_channel }}
+  #         slack_webhook: ${{ secrets.slack_webhook }}
+  #         linter: gosec
+  #     - name: Run gocyclo linter
+  #       uses: kkp-dfs/dime-github-actions-workflows/lint@main
+  #       if: ${{ inputs.code_lang == 'golang' }}
+  #       continue-on-error: true
+  #       with:
+  #         application_name: ${{ inputs.application_name }}
+  #         language: ${{ inputs.code_lang }}
+  #         slack_channel: ${{ inputs.slack_channel }}
+  #         slack_webhook: ${{ inputs.slack_webhook }}
+  #         linter: gocyclo
 
-  unit-test:
-    name: Run unit testing
-    if: ${{ inputs.code_lang == 'golang' }}
+  go-lint:
+    name: Run go lint
     needs: setup
-    runs-on: [self-hosted, linux, main, deployment]
+    runs-on: [self-hosted, linux, main, go]
+    if: ${{ inputs.language == 'golang' }}
     container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+      image: public.ecr.aws/c2u4x1k5/go-runner:1.17.2
+    strategy:
+      matrix:
+        linter: [gosec, gocyclo]
     steps:
-      - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+      - name: Checkout
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-          language: ${{ inputs.code_lang }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Run unit tests
-        uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
+      - uses: golangci/golangci-lint-action@v2
         with:
-          minimum_coverage: 80
-          application_name: ${{ inputs.application_name }}
-          language: ${{ inputs.code_lang }}
-          slack_channel: ${{ inputs.slack_channel }}
-          slack_webhook: ${{ secrets.slack_webhook }}
+          args: -E ${{ matrix.linter }} --timeout 2m0s
+          version: latest
+          skip-pkg-cache: true
+
+  # unit-test:
+  #   name: Run unit testing
+  #   if: ${{ inputs.code_lang == 'golang' }}
+  #   needs: setup
+  #   runs-on: [self-hosted, linux, main, deployment]
+  #   container:
+  #     image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
+  #     credentials:
+  #       username: ${{ needs.setup.outputs.ecr_username }}
+  #       password: ${{ needs.setup.outputs.ecr_password }}
+  #     volumes:
+  #       - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+  #   steps:
+  #     - name: Setup ${{ inputs.code_lang }}
+  #       uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+  #       with:
+  #         repository: ${{ inputs.repository }}
+  #         base_ref: ${{ inputs.base_ref }}
+  #         target_ref: ${{ inputs.target_ref }}
+  #         language: ${{ inputs.code_lang }}
+  #         go_version: ${{ inputs.go-version }}
+  #         node_version: ${{ inputs.node-version }}
+  #         gh_access_token: ${{ secrets.gh_access_token }}
+  #     - name: Run unit tests
+  #       uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
+  #       with:
+  #         minimum_coverage: 80
+  #         application_name: ${{ inputs.application_name }}
+  #         language: ${{ inputs.code_lang }}
+  #         slack_channel: ${{ inputs.slack_channel }}
+  #         slack_webhook: ${{ secrets.slack_webhook }}
+
+  go-unittest:
+    name: Run go unit test
+    if: ${{ inputs.language == 'golang' }}
+    needs: setup
+    runs-on: [self-hosted, linux, main, go]
+    container:
+      image: public.ecr.aws/c2u4x1k5/go-runner:1.17.2
+    steps:
+      - name: Checkout
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+      - run: touch $HOME/.ack-ginkgo-rc
+      - run: make unit-test
+      - run: make generate-unitcoverage
 
   integration-test:
     name: Run integration test
@@ -255,13 +296,14 @@ jobs:
       - lint
       - unit-test
       - integration-test
-    runs-on: [self-hosted, linux,  main, deployment]
+    runs-on: [self-hosted, linux, main, deployment]
     if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
     container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
+      image: public.ecr.aws/c2u4x1k5/kaniko-runner:debug
+      # image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
+      # credentials:
+      #   username: ${{ needs.setup.outputs.ecr_username }}
+      #   password: ${{ needs.setup.outputs.ecr_password }}
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     outputs:
@@ -288,7 +330,7 @@ jobs:
     needs:
       - setup
       - build
-    runs-on: [self-hosted, linux, deployment, main]
+    runs-on: [self-hosted, linux, main, deployment]
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref != 'main' }}
     environment:
       name: ${{ needs.setup.outputs.ref }}
@@ -321,7 +363,7 @@ jobs:
     needs:
       - setup
       - build
-    runs-on: [self-hosted, linux, deployment, main]
+    runs-on: [self-hosted, linux, main, deployment]
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref == 'main' }}
     environment:
       name: sit
@@ -354,15 +396,15 @@ jobs:
     needs:
       - setup
       - build
-    runs-on: [self-hosted, linux, deployment, main]
+    runs-on: [self-hosted, linux, main, dbmate]
     if: ${{ inputs.migration && ((inputs.code_lang == 'node' && needs.lint.result == 'success') || success()) }}
     environment:
       name: sit
     container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/dbmate:1.12
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
+      image: public.ecr.aws/c2u4x1k5/dbmate-runner:1.12
+      # credentials:
+      #   username: ${{ needs.setup.outputs.ecr_username }}
+      #   password: ${{ needs.setup.outputs.ecr_password }}
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
