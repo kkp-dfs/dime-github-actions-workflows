@@ -210,7 +210,7 @@ jobs:
           key: ${{ runner.os }}-${{ inputs.code_lang }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
       - uses: golangci/golangci-lint-action@v2
         with:
-          args: -E ${{ matrix.linter }} --timeout 4m0s
+          args: -E ${{ matrix.linter }} --timeout 5m0s
           version: latest
           skip-pkg-cache: true
 
