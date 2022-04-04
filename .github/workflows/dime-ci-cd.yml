@@ -185,30 +185,21 @@ jobs:
     needs: setup
     runs-on: [self-hosted, go-action-runner]
     if: ${{ inputs.code_lang == 'golang' }}
-    container:
-      image: public.ecr.aws/c2u4x1k5/go-runner:1.17.2
     strategy:
       matrix:
         linter: [gosec, gocyclo]
     steps:
-      - run: git clone ${{ inputs.repository }} .
-      - run: git checkout ${{ inputs.base_ref }}
-      - run: git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
-      - run: git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
-      - run: git fetch
-      - run: git merge --no-commit --no-ff origin/${{ inputs.target_ref }}
-        if: ${{ inputs.base_ref != inputs.target_ref }}
-      # - name: Checkout
-      #   uses: kkp-dfs/dime-github-actions-workflows/checkout@fargate
-      #   with:
-      #     repository: ${{ inputs.repository }}
-      #     base_ref: ${{ inputs.base_ref }}
-      #     target_ref: ${{ inputs.target_ref }}
-      # - uses: golangci/golangci-lint-action@v2
-      #   with:
-      #     args: -E ${{ matrix.linter }} --timeout 2m0s
-      #     version: latest
-      #     skip-pkg-cache: true
+      - name: Checkout
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+      - uses: golangci/golangci-lint-action@v2
+        with:
+          args: -E ${{ matrix.linter }} --timeout 2m0s
+          version: latest
+          skip-pkg-cache: true
 
   # unit-test:
   #   name: Run unit testing
@@ -247,22 +238,13 @@ jobs:
     needs: setup
     runs-on: [self-hosted, go-action-runner]
     if: ${{ inputs.code_lang == 'golang' }}
-    container:
-      image: public.ecr.aws/c2u4x1k5/go-runner:1.17.2
     steps:
-      # - name: Checkout
-      #   uses: kkp-dfs/dime-github-actions-workflows/checkout@fargate
-      #   with:
-      #     repository: ${{ inputs.repository }}
-      #     base_ref: ${{ inputs.base_ref }}
-      #     target_ref: ${{ inputs.target_ref }}
-      - run: git clone ${{ inputs.repository }} .
-      - run: git checkout ${{ inputs.base_ref }}
-      - run: git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
-      - run: git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
-      - run: git fetch
-      - run: git merge --no-commit --no-ff origin/${{ inputs.target_ref }}
-        if: ${{ inputs.base_ref != inputs.target_ref }}
+      - name: Checkout
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
       - run: touch $HOME/.ack-ginkgo-rc
       - run: make unit-test
       - run: make generate-unitcoverage
@@ -312,14 +294,6 @@ jobs:
       - integration-test
     runs-on: [self-hosted, kaniko-action-runner]
     if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
-    container:
-      image: public.ecr.aws/c2u4x1k5/kaniko-runner:debug
-      # image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      # credentials:
-      #   username: ${{ needs.setup.outputs.ecr_username }}
-      #   password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     outputs:
       image_repo: ${{ steps.build.outputs.image_repo }}
       image_tag: ${{ steps.build.outputs.image_tag }}
@@ -414,13 +388,6 @@ jobs:
     if: ${{ inputs.migration && ((inputs.code_lang == 'node' && needs.lint.result == 'success') || success()) }}
     environment:
       name: sit
-    container:
-      image: public.ecr.aws/c2u4x1k5/dbmate-runner:1.12
-      # credentials:
-      #   username: ${{ needs.setup.outputs.ecr_username }}
-      #   password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Migrate database
         uses: kkp-dfs/dime-github-actions-workflows/db-migration@main

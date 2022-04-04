@@ -18,12 +18,12 @@ inputs:
 runs:
   using: composite
   steps:
-    # - name: Checkout repository
-    #   uses: actions/checkout@v2
-    #   with:
-    #     repository: ${{ inputs.repository }}
-    #     ref: ${{ inputs.base_ref }}
-    #     clean: true
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.base_ref }}
+        clean: true
     - name: Checkout repository
       shell: bash
       run: |
