@@ -188,6 +188,8 @@ jobs:
     strategy:
       matrix:
         linter: [gosec, gocyclo]
+    env:
+      GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Checkout
         uses: kkp-dfs/dime-github-actions-workflows/checkout@main
@@ -195,6 +197,8 @@ jobs:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
+      - run: make tidy
+      - run: make tools-install
       - uses: golangci/golangci-lint-action@v2
         with:
           args: -E ${{ matrix.linter }} --timeout 2m0s
@@ -238,6 +242,8 @@ jobs:
     needs: setup
     runs-on: [self-hosted, go-action-runner]
     if: ${{ inputs.code_lang == 'golang' }}
+    env:
+      GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Checkout
         uses: kkp-dfs/dime-github-actions-workflows/checkout@main
