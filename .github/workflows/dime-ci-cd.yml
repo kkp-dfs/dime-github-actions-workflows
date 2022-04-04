@@ -293,8 +293,8 @@ jobs:
     name: Build & push docker images to registry
     needs:
       - setup
-      - lint
-      - unit-test
+      - go-lint
+      - go-unittest
       - integration-test
     runs-on: [self-hosted, linux, main, deployment]
     if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
