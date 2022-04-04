@@ -191,17 +191,24 @@ jobs:
       matrix:
         linter: [gosec, gocyclo]
     steps:
-      - name: Checkout
-        uses: kkp-dfs/dime-github-actions-workflows/checkout@fargate
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-      - uses: golangci/golangci-lint-action@v2
-        with:
-          args: -E ${{ matrix.linter }} --timeout 2m0s
-          version: latest
-          skip-pkg-cache: true
+      - run: git clone ${{ inputs.repository }} .
+      - run: git checkout ${{ inputs.base_ref }}
+      - run: git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
+      - run: git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
+      - run: git fetch
+      - run: git merge --no-commit --no-ff origin/${{ inputs.target_ref }}
+        if: ${{ inputs.base_ref != inputs.target_ref }}
+      # - name: Checkout
+      #   uses: kkp-dfs/dime-github-actions-workflows/checkout@fargate
+      #   with:
+      #     repository: ${{ inputs.repository }}
+      #     base_ref: ${{ inputs.base_ref }}
+      #     target_ref: ${{ inputs.target_ref }}
+      # - uses: golangci/golangci-lint-action@v2
+      #   with:
+      #     args: -E ${{ matrix.linter }} --timeout 2m0s
+      #     version: latest
+      #     skip-pkg-cache: true
 
   # unit-test:
   #   name: Run unit testing
@@ -243,12 +250,19 @@ jobs:
     container:
       image: public.ecr.aws/c2u4x1k5/go-runner:1.17.2
     steps:
-      - name: Checkout
-        uses: kkp-dfs/dime-github-actions-workflows/checkout@fargate
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
+      # - name: Checkout
+      #   uses: kkp-dfs/dime-github-actions-workflows/checkout@fargate
+      #   with:
+      #     repository: ${{ inputs.repository }}
+      #     base_ref: ${{ inputs.base_ref }}
+      #     target_ref: ${{ inputs.target_ref }}
+      - run: git clone ${{ inputs.repository }} .
+      - run: git checkout ${{ inputs.base_ref }}
+      - run: git config user.name "$(git --no-pager log --format=format:'%an' -n 1)"
+      - run: git config user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
+      - run: git fetch
+      - run: git merge --no-commit --no-ff origin/${{ inputs.target_ref }}
+        if: ${{ inputs.base_ref != inputs.target_ref }}
       - run: touch $HOME/.ack-ginkgo-rc
       - run: make unit-test
       - run: make generate-unitcoverage
