@@ -64,6 +64,16 @@ runs:
         echo "::set-output name=title::'${{ inputs.application_name }} unit test is FAIL'"
         echo "::set-output name=message::'Found some failed test cases'"
 
+    - name: Check coverage percentage
+      shell: bash
+      run: |
+        REPORT=$(lcov --summary ${{ inputs.coverage_file }})
+        COVERAGE=$(echo $REPORT | sed -e 's/.* \([0-9]\{1,2\}\.[0-9]\{1,2\}\)% .*/\1/')
+        if [ $(echo "${COVERAGE} < ${{ inputs.minimum_coverage }}" | bc) -ne 0 ]; then
+          echo "Coverage less than ${{ inputs.minimum_coverage }}%"
+          exit 1
+        fi
+
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
