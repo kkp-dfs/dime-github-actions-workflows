@@ -77,7 +77,7 @@ runs:
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ inputs.coverage_file }}
+        name: unittest-coverage-report
         path: ${{ inputs.coverage_file }}
 
     # - name: Create coverage report
