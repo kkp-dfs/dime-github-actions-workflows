@@ -110,10 +110,10 @@ jobs:
     name: Install dependencies and keep caches
     runs-on: ubuntu-latest
     outputs:
-      # ecr_token: ${{ steps.ecr.outputs.token }}
-      # ecr_repository: ${{ steps.ecr.outputs.repository }}
-      # ecr_username: ${{ steps.ecr.outputs.username }}
-      # ecr_password: ${{ steps.ecr.outputs.password }}
+      ecr_token: ${{ steps.ecr.outputs.token }}
+      ecr_repository: ${{ steps.ecr.outputs.repository }}
+      ecr_username: ${{ steps.ecr.outputs.username }}
+      ecr_password: ${{ steps.ecr.outputs.password }}
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
@@ -127,9 +127,9 @@ jobs:
       #     go_version: ${{ inputs.go-version }}
       #     node_version: ${{ inputs.node-version }}
       #     gh_access_token: ${{ secrets.gh_access_token }}
-      # - name: Get ECR information
-      #   id: ecr
-      #   uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
+      - name: Get ECR information
+        id: ecr
+        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
       - name: Get parameters
         id: paramater
         run: |
@@ -294,14 +294,21 @@ jobs:
       - go-lint
       - go-unittest
       - integration-test
-    runs-on: [self-hosted, linux, main, deployment]
+    runs-on: [self-hosted, linux,  main, deployment]
     if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     outputs:
       image_repo: ${{ steps.build.outputs.image_repo }}
       image_tag: ${{ steps.build.outputs.image_tag }}
     steps:
       - name: Checkout
-        uses: kkp-dfs/dime-github-actions-workflows/checkout@fargate
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
