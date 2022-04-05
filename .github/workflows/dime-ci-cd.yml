@@ -182,7 +182,7 @@ jobs:
 
   go-lint:
     name: Run go lint
-    runs-on: [self-hosted, go-action-runner]
+    runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
     strategy:
       matrix:
@@ -240,7 +240,7 @@ jobs:
 
   go-unittest:
     name: Run go unit test
-    runs-on: [self-hosted, go-action-runner]
+    runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
     env:
       GOPRIVATE: github.com/kkp-dfs/*
@@ -261,7 +261,7 @@ jobs:
 
   integration-test:
     name: Run integration test
-    runs-on: [self-hosted, go-action-runner]
+    runs-on: [self-hosted, go-action-runner, sit]
     if: ${{ inputs.code_lang == 'golang' }}
     continue-on-error: true
     steps:
@@ -386,7 +386,7 @@ jobs:
     needs:
       - setup
       - build
-    runs-on: [self-hosted, dbmate-action-runner]
+    runs-on: [self-hosted, dbmate-action-runner, main]
     if: ${{ inputs.migration && ((inputs.code_lang == 'node' && needs.lint.result == 'success') || success()) }}
     environment:
       name: sit
