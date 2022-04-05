@@ -263,17 +263,10 @@ jobs:
 
   integration-test:
     name: Run integration test
-    if: ${{ inputs.code_lang == 'golang' }}
     needs: setup
-    runs-on: [self-hosted, linux, sit, deployment]
+    runs-on: [self-hosted, go-action-runner]
+    if: ${{ inputs.code_lang == 'golang' }}
     continue-on-error: true
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
