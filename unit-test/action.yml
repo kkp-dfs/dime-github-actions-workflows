@@ -64,13 +64,19 @@ runs:
         echo "::set-output name=title::'${{ inputs.application_name }} unit test is FAIL'"
         echo "::set-output name=message::'Found some failed test cases'"
 
-    - name: Create coverage report
-      uses: zgosalvez/github-actions-report-lcov@v1
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
       with:
-        coverage-files: ${{ inputs.coverage_file }}
-        artifact-name: unittest-coverage-report
-        github-token: ${{ inputs.gh_access_token }}
-        minimum-coverage: ${{ inputs.minimum_coverage }}
+        name: ${{ inputs.coverage_file }}
+        path: ${{ inputs.coverage_file }}
+
+    # - name: Create coverage report
+    #   uses: zgosalvez/github-actions-report-lcov@v1
+    #   with:
+    #     coverage-files: ${{ inputs.coverage_file }}
+    #     artifact-name: unittest-coverage-report
+    #     github-token: ${{ inputs.gh_access_token }}
+    #     minimum-coverage: ${{ inputs.minimum_coverage }}
 
     # - id: success_coverage
     #   if: ${{ success() }}
