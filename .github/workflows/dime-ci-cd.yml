@@ -191,7 +191,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -246,7 +246,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -254,7 +254,7 @@ jobs:
           language: ${{ inputs.code_lang }}
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}∂
+          gh_access_token: ${{ secrets.gh_access_token }}
       - run: touch $HOME/.ack-ginkgo-rc
       - run: make unit-test
       - run: make generate-unitcoverage
@@ -266,7 +266,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -276,7 +276,7 @@ jobs:
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run integration tests
-        uses: kkp-dfs/dime-github-actions-workflows/integration-test@main
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@fargate
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
