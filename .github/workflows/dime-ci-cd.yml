@@ -400,10 +400,17 @@ jobs:
     needs:
       - setup
       - build
-    runs-on: [self-hosted, dbmate-action-runner, main]
+    runs-on: [self-hosted, linux, deployment, main]
     if: ${{ inputs.migration && ((inputs.code_lang == 'node' && needs.lint.result == 'success') || success()) }}
     environment:
       name: sit
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/dbmate:1.12
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Migrate database
         uses: kkp-dfs/dime-github-actions-workflows/db-migration@main
