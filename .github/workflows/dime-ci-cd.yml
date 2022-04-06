@@ -117,16 +117,16 @@ jobs:
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
-      # - name: Setup ${{ inputs.code_lang }}
-      #   uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-      #   with:
-      #     repository: ${{ inputs.repository }}
-      #     base_ref: ${{ inputs.base_ref }}
-      #     target_ref: ${{ inputs.target_ref }}
-      #     language: ${{ inputs.code_lang }}
-      #     go_version: ${{ inputs.go-version }}
-      #     node_version: ${{ inputs.node-version }}
-      #     gh_access_token: ${{ secrets.gh_access_token }}
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          language: ${{ inputs.code_lang }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - name: Get ECR information
         id: ecr
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
@@ -182,6 +182,7 @@ jobs:
 
   go-lint:
     name: Run go lint
+    needs: [setup]
     runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
     strategy:
@@ -240,6 +241,7 @@ jobs:
 
   go-unittest:
     name: Run go unit test
+    needs: [setup]
     runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
     env:
@@ -268,6 +270,7 @@ jobs:
 
   integration-test:
     name: Run integration test
+    needs: [setup]
     runs-on: [self-hosted, go-action-runner, sit]
     if: ${{ inputs.code_lang == 'golang' }}
     continue-on-error: true
