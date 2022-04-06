@@ -182,7 +182,7 @@ jobs:
 
   go-lint:
     name: Run go lint
-    runs-on: [self-hosted, go-action-runner, main]
+    runs-on: ubuntu-latest
     if: ${{ inputs.code_lang == 'golang' }}
     strategy:
       matrix:
@@ -200,7 +200,8 @@ jobs:
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      - uses: golangci/golangci-lint-action@v2
+      - name: Run ${{ matrix.linter }} lint
+        uses: golangci/golangci-lint-action@v2
         with:
           args: -E ${{ matrix.linter }} --timeout 5m0s
           version: latest
