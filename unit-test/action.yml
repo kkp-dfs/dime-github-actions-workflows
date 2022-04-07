@@ -97,13 +97,6 @@ runs:
             "text": "${{ steps.fail_message.outputs.message || steps.fail_coverage.outputs.message || steps.success_coverage.outputs.message }}",
             "blocks": [
               {
-                "type": "header",
-                "text": {
-                  "type": "plain_text",
-                  "text": "${{ steps.fail_message.outputs.title || steps.fail_coverage.outputs.title || steps.success_coverage.outputs.title }}"
-                }
-              },
-              {
                 "type": "context",
                 "elements": [
                   {
@@ -116,6 +109,13 @@ runs:
                     "text": "${{ github.event.sender.login }}"
                   }
                 ]
+              },
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "${{ steps.fail_message.outputs.title || steps.fail_coverage.outputs.title || steps.success_coverage.outputs.title }}"
+                }
               },
               {
                 "type": "section",
