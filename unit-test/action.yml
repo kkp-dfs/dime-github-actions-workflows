@@ -65,12 +65,30 @@ runs:
         echo "::set-output name=message::'Found some failed test cases'"
 
     - name: Create coverage report
+      if: ${{ inputs.language != 'flutter' }}
       uses: zgosalvez/github-actions-report-lcov@v1
       with:
         coverage-files: ${{ inputs.coverage_file }}
         artifact-name: unittest-coverage-report
         github-token: ${{ inputs.gh_access_token }}
         minimum-coverage: ${{ inputs.minimum_coverage }}
+
+    - name: Check coverage percentage
+      if: ${{ inputs.language == 'flutter' }}
+      shell: bash
+      run: |
+        REPORT=$(lcov --summary ${{ inputs.coverage_file }})
+        COVERAGE=$(echo $REPORT | sed -e 's/.* \([0-9]\{1,2\}\.[0-9]\{1,2\}\)% .*/\1/')
+        if [ $(echo "${COVERAGE} < ${{ inputs.minimum_coverage }}" | bc) -ne 0 ]; then
+          echo "Coverage less than ${{ inputs.minimum_coverage }}%"
+          exit 1
+        fi
+    - name: Upload artifact
+      if: ${{ inputs.language == 'flutter' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: unittest-coverage-report
+        path: ${{ inputs.coverage_file }}
 
     - id: success_coverage
       if: ${{ success() }}
