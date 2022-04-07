@@ -169,7 +169,7 @@ jobs:
           slack_webhook: ${{ inputs.slack_webhook }}
           linter: gocyclo
 
-  unittest:
+  unit-test:
     name: Run unit test
     runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
@@ -227,8 +227,8 @@ jobs:
     name: Build & push docker images to registry
     needs:
       - setup
-      - go-lint
-      - go-unittest
+      - lint
+      - unit-test
       - integration-test
     runs-on: [self-hosted, linux,  main, deployment]
     if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
