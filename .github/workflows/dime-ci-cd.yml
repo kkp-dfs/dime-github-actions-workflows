@@ -256,16 +256,24 @@ jobs:
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      - run: touch $HOME/.ack-ginkgo-rc
-      - run: make unit-test
-      - run: make generate-unitcoverage
-      - run: |
-          REPORT=$(lcov --summary unitcoverage.lcov)
-          COVERAGE=$(echo $REPORT | sed -e 's/.* \([0-9]\{1,2\}\.[0-9]\{1,2\}\)% .*/\1/')
-          if [ $(echo "${COVERAGE} < 80" | bc) -ne 0 ]; then
-            echo "Coverage less than 80%"
-            exit 1
-          fi
+      # - run: touch $HOME/.ack-ginkgo-rc
+      # - run: make unit-test
+      # - run: make generate-unitcoverage
+      # - run: |
+      #     REPORT=$(lcov --summary unitcoverage.lcov)
+      #     COVERAGE=$(echo $REPORT | sed -e 's/.* \([0-9]\{1,2\}\.[0-9]\{1,2\}\)% .*/\1/')
+      #     if [ $(echo "${COVERAGE} < 80" | bc) -ne 0 ]; then
+      #       echo "Coverage less than 80%"
+      #       exit 1
+      #     fi
+      - name: Run unit tests
+        uses: kkp-dfs/dime-github-actions-workflows/unit-test@fargate
+        with:
+          minimum_coverage: 80
+          application_name: ${{ inputs.application_name }}
+          language: ${{ inputs.code_lang }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
 
   integration-test:
     name: Run integration test
@@ -349,7 +357,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@fargate
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
@@ -382,7 +390,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@fargate
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-sit
