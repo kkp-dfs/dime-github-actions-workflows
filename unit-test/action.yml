@@ -110,7 +110,7 @@ runs:
                     "type": "image",
                     "image_url": "${{ github.event.sender.avatar_url }}",
                     "alt_text": "${{ github.event.sender.login }}"
-                  }
+                  },
                   {
                     "type": "mrkdwn",
                     "text": "${{ github.event.sender.login }}"

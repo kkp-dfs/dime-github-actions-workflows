@@ -107,7 +107,7 @@ on:
 
 jobs:
   setup:
-    name: Install dependencies and keep caches
+    name: Get ECR and paramaters
     runs-on: [self-hosted, linux, main, deployment]
     outputs:
       ecr_token: ${{ steps.ecr.outputs.token }}
@@ -117,16 +117,6 @@ jobs:
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
-      # - name: Setup ${{ inputs.code_lang }}
-      #   uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
-      #   with:
-      #     repository: ${{ inputs.repository }}
-      #     base_ref: ${{ inputs.base_ref }}
-      #     target_ref: ${{ inputs.target_ref }}
-      #     language: ${{ inputs.code_lang }}
-      #     go_version: ${{ inputs.go-version }}
-      #     node_version: ${{ inputs.node-version }}
-      #     gh_access_token: ${{ secrets.gh_access_token }}
       - name: Get ECR information
         id: ecr
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
@@ -146,49 +136,9 @@ jobs:
           echo "::set-output name=ref::$REF_NAME"
           echo "::set-output name=host::$HOST"
 
-  # lint:
-  #   name: Run lint
-  #   needs: setup
-  #   runs-on: [self-hosted, linux, main, deployment]
-  #   steps:
-  #     - name: Setup ${{ inputs.code_lang }}
-  #       uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-  #       with:
-  #         repository: ${{ inputs.repository }}
-  #         base_ref: ${{ inputs.base_ref }}
-  #         target_ref: ${{ inputs.target_ref }}
-  #         language: ${{ inputs.code_lang }}
-  #         go_version: ${{ inputs.go-version }}
-  #         node_version: ${{ inputs.node-version }}
-  #         gh_access_token: ${{ secrets.gh_access_token }}
-  #     - name: Run ${{ inputs.code_lang }} lint
-  #       uses: kkp-dfs/dime-github-actions-workflows/lint@main
-  #       with:
-  #         application_name: ${{ inputs.application_name }}
-  #         language: ${{ inputs.code_lang }}
-  #         slack_channel: ${{ inputs.slack_channel }}
-  #         slack_webhook: ${{ secrets.slack_webhook }}
-  #         linter: gosec
-  #     - name: Run gocyclo linter
-  #       uses: kkp-dfs/dime-github-actions-workflows/lint@main
-  #       if: ${{ inputs.code_lang == 'golang' }}
-  #       continue-on-error: true
-  #       with:
-  #         application_name: ${{ inputs.application_name }}
-  #         language: ${{ inputs.code_lang }}
-  #         slack_channel: ${{ inputs.slack_channel }}
-  #         slack_webhook: ${{ inputs.slack_webhook }}
-  #         linter: gocyclo
-
-  go-lint:
-    name: Run go lint
+  lint:
+    name: Run lint
     runs-on: ubuntu-latest
-    if: ${{ inputs.code_lang == 'golang' }}
-    strategy:
-      matrix:
-        linter: [gosec, gocyclo]
-    env:
-      GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
@@ -200,47 +150,27 @@ jobs:
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Run ${{ matrix.linter }} lint
-        uses: golangci/golangci-lint-action@v2
+      - name: Run ${{ inputs.code_lang }} lint
+        uses: kkp-dfs/dime-github-actions-workflows/lint@main
         with:
-          args: -E ${{ matrix.linter }} --timeout 5m0s
-          version: latest
-          skip-pkg-cache: true
+          application_name: ${{ inputs.application_name }}
+          language: ${{ inputs.code_lang }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          linter: gosec
+      - name: Run gocyclo linter
+        uses: kkp-dfs/dime-github-actions-workflows/lint@main
+        if: ${{ inputs.code_lang == 'golang' }}
+        continue-on-error: true
+        with:
+          application_name: ${{ inputs.application_name }}
+          language: ${{ inputs.code_lang }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ inputs.slack_webhook }}
+          linter: gocyclo
 
-  # unit-test:
-  #   name: Run unit testing
-  #   if: ${{ inputs.code_lang == 'golang' }}
-  #   needs: setup
-  #   runs-on: [self-hosted, linux, main, deployment]
-  #   container:
-  #     image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-  #     credentials:
-  #       username: ${{ needs.setup.outputs.ecr_username }}
-  #       password: ${{ needs.setup.outputs.ecr_password }}
-  #     volumes:
-  #       - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
-  #   steps:
-  #     - name: Setup ${{ inputs.code_lang }}
-  #       uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-  #       with:
-  #         repository: ${{ inputs.repository }}
-  #         base_ref: ${{ inputs.base_ref }}
-  #         target_ref: ${{ inputs.target_ref }}
-  #         language: ${{ inputs.code_lang }}
-  #         go_version: ${{ inputs.go-version }}
-  #         node_version: ${{ inputs.node-version }}
-  #         gh_access_token: ${{ secrets.gh_access_token }}
-  #     - name: Run unit tests
-  #       uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
-  #       with:
-  #         minimum_coverage: 80
-  #         application_name: ${{ inputs.application_name }}
-  #         language: ${{ inputs.code_lang }}
-  #         slack_channel: ${{ inputs.slack_channel }}
-  #         slack_webhook: ${{ secrets.slack_webhook }}
-
-  go-unittest:
-    name: Run go unit test
+  unittest:
+    name: Run unit test
     runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
     env:
@@ -256,16 +186,6 @@ jobs:
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      # - run: touch $HOME/.ack-ginkgo-rc
-      # - run: make unit-test
-      # - run: make generate-unitcoverage
-      # - run: |
-      #     REPORT=$(lcov --summary unitcoverage.lcov)
-      #     COVERAGE=$(echo $REPORT | sed -e 's/.* \([0-9]\{1,2\}\.[0-9]\{1,2\}\)% .*/\1/')
-      #     if [ $(echo "${COVERAGE} < 80" | bc) -ne 0 ]; then
-      #       echo "Coverage less than 80%"
-      #       exit 1
-      #     fi
       - name: Run unit tests
         uses: kkp-dfs/dime-github-actions-workflows/unit-test@fargate
         with:
