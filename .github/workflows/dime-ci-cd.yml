@@ -107,7 +107,7 @@ on:
 
 jobs:
   setup:
-    name: Install dependencies and keep caches
+    name: Get ECR and paramaters
     runs-on: [self-hosted, linux, main, deployment]
     outputs:
       ecr_token: ${{ steps.ecr.outputs.token }}
@@ -117,16 +117,6 @@ jobs:
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
-      - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          language: ${{ inputs.code_lang }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
       - name: Get ECR information
         id: ecr
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
@@ -148,11 +138,10 @@ jobs:
 
   lint:
     name: Run lint
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -181,20 +170,14 @@ jobs:
           linter: gocyclo
 
   unit-test:
-    name: Run unit testing
+    name: Run unit test
+    runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
-    needs: setup
-    runs-on: [self-hosted, linux, main, deployment]
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    env:
+      GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -204,7 +187,7 @@ jobs:
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run unit tests
-        uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
+        uses: kkp-dfs/dime-github-actions-workflows/unit-test@fargate
         with:
           minimum_coverage: 80
           application_name: ${{ inputs.application_name }}
@@ -214,20 +197,12 @@ jobs:
 
   integration-test:
     name: Run integration test
+    runs-on: [self-hosted, go-action-runner, sit]
     if: ${{ inputs.code_lang == 'golang' }}
-    needs: setup
-    runs-on: [self-hosted, linux, sit, deployment]
     continue-on-error: true
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -237,7 +212,7 @@ jobs:
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run integration tests
-        uses: kkp-dfs/dime-github-actions-workflows/integration-test@main
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@fargate
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
@@ -276,7 +251,7 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
       - name: Build and push docker image
         id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@fargate
         with:
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
@@ -288,7 +263,7 @@ jobs:
     needs:
       - setup
       - build
-    runs-on: [self-hosted, linux, deployment, main]
+    runs-on: [self-hosted, linux, main, deployment]
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref != 'main' }}
     environment:
       name: ${{ needs.setup.outputs.ref }}
@@ -302,7 +277,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@fargate
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
@@ -321,7 +296,7 @@ jobs:
     needs:
       - setup
       - build
-    runs-on: [self-hosted, linux, deployment, main]
+    runs-on: [self-hosted, linux, main, deployment]
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref == 'main' }}
     environment:
       name: sit
@@ -335,7 +310,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@fargate
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-sit

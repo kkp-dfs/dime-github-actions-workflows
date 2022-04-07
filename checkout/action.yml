@@ -24,6 +24,11 @@ runs:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.base_ref }}
         clean: true
+    - name: Checkout repository
+      shell: bash
+      run: |
+        git clone ${{ inputs.repository }} .
+        git checkout ${{ inputs.base_ref }}
 
     - shell: bash
       if: ${{ inputs.base_ref != inputs.target_ref }}
