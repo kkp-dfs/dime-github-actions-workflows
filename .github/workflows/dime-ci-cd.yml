@@ -141,7 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -177,7 +177,7 @@ jobs:
       GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -187,7 +187,7 @@ jobs:
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run unit tests
-        uses: kkp-dfs/dime-github-actions-workflows/unit-test@fargate
+        uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
         with:
           minimum_coverage: 80
           application_name: ${{ inputs.application_name }}
@@ -202,7 +202,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@fargate
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
@@ -212,7 +212,7 @@ jobs:
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run integration tests
-        uses: kkp-dfs/dime-github-actions-workflows/integration-test@fargate
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@main
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
@@ -251,7 +251,7 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
       - name: Build and push docker image
         id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@fargate
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
@@ -277,7 +277,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@fargate
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
@@ -310,7 +310,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@fargate
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-sit
