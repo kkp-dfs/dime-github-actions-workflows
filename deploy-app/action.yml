@@ -107,13 +107,13 @@ runs:
       with:
         payload: |
           {
-            "text": "${{ steps.fail_message.outputs.message || steps.fail_coverage.outputs.message || steps.success_coverage.outputs.message }}",
+            "text": "${{ steps.fail_message.outputs.message || steps.success_message.outputs.message }}",
             "blocks": [
               {
                 "type": "header",
                 "text": {
                   "type": "plain_text",
-                  "text": "${{ steps.fail_message.outputs.title || steps.fail_coverage.outputs.title || steps.success_coverage.outputs.title }}"
+                  "text": "${{ steps.fail_message.outputs.title || steps.success_message.outputs.title }}"
                 }
               },
               {
@@ -134,7 +134,7 @@ runs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "${{ steps.fail_message.outputs.message || steps.fail_coverage.outputs.message || steps.success_coverage.outputs.message }}"
+                  "text": "${{ steps.fail_message.outputs.message || steps.success_message.outputs.message }}"
                 }
               }
             ]
