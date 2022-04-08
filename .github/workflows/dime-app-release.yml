@@ -1,0 +1,74 @@
+name: Dime App Release
+
+on:
+  workflow_call:
+    inputs:
+      target_env:
+        description: Target environment of the application
+        required: true
+        type: string
+      repository:
+        description: The owner and repository name
+        required: false
+        type: string
+        default: ${{ github.repository }}
+      base_ref:
+        description: The branch or tag ref or commit SHA that be base code.
+        required: false
+        type: string
+        default: ${{ github.base_ref || 'main' }}
+      platform:
+        description: ios or android
+        type: string
+        required: true
+
+    secrets:
+      gh_access_token:
+        required: true
+
+env:
+  LANE: '${{ inputs.platform }}_${{ inputs.target_env }}_app'
+
+jobs:
+  fastlane_build:
+    name: ${{ inputs.platform }}_${{ inputs.target_env }}_app
+    runs-on: [self-hosted, macOS]
+    steps:
+      - uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+      - uses: kkp-dfs/dime-github-actions-workflows/common@main
+        with:
+          gh_access_token: ${{ inputs.gh_access_token }}
+      - name: setup bundler
+        run: |
+          cat <<EOF > $HOME/.netrc
+          machine github.com
+            login ${{ secrets.gh_access_token }}
+            password x-oauth-basic
+          EOF
+          chmod 600 $HOME/.netrc
+
+          export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
+          source /Users/dime/.bash_profile
+          export RBENV_VERSION=2.7.5
+          export LC_ALL=en_US.UTF-8
+          export LANG=en_US.UTF-8
+
+          echo '### Check versions ###'
+          ruby -v
+          gem -v
+          bundle -v
+          flutter --version
+
+          echo '### Setup environment ###'
+          cd ${{ inputs.platform }}
+          bundle install
+
+          echo '### Start building app ###'
+          bundle exec fastlane -v
+          bundle exec fastlane ${{ inputs.platform }} ${{ env.LANE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.gh_access_token }}
+
