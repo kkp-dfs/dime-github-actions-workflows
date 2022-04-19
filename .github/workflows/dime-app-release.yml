@@ -69,6 +69,7 @@ jobs:
 
           echo '### Start building app ###'
           bundle exec fastlane -v
+          bundle exec fastlane update_plugins
           bundle exec fastlane ${{ inputs.platform }} ${{ env.LANE }}
         env:
           GITHUB_TOKEN: ${{ secrets.gh_access_token }}
