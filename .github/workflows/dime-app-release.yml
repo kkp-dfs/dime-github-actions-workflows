@@ -65,6 +65,7 @@ jobs:
           echo '### Setup environment ###'
           cd ${{ inputs.platform }}
           bundle install
+          bundle update fastlane
 
           echo '### Start building app ###'
           bundle exec fastlane -v
