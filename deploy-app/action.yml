@@ -81,7 +81,6 @@ runs:
         --set "source.password=x-oauth-basic" \
         --set "destination.cluster=dime-${{ inputs.environment }}" \
         --set "destination.namespace=${{ inputs.namespace }}" \
-        --set "application.version=revise-corporate-web" \
         --set "application.values.virtualService.hosts={$ENDPOINTS}" \
         $IMAGE_SETS
 
