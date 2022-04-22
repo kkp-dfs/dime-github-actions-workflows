@@ -30,7 +30,7 @@ inputs:
     required: true
   slack_channel:
     description: The slack channel that send notification.
-    required: true
+    required: false
   slack_webhook:
     description: The slack webhook url
     required: true
@@ -81,7 +81,6 @@ runs:
         --set "source.password=x-oauth-basic" \
         --set "destination.cluster=dime-${{ inputs.environment }}" \
         --set "destination.namespace=${{ inputs.namespace }}" \
-        --set "application.version=revise-corporate-web" \
         --set "application.values.virtualService.hosts={$ENDPOINTS}" \
         $IMAGE_SETS
 
@@ -89,26 +88,88 @@ runs:
       if: ${{ success() }}
       shell: bash
       run: |
-        echo "::set-output name=color::good"
-        echo "::set-output name=title::'Successfully deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment'"
-        echo "::set-output name=message::'You can access to this deployment at https://${{ inputs.endpoint }}'"
+        echo "::set-output name=color::#2EB67D"
+        echo "::set-output name=title::Successfully deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment"
+        echo "::set-output name=message::You can access to this deployment at https://${{ inputs.endpoint }}"
 
     - id: fail_message
       if: ${{ failure() }}
       shell: bash
       run: |
-        echo "::set-output name=color::danger"
-        echo "::set-output name=title::'Fail to deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment'"
-        echo "::set-output name=message::'Cannot deploy ${{ inputs.application_name }} from $GITHUB_REF to ${{ inputs.environment }} environment'"
+        echo "::set-output name=color::#E01E5A"
+        echo "::set-output name=title::Fail to deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment"
+        echo "::set-output name=message::Cannot deploy ${{ inputs.application_name }} from $GITHUB_REF to ${{ inputs.environment }} environment"
   
     - name: Slack Notification
       if: ${{ always() }}
-      uses: rtCamp/action-slack-notify@v2
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        payload: |
+          {
+            "text": "${{ steps.fail_message.outputs.title || steps.success_message.outputs.title }}",
+            "attachments": [
+              {
+                "color": "${{ steps.fail_message.outputs.color || steps.success_message.outputs.color }}",
+                "blocks": [
+                  {
+                    "type": "context",
+                    "elements": [
+                      {
+                        "type": "image",
+                        "image_url": "${{ github.event.sender.avatar_url }}",
+                        "alt_text": "${{ github.event.sender.login }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "${{ github.event.sender.login }}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "${{ steps.fail_message.outputs.message || steps.success_message.outputs.message }}"
+                    },
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Event*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "<${{ github.server_url }}/${{ github.repository }})|${{ github.repository }}>"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "${{ github.event_name }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Ref*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Commit*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "${{ github.ref_name }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})|${{ github.sha }}>"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
       env:
-        SLACK_CHANNEL: ${{ inputs.slack_channel }}
-        SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
-        SLACK_USERNAME: GitHub Actions
-        SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
-        SLACK_COLOR: ${{ steps.fail_message.outputs.color || steps.success_message.outputs.color }}
-        SLACK_TITLE: ${{ steps.fail_message.outputs.title || steps.success_message.outputs.title }}
-        SLACK_MESSAGE: ${{ steps.fail_message.outputs.message || steps.success_message.outputs.message }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook }}

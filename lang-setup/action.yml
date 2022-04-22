@@ -25,6 +25,10 @@ inputs:
     description: Version of node
     required: false
     default: '16'
+  flutter_version:
+    description: Version of flutter
+    required: false
+    default: '2.10.3'
   gh_access_token:
     description: GitHub access token
     required: true
@@ -42,11 +46,6 @@ runs:
         gh_access_token: ${{ inputs.gh_access_token }}
 
     # Golang setup and download modules
-    - name: Setup go version ${{ inputs.go_version }}
-      if: ${{ inputs.language == 'golang' }}
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ inputs.go_version }}
     - name: Cache go module and tools
       if: ${{ inputs.language == 'golang' }}
       uses: actions/cache@v2
@@ -56,6 +55,11 @@ runs:
           $HOME/go/bin
           ./vendor
         key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+    - name: Setup go version ${{ inputs.go_version }}
+      if: ${{ inputs.language == 'golang' }}
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ inputs.go_version }}
     - name: Download go modules
       if: ${{ inputs.language == 'golang' }}
       env:
@@ -66,11 +70,6 @@ runs:
       shell: bash
 
     # Node setup and download modules
-    - name: Setup node version ${{ inputs.node_version }}
-      if: ${{ inputs.language == 'node' }}
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ inputs.node_version }}
     - name: Cache node module
       if: ${{ inputs.language == 'node' }}
       uses: actions/cache@v2
@@ -79,6 +78,11 @@ runs:
           ./node_modules
           **/node_modules
         key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}
+    - name: Setup node version ${{ inputs.node_version }}
+      if: ${{ inputs.language == 'node' }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ inputs.node_version }}
     - name: Download node modules
       if: ${{ inputs.language == 'node' }}
       run: |
@@ -86,22 +90,29 @@ runs:
         yarn install
       shell: bash
 
-    # Flutter setup and download packages
-    - name: Setup flutter
+    # # Flutter setup
+    - name: Set flutter bin path
       if: ${{ inputs.language == 'flutter' }}
-      uses: subosito/flutter-action@v2
-      with:
-        cache: true
-    - name: Cache flutter package
-      if: ${{ inputs.language == 'flutter' }}
-      uses: actions/cache@v2
-      with:
-        path: /opt/flutter/.pub-cache
-        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
-    - name: Download flutter packages
-      if: ${{ inputs.language == 'flutter' }}
-      run: |
-        export PATH=/opt/flutter/bin:$PATH
-        flutter config --no-analytics
-        flutter pub get
+      run: echo "/opt/flutter/bin" >> $GITHUB_PATH
       shell: bash
+    # - name: Cache flutter package
+    #   if: ${{ inputs.language == 'flutter' }}
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: |
+    #       /opt/flutter/.pub-cache
+    #       /runner/.pub-cache
+    #     key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
+    # - name: Setup flutter
+    #   if: ${{ inputs.language == 'flutter' }}
+    #   uses: subosito/flutter-action@v2
+    #   with:
+    #     flutter-version: ${{ inputs.flutter_version }}
+    #     channel: 'stable'
+    # - name: Download flutter packages
+    #   if: ${{ inputs.language == 'flutter' }}
+    #   run: |
+    #     export PATH=/opt/flutter/bin:$PATH
+    #     flutter config --no-analytics
+    #     flutter pub get
+    #   shell: bash

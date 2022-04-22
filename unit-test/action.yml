@@ -14,13 +14,17 @@ inputs:
     default: "0"
   slack_channel:
     description: The slack channel that send notification.
-    required: true
+    required: false
   slack_webhook:
     description: The slack webhook url
     required: true
   gh_access_token:
     description: GitHub access token
     required: true
+  coverage_file:
+    description: The coverage file
+    required: false
+    default: unitcoverage.lcov
 
 runs:
   using: composite
@@ -39,54 +43,139 @@ runs:
       shell: bash
       run: yarn test
 
+    - name: Cache flutter package
+      if: ${{ inputs.language == 'flutter' }}
+      uses: actions/cache@v2
+      with:
+        path: |
+          /opt/flutter/.pub-cache
+          /runner/.pub-cache
+        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/pubspec.lock') }}
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}
       shell: bash
-      run: |
-        flutter test -j 8
-      #  make lcov-remove-coverage
+      run: make test
 
     - id: fail_message
       if: ${{ failure() }}
       shell: bash
       run: |
-        echo "::set-output name=color::danger"
-        echo "::set-output name=title::'${{ inputs.application_name }} unit test is FAIL'"
-        echo "::set-output name=message::'Found some failed test cases'"
+        echo "::set-output name=color::#E01E5A"
+        echo "::set-output name=title::${{ inputs.application_name }} unit test is FAIL"
+        echo "::set-output name=message::Found some failed test cases"
 
     - name: Create coverage report
-      if: ${{ success() && (inputs.language != 'flutter') }}
+      if: ${{ inputs.language != 'flutter' }}
       uses: zgosalvez/github-actions-report-lcov@v1
       with:
-        coverage-files: unitcoverage.lcov
+        coverage-files: ${{ inputs.coverage_file }}
         artifact-name: unittest-coverage-report
         github-token: ${{ inputs.gh_access_token }}
         minimum-coverage: ${{ inputs.minimum_coverage }}
+
+    - name: Check coverage percentage
+      if: ${{ inputs.language == 'flutter' }}
+      shell: bash
+      run: |
+        REPORT=$(lcov --summary ${{ inputs.coverage_file }})
+        COVERAGE=$(echo $REPORT | sed -e 's/.* \([0-9]\{1,2\}\.[0-9]\{1,2\}\)% .*/\1/')
+        if [ $(echo "${COVERAGE} < ${{ inputs.minimum_coverage }}" | bc) -ne 0 ]; then
+          echo "Coverage less than ${{ inputs.minimum_coverage }}%"
+          exit 1
+        fi
+    - name: Upload artifact
+      if: ${{ inputs.language == 'flutter' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: unittest-coverage-report
+        path: ${{ inputs.coverage_file }}
 
     - id: success_coverage
       if: ${{ success() }}
       shell: bash
       run: |
-        echo "::set-output name=color::good"
-        echo "::set-output name=title::'Test coverage of ${{ inputs.application_name }} is PASS'"
-        echo "::set-output name=message::'Coverage rate is more than ${{ inputs.minimum_coverage }}%'"
+        echo "::set-output name=color::#2EB67D"
+        echo "::set-output name=title::Test coverage of ${{ inputs.application_name }} is PASS"
+        echo "::set-output name=message::Coverage rate is more than ${{ inputs.minimum_coverage }}%"
 
     - id: fail_coverage
       if: ${{ failure() }}
       shell: bash
       run: |
-        echo "::set-output name=color::danger"
-        echo "::set-output name=title::'Test coverage of ${{ inputs.application_name }} is FAIL'"
-        echo "::set-output name=message::'Coverage rate is less than ${{ inputs.minimum_coverage }}%'"
+        echo "::set-output name=color::#E01E5A"
+        echo "::set-output name=title::Test coverage of ${{ inputs.application_name }} is FAIL"
+        echo "::set-output name=message::Coverage rate is less than ${{ inputs.minimum_coverage }}%"
 
     - name: Slack Notification
       if: ${{ always() }}
-      uses: rtCamp/action-slack-notify@v2
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        payload: |
+          {
+            "text": "${{ steps.fail_message.outputs.title || steps.fail_coverage.outputs.title || steps.success_coverage.outputs.title }}",
+            "attachments": [
+              {
+                "color": "${{ steps.fail_message.outputs.color || steps.fail_coverage.outputs.color || steps.success_coverage.outputs.color }}",
+                "blocks": [
+                  {
+                    "type": "context",
+                    "elements": [
+                      {
+                        "type": "image",
+                        "image_url": "${{ github.event.sender.avatar_url }}",
+                        "alt_text": "${{ github.event.sender.login }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "${{ github.event.sender.login }}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "${{ steps.fail_message.outputs.message || steps.fail_coverage.outputs.message || steps.success_coverage.outputs.message }}"
+                    },
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Event*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "<${{ github.server_url }}/${{ github.repository }})|${{ github.repository }}>"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "${{ github.event_name }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Ref*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Commit*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "${{ github.ref_name }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})|${{ github.sha }}>"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
       env:
-        SLACK_CHANNEL: ${{ inputs.slack_channel }}
-        SLACK_WEBHOOK: ${{ inputs.slack_webhook }}
-        SLACK_USERNAME: GitHub Actions
-        SLACK_ICON: https://avatars.githubusercontent.com/u/90231066?s=200&v=4
-        SLACK_COLOR: ${{ steps.fail_message.outputs.color || steps.fail_coverage.outputs.color || steps.success_coverage.outputs.color }}
-        SLACK_TITLE: ${{ steps.fail_message.outputs.title || steps.fail_coverage.outputs.title || steps.success_coverage.outputs.title }}
-        SLACK_MESSAGE: ${{ steps.fail_message.outputs.message || steps.fail_coverage.outputs.message || steps.success_coverage.outputs.message }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook }}

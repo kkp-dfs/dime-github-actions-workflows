@@ -107,8 +107,8 @@ on:
 
 jobs:
   setup:
-    name: Install dependencies and keep caches
-    runs-on: [self-hosted, linux, main]
+    name: Get ECR and paramaters
+    runs-on: [self-hosted, linux, main, deployment]
     outputs:
       ecr_token: ${{ steps.ecr.outputs.token }}
       ecr_repository: ${{ steps.ecr.outputs.repository }}
@@ -117,16 +117,6 @@ jobs:
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
-      - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          language: ${{ inputs.code_lang }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
       - name: Get ECR information
         id: ecr
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
@@ -148,7 +138,6 @@ jobs:
 
   lint:
     name: Run lint
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Setup ${{ inputs.code_lang }}
@@ -181,17 +170,11 @@ jobs:
           linter: gocyclo
 
   unit-test:
-    name: Run unit testing
+    name: Run unit test
+    runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
-    needs: setup
-    runs-on: [self-hosted, linux, main]
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    env:
+      GOPRIVATE: github.com/kkp-dfs/*
     steps:
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
@@ -214,17 +197,9 @@ jobs:
 
   integration-test:
     name: Run integration test
+    runs-on: [self-hosted, go-action-runner, sit]
     if: ${{ inputs.code_lang == 'golang' }}
-    needs: setup
-    runs-on: [self-hosted, linux, sit]
     continue-on-error: true
-    container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
@@ -255,7 +230,7 @@ jobs:
       - lint
       - unit-test
       - integration-test
-    runs-on: [self-hosted, linux,  main]
+    runs-on: [self-hosted, linux,  main, deployment]
     if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
@@ -288,7 +263,7 @@ jobs:
     needs:
       - setup
       - build
-    runs-on: [self-hosted, linux, deployment, main]
+    runs-on: [self-hosted, linux, main, deployment]
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref != 'main' }}
     environment:
       name: ${{ needs.setup.outputs.ref }}
@@ -321,7 +296,7 @@ jobs:
     needs:
       - setup
       - build
-    runs-on: [self-hosted, linux, deployment, main]
+    runs-on: [self-hosted, linux, main, deployment]
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref == 'main' }}
     environment:
       name: sit
