@@ -29,7 +29,7 @@ runs:
   steps:
     - name: Get db credentials
       id: db
-      shell: bash
+      shell: sh
       run: |
         cat <<EOF > ~/.netrc
         machine github.com
