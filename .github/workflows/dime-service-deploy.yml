@@ -106,7 +106,7 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/common@improve-deploy
+      - uses: kkp-dfs/dime-github-actions-workflows/common@main
         with:
           gh_access_token: ${{ secrets.gh_access_token }}
       - run: git clone https://github.com/kkp-dfs/dime-helm.git
@@ -135,7 +135,6 @@ jobs:
           --set "source.password=x-oauth-basic" \
           --set "destination.cluster=dime-${{ inputs.environment }}" \
           --set "destination.namespace=${{ inputs.namespace }}" \
-          --set "application.version=staticfile" \
           --set "application.values.virtualService.hosts={$ENDPOINTS}" \
           $IMAGE_SETS
       - id: success_message
