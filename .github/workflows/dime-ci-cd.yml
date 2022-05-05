@@ -202,7 +202,7 @@ jobs:
 
   integration-test:
     name: Run integration test
-    runs-on: [self-hosted, go-action-runner, sit]
+    runs-on: [self-hosted, go-action-runner, "${{ inputs.cluster_prefix }}-${{ inputs.environment }}"]
     if: ${{ inputs.code_lang == 'golang' }}
     continue-on-error: true
     steps:
