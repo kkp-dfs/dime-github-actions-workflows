@@ -50,7 +50,7 @@ runs:
         git fetch
         git reset ${{ inputs.helm_ref }} --hard
 
-        yaml-merge values/${{ inputs.application_name }}/values.yaml values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml > values.yaml
+        yq eval-all '. as $item ireduce({}; . * $item)' values/${{ inputs.application_name }}/values.yaml values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml > values.yaml
         VAULT_USERNAME=$(cat values.yaml | yq eval '.application.values.secrets.default.data.DB_USERNAME' - | sed -e 's/vault:/https:\/\/vault.mydime.tech\/v1\//g')
         VAULT_PASSWORD=$(cat values.yaml | yq eval '.application.values.secrets.default.data.DB_PASSWORD' - | sed -e 's/vault:/https:\/\/vault.mydime.tech\/v1\//g')
         USERNAME_KEY=$(echo $VAULT_USERNAME | cut -d '#' -f2)
