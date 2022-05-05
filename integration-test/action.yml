@@ -2,6 +2,10 @@ name: Integration test
 description: Run integration test
 
 inputs:
+  environment:
+    description: Environment that would like to deploy services
+    required: true
+    default: sit
   application_name:
     description: Name of application
     required: true
@@ -41,27 +45,40 @@ runs:
       if: ${{ inputs.language == 'golang' }}
       shell: bash
       run: |
+        git clone https://github.com/kkp-dfs/dime-helm.git
+        cd dime-helm
+        git fetch
+        git reset ${{ inputs.helm_ref }} --hard
+
+        yaml-merge values/${{ inputs.application_name }}/values.yaml values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml > values.yaml
+        VAULT_USERNAME=$(cat values.yaml | yq eval '.application.values.secrets.default.data.DB_USERNAME' - | sed -e 's/vault:/https:\/\/vault.mydime.tech\/v1\//g')
+        VAULT_PASSWORD=$(cat values.yaml | yq eval '.application.values.secrets.default.data.DB_PASSWORD' - | sed -e 's/vault:/https:\/\/vault.mydime.tech\/v1\//g')
+        USERNAME_KEY=$(echo $VAULT_USERNAME | cut -d '#' -f2)
+        PASSWORD_KEY=$(echo $VAULT_PASSWORD | cut -d '#' -f2)
+
         JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
         echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
         TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/sit/login | jq -r '.auth.client_token')
 
         DB=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/database/sit)
-        DB_HOST=dime-default-db.csi5ylritr1l.ap-southeast-1.rds.amazonaws.com
+        DB_HOST=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_HOST' -)"
+        DB_PORT=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_PORT' -)"
         DB_ADMIN_USER=$(echo $DB | jq -r '.data.data.username')
         DB_ADMIN_PASS=$(echo $DB | jq -r '.data.data.password')
         DB_NAME=${{ inputs.application_name }}-${{ github.sha }}
         DB_USER=${{ inputs.application_name }}-${{ github.sha }}
         DB_PASS=${{ github.sha }}
         echo "::set-output name=db_host::${DB_HOST}"
+        echo "::set-output name=db_port::${DB_PORT}"
         echo "::set-output name=db_admin_user::$(echo ${DB_ADMIN_USER} | base64)"
         echo "::set-output name=db_admin_pass::$(echo ${DB_ADMIN_PASS} | base64)"
         echo "::set-output name=db_name::${DB_NAME//-/_}"
         echo "::set-output name=db_user::${DB_USER:0:32}"
         echo "::set-output name=db_pass::${DB_PASS}"
 
-        mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME//-/_} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
-        mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE USER IF NOT EXISTS '${DB_USER:0:32}'@'%' IDENTIFIED BY '${DB_PASS}';"
-        mysql --host=${DB_HOST} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "GRANT ALL PRIVILEGES ON ${DB_NAME//-/_}.* TO '${DB_USER:0:32}'@'%'; FLUSH PRIVILEGES;"
+        mysql --host=${DB_HOST} --port=${DB_PORT} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME//-/_} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+        mysql --host=${DB_HOST} --port=${DB_PORT} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "CREATE USER IF NOT EXISTS '${DB_USER:0:32}'@'%' IDENTIFIED BY '${DB_PASS}';"
+        mysql --host=${DB_HOST} --port=${DB_PORT} -u $DB_ADMIN_USER -p${DB_ADMIN_PASS} -e "GRANT ALL PRIVILEGES ON ${DB_NAME//-/_}.* TO '${DB_USER:0:32}'@'%'; FLUSH PRIVILEGES;"
         if [ "${{ inputs.migration }}" == "true" ]; then
           dbmate --wait -d ${{ inputs.migrate_dir }} -s ${{ inputs.migrate_schema }} -u mysql://${DB_ADMIN_USER}:${DB_ADMIN_PASS}@${DB_HOST}/${DB_NAME//-/_} up
         fi
@@ -99,6 +116,7 @@ runs:
       env:
         INTEGRATION_ON_SIT: "true"
         DB_HOST: ${{ steps.setup.outputs.db_host }}
+        DB_PORT: ${{ steps.setup.outputs.db_port }}
         DB_DATABASE: ${{ steps.setup.outputs.db_name }}
         DB_USERNAME: ${{ steps.setup.outputs.db_user }}
         DB_PASSWORD: ${{ steps.setup.outputs.db_pass }}
@@ -227,13 +245,14 @@ runs:
       shell: bash
       run: |
         DB_HOST=${{ steps.setup.outputs.db_host }}
+        DB_PORT=${{ steps.setup.outputs.db_port }}
         DB_ADMIN_USER=$(echo ${{ steps.setup.outputs.db_admin_user }} | base64 -d)
         DB_ADMIN_PASS=$(echo ${{ steps.setup.outputs.db_admin_pass }} | base64 -d)
         DB_NAME=${{ steps.setup.outputs.db_name }}
         DB_USER=${{ steps.setup.outputs.db_user }}
-        mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '${DB_USER}'@'%';"
-        mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP USER '${DB_USER}'@'%';"
-        mysql --host=${DB_HOST} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP DATABASE ${DB_NAME};"
+        mysql --host=${DB_HOST} --port=${DB_PORT} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "REVOKE ALL PRIVILEGES, GRANT OPTION FROM '${DB_USER}'@'%';"
+        mysql --host=${DB_HOST} --port=${DB_PORT} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP USER '${DB_USER}'@'%';"
+        mysql --host=${DB_HOST} --port=${DB_PORT} -u ${DB_ADMIN_USER} -p${DB_ADMIN_PASS} -e "DROP DATABASE ${DB_NAME};"
 
         RMQ_HOST=${{ steps.setup.outputs.rmq_host }}
         RMQ_VHOST=${{ steps.setup.outputs.rmq_vhost }}
