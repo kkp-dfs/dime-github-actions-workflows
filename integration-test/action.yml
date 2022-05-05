@@ -65,6 +65,7 @@ runs:
         TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/${{ inputs.cluster_prefix }}-${{ inputs.environment }}/login | jq -r '.auth.client_token')
 
         VAULT_URL=https://vault.mydime.tech/v1/secrets/data/database/$(echo ${{ inputs.cluster_prefix }} | sed -e 's/dime-//g')-${{ inputs.environment }}
+        echo $VAULT_URL
         DB=$(curl -H "X-Vault-Token:$TOKEN" $VAULT_URL)
         DB_HOST=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_HOST' -)
         DB_PORT=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_PORT' -)

@@ -110,6 +110,9 @@ on:
       slack_webhook:
         required: true
 
+env:
+  GOPRIVATE: github.com/kkp-dfs/*
+
 jobs:
   setup:
     name: Get ECR and paramaters
@@ -179,7 +182,7 @@ jobs:
     runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
     env:
-      GOPRIVATE: github.com/kkp-dfs/*
+      GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
     steps:
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
@@ -205,6 +208,8 @@ jobs:
     runs-on: [self-hosted, go-action-runner, "${{ inputs.cluster_prefix }}-${{ inputs.environment }}"]
     if: ${{ inputs.code_lang == 'golang' }}
     continue-on-error: true
+    env:
+      GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
     steps:
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
@@ -238,6 +243,8 @@ jobs:
       - integration-test
     runs-on: [self-hosted, linux,  main, deployment]
     if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
+    env:
+      GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
       credentials:
