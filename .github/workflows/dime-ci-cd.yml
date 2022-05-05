@@ -130,9 +130,9 @@ jobs:
         run: |
           REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
           if [ "${{ inputs.event_name }}" == "pull_request" ]; then
-            HOST=$(echo "${{ inputs.hostname }}" | sed -E 's/^[a-z0-9\-_]+\.(.+)$/${{ inputs.application }}-pr-${{ inputs.event_number }}.\1/i')
+            HOST=$(echo "${{ inputs.hostname }}" | sed -E 's/^[a-z0-9\-_]+\.(.+)$/${{ inputs.application_name }}-pr-${{ inputs.event_number }}.\1/i')
           elif [ "${REF_NAME}" != "main" ]; then
-            HOST=$(echo "${{ inputs.hostname }}" | sed -E 's/^[a-z0-9\-_]+\.(.+)$/${{ inputs.application }}-refs-${REF_NAME}.\1/i')
+            HOST=$(echo "${{ inputs.hostname }}" | sed -E 's/^[a-z0-9\-_]+\.(.+)$/${{ inputs.application_name }}-refs-${REF_NAME}.\1/i')
           elif [[ ! -z "${{ inputs.additional_hostnames }}" ]]; then
             HOST=${{ inputs.hostname }},${{ inputs.additional_hostnames }}
           else
