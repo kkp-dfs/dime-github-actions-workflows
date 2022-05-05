@@ -6,10 +6,10 @@ inputs:
     description: Environment that would like to deploy services
     required: true
     default: sit
-  cluster:
-    description: destination cluster name
+  cluster_prefix:
+    description: cluster prefix
     required: false
-    default: dime-sit
+    default: dime
   application_name:
     description: Name of application
     required: true
@@ -62,9 +62,10 @@ runs:
 
         JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
         echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
-        TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/${{ inputs.cluster }}/login | jq -r '.auth.client_token')
+        TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/${{ inputs.cluster_prefix }}-${{ inputs.environment }}/login | jq -r '.auth.client_token')
 
-        DB=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/database/sit)
+        VAULT_URL=https://vault.mydime.tech/v1/secrets/data/database/$(echo ${{ inputs.cluster_prefix }} | sed -e 's/dime-//g')-${{ inputs.environment }}
+        DB=$(curl -H "X-Vault-Token:$TOKEN" $VAULT_URL)
         DB_HOST=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_HOST' -)
         DB_PORT=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_PORT' -)
         DB_NAME=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_DATABASE' -)-${{ github.sha }}
