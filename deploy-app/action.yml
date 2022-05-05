@@ -9,6 +9,10 @@ inputs:
     description: commit reference of helm repository
     required: false
     default: main
+  cluster:
+    description: destination cluster name
+    required: false
+    default: dime-sit
   namespace:
     description: Kubernetes namespace
     required: true
@@ -79,7 +83,7 @@ runs:
         --set "nameOverride=${{ inputs.application_name }}" \
         --set "source.username=${{ inputs.gh_access_token }}" \
         --set "source.password=x-oauth-basic" \
-        --set "destination.cluster=dime-${{ inputs.environment }}" \
+        --set "destination.cluster=${{ inputs.cluster }}" \
         --set "destination.namespace=${{ inputs.namespace }}" \
         --set "application.values.virtualService.hosts={$ENDPOINTS}" \
         $IMAGE_SETS

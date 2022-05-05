@@ -38,6 +38,11 @@ on:
         required: true
         default: sit
         type: string
+      cluster_prefix:
+        description: cluster prefix
+        required: false
+        type: string
+        default: dime
       hostname:
         description: The hostname of the application service
         required: true
@@ -277,11 +282,12 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@redzone
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
           helm_ref: ${{ inputs.helm_ref }}
+          cluster: ${{ inputs.cluster_prefix }}-${{ inputs.environment }}
           namespace: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
           application_name: ${{ inputs.application_name }}
           endpoint: ${{ needs.setup.outputs.endpoint }}
@@ -310,11 +316,12 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@redzone
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-sit
           helm_ref: ${{ inputs.helm_ref }}
+          cluster: ${{ inputs.cluster }}-${{ inputs.environment }}
           namespace: ${{ inputs.namespace }}
           application_name: ${{ inputs.application_name }}
           endpoint: ${{ needs.setup.outputs.endpoint }}
