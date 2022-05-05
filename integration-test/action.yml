@@ -61,13 +61,13 @@ runs:
         TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/sit/login | jq -r '.auth.client_token')
 
         DB=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/database/sit)
-        DB_HOST=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_HOST' -)"
-        DB_PORT=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_PORT' -)"
+        DB_HOST=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_HOST' -)
+        DB_PORT=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_PORT' -)
+        DB_NAME=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_DATABASE' -)-${{ github.sha }}
+        DB_USER=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_DATABASE' -)-${{ github.sha }}
+        DB_PASS=${{ github.sha }}
         DB_ADMIN_USER=$(echo $DB | jq -r '.data.data.username')
         DB_ADMIN_PASS=$(echo $DB | jq -r '.data.data.password')
-        DB_NAME=${{ inputs.application_name }}-${{ github.sha }}
-        DB_USER=${{ inputs.application_name }}-${{ github.sha }}
-        DB_PASS=${{ github.sha }}
         echo "::set-output name=db_host::${DB_HOST}"
         echo "::set-output name=db_port::${DB_PORT}"
         echo "::set-output name=db_admin_user::$(echo ${DB_ADMIN_USER} | base64)"
