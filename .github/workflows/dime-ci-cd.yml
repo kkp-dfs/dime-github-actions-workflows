@@ -219,6 +219,7 @@ jobs:
       - name: Run integration tests
         uses: kkp-dfs/dime-github-actions-workflows/integration-test@redzone
         with:
+          cluster: ${{ inputs.cluster_prefix }}-${{ inputs.environment }}
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
           migration: ${{ inputs.migration }}
