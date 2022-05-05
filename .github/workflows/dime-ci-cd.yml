@@ -197,7 +197,7 @@ jobs:
 
   integration-test:
     name: Run integration test
-    runs-on: [self-hosted, go-action-runner, sit]
+    runs-on: [self-hosted, go-action-runner, dime-sit]
     if: ${{ inputs.code_lang == 'golang' }}
     continue-on-error: true
     steps:
