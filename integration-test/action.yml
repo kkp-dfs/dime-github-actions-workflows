@@ -58,7 +58,7 @@ runs:
 
         JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
         echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
-        TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/sit/login | jq -r '.auth.client_token')
+        TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/dime-sit/login | jq -r '.auth.client_token')
 
         DB=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/database/sit)
         DB_HOST=$(cat values.yaml | yq eval '.application.values.configmaps.default.data.DB_HOST' -)
