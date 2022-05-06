@@ -38,6 +38,11 @@ on:
         required: true
         default: sit
         type: string
+      cluster_prefix:
+        description: cluster prefix
+        required: false
+        type: string
+        default: dime
       hostname:
         description: The hostname of the application service
         required: true
@@ -105,6 +110,9 @@ on:
       slack_webhook:
         required: true
 
+env:
+  GOPRIVATE: github.com/kkp-dfs/*
+
 jobs:
   setup:
     name: Get ECR and paramaters
@@ -125,9 +133,9 @@ jobs:
         run: |
           REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
           if [ "${{ inputs.event_name }}" == "pull_request" ]; then
-            HOST=${{ inputs.application_name }}-pr-${{ inputs.event_number }}.${{ inputs.hostname }}
+            HOST=$(echo "${{ inputs.hostname }}" | sed -E 's/^[a-z0-9\-_]+\.(.+)$/${{ inputs.application_name }}-pr-${{ inputs.event_number }}.\1/i')
           elif [ "${REF_NAME}" != "main" ]; then
-            HOST=${REF_NAME}.${{ inputs.hostname }}
+            HOST=$(echo "${{ inputs.hostname }}" | sed -E 's/^[a-z0-9\-_]+\.(.+)$/${{ inputs.application_name }}-refs-${REF_NAME}.\1/i')
           elif [[ ! -z "${{ inputs.additional_hostnames }}" ]]; then
             HOST=${{ inputs.hostname }},${{ inputs.additional_hostnames }}
           else
@@ -174,7 +182,7 @@ jobs:
     runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
     env:
-      GOPRIVATE: github.com/kkp-dfs/*
+      GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
     steps:
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
@@ -197,9 +205,11 @@ jobs:
 
   integration-test:
     name: Run integration test
-    runs-on: [self-hosted, go-action-runner, dime-sit]
+    runs-on: [self-hosted, go-action-runner, "${{ inputs.cluster_prefix }}-${{ inputs.environment }}"]
     if: ${{ inputs.code_lang == 'golang' }}
     continue-on-error: true
+    env:
+      GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
     steps:
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
@@ -214,6 +224,7 @@ jobs:
       - name: Run integration tests
         uses: kkp-dfs/dime-github-actions-workflows/integration-test@main
         with:
+          cluster_prefix: ${{ inputs.cluster_prefix }}
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
           migration: ${{ inputs.migration }}
@@ -232,6 +243,8 @@ jobs:
       - integration-test
     runs-on: [self-hosted, linux,  main, deployment]
     if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
+    env:
+      GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
       credentials:
@@ -267,7 +280,7 @@ jobs:
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref != 'main' }}
     environment:
       name: ${{ needs.setup.outputs.ref }}
-      url: ${{ needs.setup.outputs.endpoint }}"
+      url: https://${{ needs.setup.outputs.endpoint }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
@@ -282,6 +295,7 @@ jobs:
           environment: sit
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
           helm_ref: ${{ inputs.helm_ref }}
+          cluster: ${{ inputs.cluster_prefix }}-${{ inputs.environment }}
           namespace: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
           application_name: ${{ inputs.application_name }}
           endpoint: ${{ needs.setup.outputs.endpoint }}
@@ -300,7 +314,7 @@ jobs:
     if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref == 'main' }}
     environment:
       name: sit
-      url: ${{ needs.setup.outputs.endpoint }}"
+      url: https://${{ needs.setup.outputs.endpoint }}
     container:
       image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
       credentials:
@@ -315,6 +329,7 @@ jobs:
           environment: sit
           release_name: ${{ inputs.application_name }}-sit
           helm_ref: ${{ inputs.helm_ref }}
+          cluster: ${{ inputs.cluster }}-${{ inputs.environment }}
           namespace: ${{ inputs.namespace }}
           application_name: ${{ inputs.application_name }}
           endpoint: ${{ needs.setup.outputs.endpoint }}
