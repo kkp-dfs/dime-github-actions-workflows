@@ -222,7 +222,7 @@ jobs:
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Run integration tests
-        uses: kkp-dfs/dime-github-actions-workflows/integration-test@redzone
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@main
         with:
           cluster_prefix: ${{ inputs.cluster_prefix }}
           application_name: ${{ inputs.application_name }}
@@ -290,7 +290,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@redzone
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
@@ -324,7 +324,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@redzone
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
           environment: sit
           release_name: ${{ inputs.application_name }}-sit
