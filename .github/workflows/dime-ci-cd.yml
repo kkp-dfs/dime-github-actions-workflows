@@ -365,3 +365,21 @@ jobs:
           schema: ${{ inputs.migrate_schema }}
           helm_ref: ${{ inputs.helm_ref }}
           gh_access_token: ${{ secrets.GH_ACCESS_TOKEN }}
+
+  e2e-test:
+    name: Run E2E testing
+    needs:
+      - deploy
+      - db_migration
+    runs-on: [self-hosted, linux, deployment, main]
+    if: ${{ inputs.code_lang == 'node' }}
+    steps:
+      - name: Trigger jenkins job
+        uses: jabbukka/jenkins-trigger@main
+        with:
+          url: https://jenkins.mydime.tech
+          job_name: API-E2E
+          user_name: parse-kkp
+          api_token: ${{ secrets.JENKINS_API_TOKEN }}
+          wait: "true"
+          timeout: "1000"
