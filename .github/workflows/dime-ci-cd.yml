@@ -377,7 +377,7 @@ jobs:
       - name: Trigger jenkins job
         uses: jabbukka/jenkins-trigger@main
         with:
-          url: https://jenkins.mydime.tech
+          url: http://jenkins.qa.svc.cluster.local:8080
           user_name: parse-kkp
           api_token: ${{ secrets.JENKINS_API_TOKEN }}
           job_name: API-E2E
