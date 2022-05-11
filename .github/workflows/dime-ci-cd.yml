@@ -378,8 +378,9 @@ jobs:
         uses: jabbukka/jenkins-trigger@main
         with:
           url: https://jenkins.mydime.tech
-          job_name: API-E2E
           user_name: parse-kkp
           api_token: ${{ secrets.JENKINS_API_TOKEN }}
+          job_name: API-E2E
+          parameter: '{"BRANCH":"main","ENVIRONMENT":"sit","TAG":"-i SIT"}'
           wait: "true"
           timeout: "1000"
