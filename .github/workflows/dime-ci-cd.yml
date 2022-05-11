@@ -367,12 +367,12 @@ jobs:
           gh_access_token: ${{ secrets.GH_ACCESS_TOKEN }}
 
   e2e-test:
-    name: Run E2E testing
+    name: Run E2E test
     needs:
-      - deploy
-      - db_migration
+      - deploy_pr
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ inputs.code_lang == 'node' }}
+    if: ${{ inputs.code_lang == 'golang' }}
+    continue-on-error: true
     steps:
       - name: Trigger jenkins job
         uses: jabbukka/jenkins-trigger@main
