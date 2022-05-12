@@ -72,6 +72,7 @@ jobs:
           gem -v
           bundle -v
           flutter --version
+          flutter pub get
 
           echo '### Setup environment ###'
           cd ${{ inputs.platform }}
