@@ -108,6 +108,9 @@ jobs:
 
           echo '### Setup environment ###'
           make gen-config-${{ inputs.target_env }}
+          if [[ "${{ inputs.platform }}" == "android" ]]; then
+            cp /Users/dime/google-services.json ./android/app/
+          fi
           cd ${{ inputs.platform }}
           bundle install
           bundle update fastlane
