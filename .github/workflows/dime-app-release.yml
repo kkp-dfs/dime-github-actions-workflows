@@ -26,9 +26,6 @@ on:
       gh_access_token:
         required: true
 
-env:
-  LANE: '${{ inputs.platform }}_${{ inputs.target_env }}_app'
-
 jobs:
   prepare:
     name: Prepare environment secret file
@@ -57,8 +54,7 @@ jobs:
           curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-`uname -s`-`uname -m` -o envsubst
           chmod +x envsubst
           ./envsubst < environment_secret_template.yaml > environment_secret_${{ inputs.target_env }}.yaml
-      - name: Save environment secret file
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
           path: environment_secret_${{ inputs.target_env }}.yaml
           key: environment_secret_${{ inputs.target_env }}
@@ -75,8 +71,7 @@ jobs:
       - uses: kkp-dfs/dime-github-actions-workflows/common@main
         with:
           gh_access_token: ${{ inputs.gh_access_token }}
-      - name: Restore environment secret file
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
           path: environment_secret_${{ inputs.target_env }}.yaml
           key: environment_secret_${{ inputs.target_env }}
@@ -124,4 +119,5 @@ jobs:
           bundle exec fastlane ${{ inputs.platform }} ${{ env.LANE }}
         env:
           GITHUB_TOKEN: ${{ secrets.gh_access_token }}
+          LANE: '${{ inputs.platform }}_${{ inputs.target_env }}_app'
 
