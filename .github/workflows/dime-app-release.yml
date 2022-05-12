@@ -34,6 +34,13 @@ jobs:
     name: Prepare environment secret file
     runs-on: [self-hosted, linux, main, deployment]
     steps:
+      - uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+      - uses: kkp-dfs/dime-github-actions-workflows/common@main
+        with:
+          gh_access_token: ${{ inputs.gh_access_token }}
       - name: Generate environment secret file
         run: |
           JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
@@ -51,10 +58,10 @@ jobs:
           chmod +x envsubst
           ./envsubst < environment_secret_template.yaml > environment_secret_${{ inputs.target_env }}.yaml
       - name: Save environment secret file
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: environment_secret_${{ inputs.target_env }}.yaml
-          key: nvironment_secret_${{ inputs.target_env }}
+          key: environment_secret_${{ inputs.target_env }}
 
   fastlane_build:
     name: ${{ inputs.platform }}_${{ inputs.target_env }}_app
@@ -69,10 +76,10 @@ jobs:
         with:
           gh_access_token: ${{ inputs.gh_access_token }}
       - name: Restore environment secret file
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: environment_secret_${{ inputs.target_env }}.yaml
-          key: nvironment_secret_${{ inputs.target_env }}
+          key: environment_secret_${{ inputs.target_env }}
       - name: setup bundler
         run: |
           export PATH=$PATH:/opt/homebrew/bin
@@ -104,10 +111,9 @@ jobs:
           gem -v
           bundle -v
           flutter --version
-          flutter pub get
-          make gen-config-${{ inputs.target_env }}
 
           echo '### Setup environment ###'
+          make gen-config-${{ inputs.target_env }}
           cd ${{ inputs.platform }}
           bundle install
           bundle update fastlane
