@@ -43,6 +43,8 @@ jobs:
           gh_access_token: ${{ inputs.gh_access_token }}
       - name: setup bundler
         run: |
+          export PATH=$PATH:/opt/homebrew/bin
+
           cat <<EOF > $HOME/.netrc
           machine github.com
             login ${{ secrets.gh_access_token }}
