@@ -119,8 +119,8 @@ jobs:
           EOF
 
           mv key.properties ./android/
-          cp /Users/dime/dime_app_release_files/google-services.json ./android/app/
-          cp /Users/dime/dime_app_release_files/google_service_credentials_${{ inputs.target_env }}.json ./android/app/src/${{ inputs.target_env }}/service_credentials.json
+          cp /Users/dime/dime_app_release_files/google-services-${{ inputs.target_env }}.json ./android/app/google-services.json
+          cp /Users/dime/dime_app_release_files/service_credentials_${{ inputs.target_env }}.json ./android/app/src/${{ inputs.target_env }}/service_credentials.json
 
           cd android
           gradle wrapper
