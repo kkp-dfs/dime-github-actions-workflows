@@ -62,7 +62,6 @@ jobs:
           DATA=$(curl -H "X-VAULT-TOKEN:$TOKEN" https:/vault.mydime.tech/v1/infrastructure/data/mac-mini-01)
 
           export KEYSTORE_PASSWORD=$(echo $DATA | jq -r ".data.data.android_release_keystore_password")
-          echo $PWD
           cat <<EOF > key.properties
           keyAlias=release
           keyPassword=${KEYSTORE_PASSWORD}
@@ -110,10 +109,6 @@ jobs:
           export LANG=en_US.UTF-8
           source /Users/dime/.bash_profile
 
-          gradle wrapper -p android/
-          cp key.properties android/
-          cp /Users/dime/google-services.json ./android/app/
-
           cat <<EOF > ./android/local.properties
           sdk.dir=/Users/dime/Library/Android/sdk
           flutter.sdk=/opt/flutter
@@ -122,7 +117,11 @@ jobs:
           flutter.versionCode=1
           EOF
 
-          cd ${{ inputs.platform }}
+          mv key.properties ./android/
+          cp /Users/dime/google-services.json ./android/app/
+
+          cd android
+          gradle wrapper
           bundle install
 
       - name: Build app
