@@ -62,6 +62,7 @@ jobs:
           DATA=$(curl -H "X-VAULT-TOKEN:$TOKEN" https:/vault.mydime.tech/v1/infrastructure/data/mac-mini-01)
 
           export KEYSTORE_PASSWORD=$(echo $DATA | jq -r ".data.data.android_release_keystore_password")
+          echo $PWD
           cat <<EOF > key.properties
           keyAlias=release
           keyPassword=${KEYSTORE_PASSWORD}
@@ -91,8 +92,20 @@ jobs:
         with:
           name: dime_app_${{ inputs.target_env }}_${{ github.sha }}
       # - run: curl -X DELETE -H "Accept:application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/actions/artifacts/ARTIFACT_ID
-      - run: cp /Users/dime/google-services.json ./android/app/
+      - name: Set up for android
         if: ${{ inputs.platform == 'android' }}
+        run: |
+          gradle wrapper -p android/
+          cp key.properties android/
+          cp /Users/dime/google-services.json ./android/app/
+
+          cat <<EOF > android/local.properties
+          sdk.dir=$HOME/Library/Android/sdk
+          flutter.sdk=/opt/flutter
+          flutter.buildMode=debug
+          flutter.versionName=1.0.0
+          flutter.versionCode=1
+          EOF
       - name: setup bundler
         run: |
           export PATH=$PATH:/opt/homebrew/bin
@@ -102,16 +115,6 @@ jobs:
             password x-oauth-basic
           EOF
           chmod 600 $HOME/.netrc
-
-          cat <<EOF > android/local.properties
-          sdk.dir=$HOME/Library/Android/sdk
-          flutter.sdk=/opt/flutter
-          flutter.buildMode=debug
-          flutter.versionName=1.0.0
-          flutter.versionCode=1
-          EOF
-          gradle wrapper -p android/
-          cp key.properties android/
 
           export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
           source /Users/dime/.bash_profile
