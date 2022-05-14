@@ -136,7 +136,6 @@ jobs:
           flutter build appbundle --flavor dev
 
           cd ${{ inputs.platform }}
-          bundle update fastlane
           bundle exec fastlane -v
           bundle exec fastlane update_plugins
           bundle exec fastlane ${{ env.LANE }}
