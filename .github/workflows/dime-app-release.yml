@@ -101,6 +101,8 @@ jobs:
             password x-oauth-basic
           EOF
           chmod 600 $HOME/.netrc
+
+          make gen-config-${{ inputs.target_env }}
       - name: Set up for android
         if: ${{ inputs.platform == 'android' }}
         run: |
@@ -132,10 +134,6 @@ jobs:
           export LC_ALL=en_US.UTF-8
           export LANG=en_US.UTF-8
           source /Users/dime/.bash_profile
-          make gen-config-${{ inputs.target_env }}
-
-          echo '### build bundle ###'
-          flutter build appbundle --flavor ${{ inputs.target_env }}
 
           cd ${{ inputs.platform }}
           bundle update fastlane
