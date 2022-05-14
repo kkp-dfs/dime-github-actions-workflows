@@ -29,7 +29,7 @@ on:
 
 jobs:
   prepare:
-    name: Prepare environment secret file
+    name: Prepare essential files
     runs-on: [self-hosted, linux, main, deployment]
     steps:
       - name: Clean workspace
@@ -79,7 +79,7 @@ jobs:
           retention-days: 1
 
   get_code:
-    name: Get source code and generate config
+    name: Get & generate code
     runs-on: [self-hosted, macOS]
     needs: [prepare]
     env:
@@ -108,7 +108,7 @@ jobs:
           make gen-config-${{ inputs.target_env }}
 
   build_android:
-    name: Build and Distribute Android application
+    name: Android build and release
     runs-on: [self-hosted, macOS]
     needs: [get_code]
     if: ${{ inputs.platform == 'android' || inputs.platform == 'both' }}
@@ -143,7 +143,7 @@ jobs:
           bundle exec fastlane android_${{ inputs.target_env }}_app
 
   build_ios:
-    name: Build and Distribute IOS application
+    name: IOS build & release
     runs-on: [self-hosted, macOS]
     needs: [get_code]
     if: ${{ inputs.platform == 'ios' || inputs.platform == 'both'  }}
