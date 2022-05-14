@@ -80,10 +80,6 @@ jobs:
     name: ${{ inputs.platform }}_${{ inputs.target_env }}_app
     runs-on: [self-hosted, macOS]
     needs: [prepare]
-    env:
-      RBENV_VERSION: 2.7.5
-      LC_ALL: en_US.UTF-8
-      LANG: en_US.UTF-8
     steps:
       - uses: kkp-dfs/dime-github-actions-workflows/checkout@main
         with:
@@ -105,12 +101,15 @@ jobs:
             password x-oauth-basic
           EOF
           chmod 600 $HOME/.netrc
-          source /Users/dime/.bash_profile
-          make gen-config-${{ inputs.target_env }}
       - name: Set up for android
         if: ${{ inputs.platform == 'android' }}
         run: |
           export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
+          export RBENV_VERSION=2.7.5
+          export LC_ALL=en_US.UTF-8
+          export LANG=en_US.UTF-8
+          source /Users/dime/.bash_profile
+
           gradle wrapper -p android/
           cp key.properties android/
           cp /Users/dime/google-services.json ./android/app/
@@ -126,12 +125,17 @@ jobs:
           cd ${{ inputs.platform }}
           bundle install
 
-          echo '### build bundle ###'
-          cd ..
-          flutter build appbundle --flavor dev
       - name: Build app
         run: |
           export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
+          export RBENV_VERSION=2.7.5
+          export LC_ALL=en_US.UTF-8
+          export LANG=en_US.UTF-8
+          make gen-config-${{ inputs.target_env }}
+
+          echo '### build bundle ###'
+          flutter build appbundle --flavor dev
+
           cd ${{ inputs.platform }}
           bundle update fastlane
           bundle exec fastlane -v
