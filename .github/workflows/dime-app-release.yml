@@ -18,9 +18,10 @@ on:
         type: string
         default: ${{ github.base_ref || 'main' }}
       platform:
-        description: ios or android
+        description: ios or android or both
         type: string
-        required: true
+        required: false
+        default: both
 
     secrets:
       gh_access_token:
@@ -31,14 +32,13 @@ jobs:
     name: Prepare environment secret file
     runs-on: [self-hosted, linux, main, deployment]
     steps:
-      - uses: AutoModality/action-clean@v1
-      - uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+      - name: Clean workspace
+        uses: AutoModality/action-clean@v1
+      - name: Checkout code
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
-      - uses: kkp-dfs/dime-github-actions-workflows/common@main
-        with:
-          gh_access_token: ${{ inputs.gh_access_token }}
       - name: Generate environment secret file
         run: |
           JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
@@ -69,49 +69,52 @@ jobs:
           storeFile=/Users/dime/.android/release.keystore
           storePassword=${KEYSTORE_PASSWORD}
           EOF
-      - uses: actions/upload-artifact@v3
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
         with:
           name: dime_app_${{ inputs.target_env }}_${{ github.sha }}
           path: |
             environment_secret_${{ inputs.target_env }}.yaml
             key.properties
           retention-days: 1
-  fastlane_build:
-    name: Build ${{ inputs.platform }}
+
+  get_code:
+    name: Get source code and generate config
     runs-on: [self-hosted, macOS]
     needs: [prepare]
+    env:
+      GITHUB_TOKEN: ${{ secrets.gh_access_token }}
     steps:
-      - uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+      - name: Checkout code
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
         with:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
-      - uses: kkp-dfs/dime-github-actions-workflows/common@main
+      - name: Common preparation
+        uses: kkp-dfs/dime-github-actions-workflows/common@main
         with:
           gh_access_token: ${{ inputs.gh_access_token }}
-      - uses: actions/download-artifact@v3
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
         with:
           name: dime_app_${{ inputs.target_env }}_${{ github.sha }}
-      # - run: curl -X DELETE -H "Accept:application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/actions/artifacts/ARTIFACT_ID
-      - name: General set up
-        run: |
-          export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
-          cat <<EOF > $HOME/.netrc
-          machine github.com
-            login ${{ secrets.gh_access_token }}
-            password x-oauth-basic
-          EOF
-          chmod 600 $HOME/.netrc
-
-          make gen-config-${{ inputs.target_env }}
-      - name: Set up for android
-        if: ${{ inputs.platform == 'android' }}
+      - name: Generate config and secret
         run: |
           export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
           export RBENV_VERSION=2.7.5
           export LC_ALL=en_US.UTF-8
           export LANG=en_US.UTF-8
           source /Users/dime/.bash_profile
+          make gen-config-${{ inputs.target_env }}
 
+  build_android:
+    name: Build and Distribute Android application
+    runs-on: [self-hosted, macOS]
+    needs: [get_code]
+    if: ${{ inputs.platform == 'android' || inputs.platform == 'both' }}
+    steps:
+      - name: Create or copy essential file for build and distribute android application
+        run: |
           cat <<EOF > ./android/local.properties
           sdk.dir=/Users/dime/Library/Android/sdk
           flutter.sdk=/opt/flutter
@@ -123,11 +126,7 @@ jobs:
           mv key.properties ./android/
           cp /Users/dime/dime_app_release_files/google-services-${{ inputs.target_env }}.json ./android/app/google-services.json
           cp /Users/dime/dime_app_release_files/service_credentials_${{ inputs.target_env }}.json ./android/app/src/${{ inputs.target_env }}/service_credentials.json
-
-          cd android
-          gradle wrapper
-          bundle install
-      - name: Build app
+      - name: Build and distribute application
         run: |
           export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
           export RBENV_VERSION=2.7.5
@@ -135,11 +134,31 @@ jobs:
           export LANG=en_US.UTF-8
           source /Users/dime/.bash_profile
 
-          cd ${{ inputs.platform }}
+          cd android
+          gradle wrapper
+          bundle install
           bundle update fastlane
           bundle exec fastlane -v
           bundle exec fastlane update_plugins
-          bundle exec fastlane ${{ env.LANE }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.gh_access_token }}
-          LANE: '${{ inputs.platform }}_${{ inputs.target_env }}_app'
+          bundle exec fastlane android_${{ inputs.target_env }}_app
+
+  build_ios:
+    name: Build and Distribute IOS application
+    runs-on: [self-hosted, macOS]
+    needs: [get_code]
+    if: ${{ inputs.platform == 'ios' || inputs.platform == 'both'  }}
+    steps:
+      - name: Build and distribute application
+        run: |
+          export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
+          export RBENV_VERSION=2.7.5
+          export LC_ALL=en_US.UTF-8
+          export LANG=en_US.UTF-8
+          source /Users/dime/.bash_profile
+
+          cd ios
+          bundle install
+          bundle update fastlane
+          bundle exec fastlane -v
+          bundle exec fastlane update_plugins
+          bundle exec fastlane ios_${{ inputs.target_env }}_app
