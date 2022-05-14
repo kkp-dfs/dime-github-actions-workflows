@@ -54,10 +54,26 @@ jobs:
           curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-`uname -s`-`uname -m` -o envsubst
           chmod +x envsubst
           ./envsubst < environment_secret_template.yaml > environment_secret_${{ inputs.target_env }}.yaml
+      - name: Create key properties
+        run: |
+          JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
+          TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/dime-main/login | jq -r '.auth.client_token')
+          DATA=$(curl -H "X-VAULT-TOKEN:$TOKEN" https:/vault.mydime.tech/v1/infrastructure/data/mac-mini-01)
+
+          export KEYSTORE_PASSWORD=$(echo $DATA | jq -r ".data.data.android_release_keystore_password")
+          cat <<EOF > key.properties
+          keyAlias=release
+          keyPassword=${KEYSTORE_PASSWORD}
+          storeFile=${HOME}/.android/release.keystore
+          storePassword=${KEYSTORE_PASSWORD}
+          EOF
       - uses: actions/upload-artifact@v3
         with:
-          name: environment_secret_${{ inputs.target_env }}_${{ github.sha }}
-          path: environment_secret_${{ inputs.target_env }}.yaml
+          name: dime_app_${{ inputs.target_env }}_${{ github.sha }}
+          path: |
+            environment_secret_${{ inputs.target_env }}.yaml
+            key.properties
           retention-days: 1
   fastlane_build:
     name: ${{ inputs.platform }}_${{ inputs.target_env }}_app
@@ -73,7 +89,7 @@ jobs:
           gh_access_token: ${{ inputs.gh_access_token }}
       - uses: actions/download-artifact@v3
         with:
-          name: environment_secret_${{ inputs.target_env }}_${{ github.sha }}
+          name: dime_app_${{ inputs.target_env }}_${{ github.sha }}
       # - run: curl -X DELETE -H "Accept:application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/actions/artifacts/ARTIFACT_ID
       - run: cp /Users/dime/google-services.json ./android/app/
         if: ${{ inputs.platform == 'android' }}
@@ -94,7 +110,8 @@ jobs:
           flutter.versionName=1.0.0
           flutter.versionCode=1
           EOF
-          gradle wrapper -p android
+          gradle wrapper -p android/
+          cp key.properties android/
 
           export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
           source /Users/dime/.bash_profile
