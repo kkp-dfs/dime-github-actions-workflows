@@ -76,7 +76,7 @@ jobs:
             key.properties
           retention-days: 1
   fastlane_build:
-    name: ${{ inputs.platform }}_${{ inputs.target_env }}_app
+    name: Build ${{ inputs.platform }}
     runs-on: [self-hosted, macOS]
     needs: [prepare]
     steps:
@@ -123,13 +123,13 @@ jobs:
           cd android
           gradle wrapper
           bundle install
-
       - name: Build app
         run: |
           export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
           export RBENV_VERSION=2.7.5
           export LC_ALL=en_US.UTF-8
           export LANG=en_US.UTF-8
+          source /Users/dime/.bash_profile
           make gen-config-${{ inputs.target_env }}
 
           echo '### build bundle ###'
