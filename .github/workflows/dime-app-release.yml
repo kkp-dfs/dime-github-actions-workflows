@@ -135,7 +135,7 @@ jobs:
           make gen-config-${{ inputs.target_env }}
 
           echo '### build bundle ###'
-          flutter build appbundle --flavor dev
+          flutter build appbundle --flavor ${{ inputs.target_env }}
 
           cd ${{ inputs.platform }}
           bundle update fastlane
