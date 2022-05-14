@@ -66,7 +66,7 @@ jobs:
           cat <<EOF > key.properties
           keyAlias=release
           keyPassword=${KEYSTORE_PASSWORD}
-          storeFile=${HOME}/.android/release.keystore
+          storeFile=/Users/dime/.android/release.keystore
           storePassword=${KEYSTORE_PASSWORD}
           EOF
       - uses: actions/upload-artifact@v3
@@ -92,23 +92,8 @@ jobs:
         with:
           name: dime_app_${{ inputs.target_env }}_${{ github.sha }}
       # - run: curl -X DELETE -H "Accept:application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/actions/artifacts/ARTIFACT_ID
-      - name: Set up for android
-        if: ${{ inputs.platform == 'android' }}
+      - name: General set up
         run: |
-          gradle wrapper -p android/
-          cp key.properties android/
-          cp /Users/dime/google-services.json ./android/app/
-
-          cat <<EOF > android/local.properties
-          sdk.dir=$HOME/Library/Android/sdk
-          flutter.sdk=/opt/flutter
-          flutter.buildMode=debug
-          flutter.versionName=1.0.0
-          flutter.versionCode=1
-          EOF
-      - name: setup bundler
-        run: |
-          export PATH=$PATH:/opt/homebrew/bin
           cat <<EOF > $HOME/.netrc
           machine github.com
             login ${{ secrets.gh_access_token }}
@@ -116,27 +101,37 @@ jobs:
           EOF
           chmod 600 $HOME/.netrc
 
-          export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
           source /Users/dime/.bash_profile
+          export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
           export RBENV_VERSION=2.7.5
           export LC_ALL=en_US.UTF-8
           export LANG=en_US.UTF-8
 
-          echo '### Check versions ###'
-          ruby -v
-          gem -v
-          bundle -v
-          flutter --version
-
           echo '### Setup environment ###'
           make gen-config-${{ inputs.target_env }}
+      - name: Set up for android
+        if: ${{ inputs.platform == 'android' }}
+        run: |
+          gradle wrapper -p android/
+          cp key.properties android/
+          cp /Users/dime/google-services.json ./android/app/
+
+          cat <<EOF > ./android/local.properties
+          sdk.dir=/Users/dime/Library/Android/sdk
+          flutter.sdk=/opt/flutter
+          flutter.buildMode=debug
+          flutter.versionName=1.0.0
+          flutter.versionCode=1
+          EOF
+
           cd ${{ inputs.platform }}
           bundle install
 
           echo '### build bundle ###'
           cd ..
           flutter build appbundle --flavor dev
-
+      - name: build app
+        run: |
           echo '### Start building app ###'
           cd ${{ inputs.platform }}
           bundle update fastlane
