@@ -121,8 +121,14 @@ jobs:
     needs: [get_code]
     if: ${{ inputs.platform == 'android' || inputs.platform == 'both' }}
     steps:
-      - name: Create or copy essential file for build and distribute android application
+      - name: Build and distribute application
         run: |
+          export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
+          export RBENV_VERSION=2.7.5
+          export LC_ALL=en_US.UTF-8
+          export LANG=en_US.UTF-8
+          source /Users/dime/.bash_profile
+
           cat <<EOF > ./android/local.properties
           sdk.dir=/Users/dime/Library/Android/sdk
           flutter.sdk=/opt/flutter
@@ -134,14 +140,7 @@ jobs:
           mv key.properties ./android/
           cp /Users/dime/dime_app_release_files/google-services-${{ inputs.target_env }}.json ./android/app/google-services.json
           cp /Users/dime/dime_app_release_files/service_credentials_${{ inputs.target_env }}.json ./android/app/src/${{ inputs.target_env }}/service_credentials.json
-      - name: Build and distribute application
-        run: |
-          export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
-          export RBENV_VERSION=2.7.5
-          export LC_ALL=en_US.UTF-8
-          export LANG=en_US.UTF-8
-          source /Users/dime/.bash_profile
-
+      
           cd android
           gradle wrapper
           bundle install
@@ -164,9 +163,11 @@ jobs:
           export LANG=en_US.UTF-8
           export FASTLANE_PASSWORD=${{ secrets.fastlane_password }}
           source /Users/dime/.bash_profile
+
           cp /Users/dime/dime_app_release_files/apple.p8 ./ios/fastlane/apple.p8
 
           cd ios
+          pod install
           bundle install
           bundle update fastlane
           bundle exec fastlane -v
