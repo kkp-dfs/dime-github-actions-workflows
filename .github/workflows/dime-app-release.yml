@@ -25,7 +25,7 @@ on:
       release_version:
         description: App release version
         type: string
-        required: true
+        required: false
         default: 1.0.0
 
     secrets:
@@ -140,7 +140,6 @@ jobs:
           export RBENV_VERSION=2.7.5
           export LC_ALL=en_US.UTF-8
           export LANG=en_US.UTF-8
-          export FASTLANE_PASSWORD=${{ secrets.fastlane_password }}
           source /Users/dime/.bash_profile
 
           cd android
@@ -163,6 +162,7 @@ jobs:
           export RBENV_VERSION=2.7.5
           export LC_ALL=en_US.UTF-8
           export LANG=en_US.UTF-8
+          export FASTLANE_PASSWORD=${{ secrets.fastlane_password }}
           source /Users/dime/.bash_profile
 
           cd ios
