@@ -22,9 +22,16 @@ on:
         type: string
         required: false
         default: both
+      release_version:
+        description: App release version
+        type: string
+        required: true
+        default: 1.0.0
 
     secrets:
       gh_access_token:
+        required: true
+      fastlane_password:
         required: true
 
 jobs:
@@ -105,6 +112,7 @@ jobs:
           export LC_ALL=en_US.UTF-8
           export LANG=en_US.UTF-8
           source /Users/dime/.bash_profile
+          sed -e 's/version: 1.0.0+1/version: ${{ inputs.release_version }}+1/g'
           make gen-config-${{ inputs.target_env }}
 
   build_android:
@@ -132,6 +140,7 @@ jobs:
           export RBENV_VERSION=2.7.5
           export LC_ALL=en_US.UTF-8
           export LANG=en_US.UTF-8
+          export FASTLANE_PASSWORD=${{ secrets.fastlane_password }}
           source /Users/dime/.bash_profile
 
           cd android
