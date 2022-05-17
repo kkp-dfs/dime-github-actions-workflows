@@ -164,6 +164,7 @@ jobs:
           export LANG=en_US.UTF-8
           export FASTLANE_PASSWORD=${{ secrets.fastlane_password }}
           source /Users/dime/.bash_profile
+          cp /Users/dime/dime_app_release_files/apple.p8 ./ios/fastlane/apple.p8
 
           cd ios
           bundle install
