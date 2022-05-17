@@ -34,21 +34,10 @@ on:
         required: true
 
 jobs:
-  analyze:
-    name: Run analyze
-    runs-on: [self-hosted, flutter-action-runner]
-    continue-on-error: true
+  prepare:
+    name: Preparation
+    runs-on: [self-hosted, linux, main]
     steps:
-      - name: Setup flutter
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-        with:
-          language: flutter
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
       - name: Generate environment secret file
         run: |
           JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
@@ -66,7 +55,32 @@ jobs:
           curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-`uname -s`-`uname -m` -o envsubst
           chmod +x envsubst
           ./envsubst < environment_secret_template.yaml > environment_secret_sit.yaml
-          make gen-config-sit
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dime-app-artifact
+          path: environment_secret_sit.yaml
+  analyze:
+    name: Run analyze
+    runs-on: [self-hosted, flutter-action-runner]
+    continue-on-error: true
+    steps:
+      - name: Setup flutter
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        with:
+          language: flutter
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dime-app-artifact
+      - name: Generate config and secret
+        run: make gen-config-sit
       - uses: kkp-dfs/dime-github-actions-workflows/lint@main
         with:
           language: flutter
@@ -88,24 +102,12 @@ jobs:
           go_version: ${{ inputs.go-version }}
           node_version: ${{ inputs.node-version }}
           gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Generate environment secret file
-        run: |
-          JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-          echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
-          TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/dime-main/login | jq -r '.auth.client_token')
-          DATA=$(curl -H "X-VAULT-TOKEN:$TOKEN" https:/vault.mydime.tech/v1/secrets/data/services/dime-app/testing)
-
-          export DIRECTUS_ACCESS_TOKEN=$(echo $DATA | jq -r ".data.data.DIRECTUS_ACCESS_TOKEN")
-          export PASSWORD_HASHING_SALT=$(echo $DATA | jq -r ".data.data.PASSWORD_HASHING_SALT")
-          export SECURE_ED25519_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SECURE_ED25519_PUBLIC_KEY")
-          export SECURE_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SECURE_RSA_PUBLIC_KEY")
-          export SIGN_IN_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SIGN_IN_RSA_PUBLIC_KEY")
-          export PATH=/opt/flutter/bin:$PATH
-
-          curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-`uname -s`-`uname -m` -o envsubst
-          chmod +x envsubst
-          ./envsubst < environment_secret_template.yaml > environment_secret_sit.yaml
-          make gen-config-sit
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dime-app-artifact
+      - name: Generate config and secret
+        run: make gen-config-sit
       - name: Run unit tests
         uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
         with:
@@ -115,6 +117,34 @@ jobs:
           slack_channel: ${{ inputs.slack_channel }}
           slack_webhook: ${{ secrets.slack_webhook }}
           coverage_file: coverage/lcov.info
+
+  integration-test:
+    name: Run integration test
+    runs-on: [self-hosted, macos]
+    strategy:
+      matrix:
+        platform: [android, iso]
+    continue-on-error: true
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dime-app-artifact
+      - name: Generate config and secret
+        run: make gen-config-sit
+      - name: Get flutter device
+        id: device
+        run: |
+          DEVICE_ID=$(flutter devices | grep ${{ matrix.platform }} | awk -F• '{ print $2 }' | sed -e 's/ //g')
+          echo "::set-output name=id::$DEVICE_ID"
+      - name: Run test
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@flutter-integration-test
+        with:
+          environment: sit
+          device: ${{ steps.device.id }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
   mobsfscan:
     runs-on: ubuntu-latest
