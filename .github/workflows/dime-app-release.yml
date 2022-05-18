@@ -113,6 +113,7 @@ jobs:
           export LANG=en_US.UTF-8
           source /Users/dime/.bash_profile
           sed -e 's/version: 1.0.0+1/version: ${{ inputs.release_version }}+1/g'
+          flutter clean
           make gen-config-${{ inputs.target_env }}
 
   build_android:
