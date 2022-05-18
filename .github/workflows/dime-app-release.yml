@@ -169,6 +169,7 @@ jobs:
           cd ios
           bundle install
           bundle update fastlane
+          arch -x86_64 pod update Firebase/RemoteConfig
           pod install
           bundle exec fastlane -v
           bundle exec fastlane update_plugins
