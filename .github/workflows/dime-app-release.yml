@@ -165,7 +165,6 @@ jobs:
           source /Users/dime/.bash_profile
 
           cp /Users/dime/dime_app_release_files/apple.p8 ./ios/fastlane/apple.p8
-          flutter build ios --flavor sit
 
           cd ios
           bundle install
