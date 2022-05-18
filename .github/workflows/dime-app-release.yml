@@ -165,7 +165,7 @@ jobs:
           source /Users/dime/.bash_profile
 
           cp /Users/dime/dime_app_release_files/apple.p8 ./ios/fastlane/apple.p8
-          cp /Users/dime/dime_app_release_files/GoogleService-Info-${{ inputs.target_env }}.plist ./ios/GoogleService-Info-${{ inputs.target_env }}.plist
+          cp /Users/dime/dime_app_release_files/GoogleService-Info-${{ inputs.target_env }}.plist ./ios/GoogleService-Info.plist
 
           cd ios
           bundle install
