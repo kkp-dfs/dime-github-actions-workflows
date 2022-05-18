@@ -163,9 +163,11 @@ jobs:
           export LC_ALL=en_US.UTF-8
           export LANG=en_US.UTF-8
           export FASTLANE_PASSWORD=${{ secrets.fastlane_password }}
+          export VERBOSE_SCRIPT_LOGGING=true
           source /Users/dime/.bash_profile
 
           cp /Users/dime/dime_app_release_files/apple.p8 ./ios/fastlane/apple.p8
+          cp /Users/dime/dime_app_release_files/GoogleService-Info-${{ inputs.target_env }}.plist ./ios/
           cp /Users/dime/dime_app_release_files/GoogleService-Info-${{ inputs.target_env }}.plist ./ios/GoogleService-Info.plist
           cp /Users/dime/dime_app_release_files/service_credentials_${{ inputs.target_env }}.json ./ios/service_credentials.json
 
