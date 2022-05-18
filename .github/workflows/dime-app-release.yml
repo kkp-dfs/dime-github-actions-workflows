@@ -158,7 +158,7 @@ jobs:
     steps:
       - name: Build and distribute application
         run: |
-          export PATH=/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin:$PATH
+          export PATH=$PATH:/opt/homebrew/opt/openjdk/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/opt/flutter/bin
           export RBENV_VERSION=2.7.5
           export LC_ALL=en_US.UTF-8
           export LANG=en_US.UTF-8
@@ -167,6 +167,7 @@ jobs:
 
           cp /Users/dime/dime_app_release_files/apple.p8 ./ios/fastlane/apple.p8
           cp /Users/dime/dime_app_release_files/GoogleService-Info-${{ inputs.target_env }}.plist ./ios/GoogleService-Info.plist
+          cp /Users/dime/dime_app_release_files/service_credentials_${{ inputs.target_env }}.json ./ios/service_credentials.json
 
           cd ios
           bundle install
