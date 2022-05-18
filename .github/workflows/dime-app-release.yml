@@ -169,6 +169,7 @@ jobs:
           cd ios
           bundle install
           bundle update fastlane
+          pod install
           bundle exec fastlane -v
           bundle exec fastlane update_plugins
           bundle exec fastlane ios_${{ inputs.target_env }}_app
