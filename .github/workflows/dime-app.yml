@@ -58,6 +58,7 @@ jobs:
 
           export DIRECTUS_ACCESS_TOKEN=$(echo $DATA | jq -r ".data.data.DIRECTUS_ACCESS_TOKEN")
           export PASSWORD_HASHING_SALT=$(echo $DATA | jq -r ".data.data.PASSWORD_HASHING_SALT")
+          export PIN_ENCRYPTION_KEY=$(echo $DATA | jq -r ".data.data.PIN_ENCRYPTION_KEY")
           export SECURE_ED25519_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SECURE_ED25519_PUBLIC_KEY")
           export SECURE_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SECURE_RSA_PUBLIC_KEY")
           export SIGN_IN_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SIGN_IN_RSA_PUBLIC_KEY")
@@ -97,6 +98,7 @@ jobs:
 
           export DIRECTUS_ACCESS_TOKEN=$(echo $DATA | jq -r ".data.data.DIRECTUS_ACCESS_TOKEN")
           export PASSWORD_HASHING_SALT=$(echo $DATA | jq -r ".data.data.PASSWORD_HASHING_SALT")
+          export PIN_ENCRYPTION_KEY=$(echo $DATA | jq -r ".data.data.PIN_ENCRYPTION_KEY")
           export SECURE_ED25519_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SECURE_ED25519_PUBLIC_KEY")
           export SECURE_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SECURE_RSA_PUBLIC_KEY")
           export SIGN_IN_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SIGN_IN_RSA_PUBLIC_KEY")
