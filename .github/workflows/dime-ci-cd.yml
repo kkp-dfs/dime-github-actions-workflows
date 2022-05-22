@@ -377,7 +377,8 @@ jobs:
     continue-on-error: true
     steps:
       - name: Trigger jenkins job
-        uses: kkp-dfs/dime-github-actions-workflows/jenkins-trigger@jenkins-action
+        uses: jabbukka/jenkins-trigger@main
+        # uses: kkp-dfs/dime-github-actions-workflows/jenkins-trigger@jenkins-action
         with:
           url: http://jenkins.qa.svc.cluster.local:8080
           user_name: parse-kkp
