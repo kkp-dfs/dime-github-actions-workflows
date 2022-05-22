@@ -383,7 +383,12 @@ jobs:
           user_name: jenkins
           api_token: ${{ secrets.jenkins_api_token }}
           job_name: API-E2E
-          parameter: '{"BRANCH":"main","ENVIRONMENT":"sit","TAG":"-i SIT"}'
+          parameter: |
+            {
+              "BRANCH": "main",
+              "ENVIRONMENT": "sit",
+              "TAG": "-i SIT"
+            }
           wait: "true"
           timeout: "1000"
           slack_channel: ${{ inputs.slack_channel }}
