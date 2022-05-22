@@ -35,7 +35,7 @@ runs:
         TOKEN=$(base64 "${{ inputs.user_name }}:${{ inputs.api_token }}")
         curl -v -H "Authorization: Basic $TOKEN" -d '${{ inputs.parameter }}' ${{ inputs.url }}/job/${{ inputs.job_name }}/buildWithParameters
     - name: Waiting for ${{ inputs.job_name }}...
-      if: ${{ inputs.wait == "true" }}
+      if: ${{ inputs.wait == 'true' }}
       shell: bash
       run: |
         TOKEN=$(base64 "${{ inputs.user_name }}:${{ inputs.api_token }}")
