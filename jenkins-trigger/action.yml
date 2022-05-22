@@ -25,21 +25,23 @@ inputs:
     description: 'Timeout (seconds) for github action. Set 600s as default'
     required: false
     default: "600"
+  slack_channel:
+    description: The slack channel that send notification.
+    required: false
+  slack_webhook:
+    description: The slack webhook url
+    required: true
 
 runs:
   using: composite
   steps:
-    - name: Trigger job
-      shell: bash
-      run: |
-        TOKEN=$(echo ${{ inputs.user_name }}:${{ inputs.api_token }} | base64)
-        curl -v -H "Authorization: Basic $TOKEN" -d '${{ inputs.parameter }}' ${{ inputs.url }}/job/${{ inputs.job_name }}/buildWithParameters
-    - name: Waiting for ${{ inputs.job_name }}...
-      if: ${{ inputs.wait == 'true' }}
-      shell: bash
-      run: |
-        TOKEN=$(echo ${{ inputs.user_name }}:${{ inputs.api_token }} | base64)
-        TIMEOUT=$(date '+%s')
-        curl -v -H "Authorization: Basic $TOKEN" ${{ inputs.url }}/job/${{ inputs.job_name }}/lastBuild/api/json
-        # while [ $TIMEOUT -le `date +%s` ]; do
-        # done
+    - name: Trigger ${{ inputs.job_name }} job
+      uses: jabbukka/jenkins-trigger@main
+      with:
+          url: http://jenkins.qa.svc.cluster.local:8080
+          user_name: parse-kkp
+          api_token: ${{ secrets.jenkins_api_token }}
+          job_name: API-E2E
+          parameter: '{"BRANCH":"main","ENVIRONMENT":"sit","TAG":"-i SIT"}'
+          wait: "true"
+          timeout: "1000"
