@@ -109,6 +109,8 @@ on:
         required: true
       slack_webhook:
         required: true
+      jenkins_api_token:
+        required: true
 
 env:
   GOPRIVATE: github.com/kkp-dfs/*
@@ -364,7 +366,7 @@ jobs:
           directory: ${{ inputs.migrate_dir }}
           schema: ${{ inputs.migrate_schema }}
           helm_ref: ${{ inputs.helm_ref }}
-          gh_access_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          gh_access_token: ${{ secrets.gh_access_token }}
 
   e2e-test:
     name: Run E2E test
@@ -379,7 +381,7 @@ jobs:
         with:
           url: http://jenkins.qa.svc.cluster.local:8080
           user_name: parse-kkp
-          api_token: ${{ secrets.JENKINS_API_TOKEN }}
+          api_token: ${{ secrets.jenkins_api_token }}
           job_name: API-E2E
           parameter: '{"BRANCH":"main","ENVIRONMENT":"sit","TAG":"-i SIT"}'
           wait: "true"
