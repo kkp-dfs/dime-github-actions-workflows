@@ -32,13 +32,13 @@ runs:
     - name: Trigger job
       shell: bash
       run: |
-        TOKEN=$(base64 "${{ inputs.user_name }}:${{ inputs.api_token }}")
+        TOKEN=$(echo "${{ inputs.user_name }}:${{ inputs.api_token }}" | base64)
         curl -v -H "Authorization: Basic $TOKEN" -d '${{ inputs.parameter }}' ${{ inputs.url }}/job/${{ inputs.job_name }}/buildWithParameters
     - name: Waiting for ${{ inputs.job_name }}...
       if: ${{ inputs.wait == 'true' }}
       shell: bash
       run: |
-        TOKEN=$(base64 "${{ inputs.user_name }}:${{ inputs.api_token }}")
+        TOKEN=$(echo "${{ inputs.user_name }}:${{ inputs.api_token }}" | base64)
         TIMEOUT=$(date '+%s')
         curl -v -H "Authorization: Basic $TOKEN" ${{ inputs.url }}/job/${{ inputs.job_name }}/lastBuild/api/json
         # while [ $TIMEOUT -le `date +%s` ]; do
