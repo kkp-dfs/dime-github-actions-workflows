@@ -1,0 +1,45 @@
+name: Jenkins Trigger
+description: Trigger jenkins job
+
+inputs:
+  url:
+    description: 'Jenkins full URL including http/https protocol'
+    required: true
+  user_name: 
+    description: 'User name of Jenkins'
+    required: true
+  api_token:
+    description: 'Jenkins API token'
+    required: true
+  job_name:
+    description: 'Job name'
+    required: true
+  parameter:
+    description: 'Job parameter in JSON format. ex) {"param1":"value1"} '
+    required: false
+  wait:
+    description: 'Waiting for job completion or not'
+    required: false
+    default: "true"
+  timeout:
+    description: 'Timeout (seconds) for github action. Set 600s as default'
+    required: false
+    default: "600"
+
+runs:
+  using: composite
+  steps:
+    - name: Trigger job
+      shell: bash
+      run: |
+        TOKEN=$(base64 "${{ inputs.user_name }}:${{ inputs.api_token }}")
+        curl -v -H "Authorization: Basic $TOKEN" -d '${{ inputs.parameter }}' ${{ inputs.url }}/job/${{ inputs.job_name }}/buildWithParameters
+    - name: Waiting for ${{ inputs.job_name }}...
+      if: ${{ inputs.wait == "true" }}
+      shell: bash
+      run: |
+        TOKEN=$(base64 "${{ inputs.user_name }}:${{ inputs.api_token }}")
+        TIMEOUT=$(date '+%s')
+        curl -v -H "Authorization: Basic $TOKEN" ${{ inputs.url }}/job/${{ inputs.job_name }}/lastBuild/api/json
+        # while [ $TIMEOUT -le `date +%s` ]; do
+        # done
