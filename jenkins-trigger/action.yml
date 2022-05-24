@@ -25,12 +25,6 @@ inputs:
     description: 'Timeout (seconds) for github action. Set 600s as default'
     required: false
     default: "600"
-  slack_channel:
-    description: The slack channel that send notification.
-    required: false
-  slack_webhook:
-    description: The slack webhook url
-    required: true
 
 runs:
   using: composite
@@ -46,91 +40,3 @@ runs:
           parameters: ${{ inputs.parameter }}
           timeout: ${{ inputs.timeout }}
           wait: ${{ inputs.wait }}
-  
-    - id: success_coverage
-      if: ${{ success() }}
-      shell: bash
-      run: |
-        echo "::set-output name=color::#2EB67D"
-        echo "::set-output name=title::${{ inputs.job_name }} testing is PASS"
-
-    - id: fail_coverage
-      if: ${{ failure() }}
-      shell: bash
-      run: |
-        echo "::set-output name=color::#E01E5A"
-        echo "::set-output name=title::${{ inputs.application_name }} testing is FAIL"
-
-    - name: Slack Notification
-      if: ${{ always() }}
-      uses: slackapi/slack-github-action@v1.18.0
-      with:
-        payload: |
-          {
-            "text": "${{ steps.fail_coverage.outputs.title || steps.success_coverage.outputs.title }}",
-            "attachments": [
-              {
-                "color": "${{ steps.fail_coverage.outputs.color || steps.success_coverage.outputs.color }}",
-                "blocks": [
-                  {
-                    "type": "context",
-                    "elements": [
-                      {
-                        "type": "image",
-                        "image_url": "${{ github.event.sender.avatar_url }}",
-                        "alt_text": "${{ github.event.sender.login }}"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "${{ github.event.sender.login }}"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "section",
-                    "text": {
-                      "type": "mrkdwn",
-                      "text": "Jenkins Job: ${{ steps.jenkins.outputs.build_url }}\nBuild log: ${{ steps.jenkins.outputs.build_url }}artifact/log.html"
-                    },
-                    "fields": [
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Repository*"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Event*"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "${{ github.event_name }}"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Ref*"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "*Commit*"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "${{ github.ref_name }}"
-                      },
-                      {
-                        "type": "mrkdwn",
-                        "text": "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-      env:
-        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-        SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook }}

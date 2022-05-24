@@ -392,5 +392,3 @@ jobs:
             }
           wait: "true"
           timeout: "1000"
-          slack_channel: jenkins
-          slack_webhook: ${{ secrets.SLACK_WEBHOOK_JENKINS }}
