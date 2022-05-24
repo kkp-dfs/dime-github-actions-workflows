@@ -39,7 +39,7 @@ runs:
       id: jenkins
       uses: joshlk/jenkins-githubaction@master
       with:
-          url: http://jenkins.qa.svc.cluster.local:8080
+          url: ${{ inputs.url }}
           username: ${{ inputs.user_name }}
           api_token: ${{ inputs.api_token }}
           job_name: ${{ inputs.job_name }}
@@ -90,7 +90,7 @@ runs:
                     "type": "section",
                     "text": {
                       "type": "mrkdwn",
-                      "text": "Jenkins JOB: ${{ steps.jenkins.build_url }}"
+                      "text": "Jenkins Job: ${{ steps.jenkins.outputs.build_url }}"
                     },
                     "fields": [
                       {
