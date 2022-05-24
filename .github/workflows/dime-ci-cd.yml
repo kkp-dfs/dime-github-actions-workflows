@@ -387,7 +387,8 @@ jobs:
             {
               "BRANCH": "main",
               "ENVIRONMENT": "sit",
-              "TAG": "-i SIT"
+              "INCLUDE_TAG": "-i SIT",
+              "EXCLUDE_TAG": "",
             }
           wait: "true"
           timeout: "1000"

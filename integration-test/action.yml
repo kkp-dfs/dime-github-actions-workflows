@@ -214,7 +214,7 @@ runs:
                       },
                       {
                         "type": "mrkdwn",
-                        "text": "<${{ github.server_url }}/${{ github.repository }})|${{ github.repository }}>"
+                        "text": "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"
                       },
                       {
                         "type": "mrkdwn",
@@ -234,7 +234,7 @@ runs:
                       },
                       {
                         "type": "mrkdwn",
-                        "text": "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})|${{ github.sha }}>"
+                        "text": "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
                       }
                     ]
                   }
