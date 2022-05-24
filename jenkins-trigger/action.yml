@@ -90,7 +90,7 @@ runs:
                     "type": "section",
                     "text": {
                       "type": "mrkdwn",
-                      "text": "Jenkins Job: ${{ steps.jenkins.outputs.build_url }}"
+                      "text": "Jenkins Job: ${{ steps.jenkins.outputs.build_url }}\nBuild log: ${{ steps.jenkins.outputs.build_url }}artifact/log.html"
                     },
                     "fields": [
                       {
