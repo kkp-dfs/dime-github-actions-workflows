@@ -266,7 +266,7 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
       - name: Build and push docker image
         id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@jenkins-action
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
@@ -377,7 +377,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Trigger jenkins job
-        uses: kkp-dfs/dime-github-actions-workflows/jenkins-trigger@jenkins-action
+        uses: kkp-dfs/dime-github-actions-workflows/jenkins-trigger@main
         with:
           url: http://jenkins.qa.svc.cluster.local:8080
           user_name: jenkins
