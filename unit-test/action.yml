@@ -54,7 +54,6 @@ runs:
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}
       shell: bash
-      continue-on-error: true
       run: make test
 
     - id: fail_message
@@ -91,7 +90,7 @@ runs:
         name: unittest-coverage-report
         path: ${{ inputs.coverage_file }}
     - name: Upload goldens artifact
-      if: ${{ inputs.language == 'flutter' }}
+      if: ${{ always() && inputs.language == 'flutter' }}
       uses: actions/upload-artifact@v3
       with:
         name: goldens-failures
