@@ -93,7 +93,7 @@ runs:
       if: ${{ inputs.language == 'flutter' }}
       uses: actions/upload-artifact@v3
       with:
-        name: unittest-coverage-report
+        name: goldens-failures
         path: test/failures
 
     - id: success_coverage
