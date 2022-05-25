@@ -385,6 +385,7 @@ jobs:
           job_name: API-E2E
           parameter: >-
             {
+              "TRIGGER": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.repository }}@${{ github.ref_name }}>",
               "BRANCH": "main",
               "ENVIRONMENT": "sit",
               "INCLUDE_TAG": "-i SIT",
