@@ -375,7 +375,7 @@ jobs:
       - deploy
       - db_migration
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ inputs.code_lang == 'golang' }}
+    if: ${{ always() && inputs.code_lang == 'golang' }}
     continue-on-error: true
     steps:
       - name: Trigger jenkins job
