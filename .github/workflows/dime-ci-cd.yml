@@ -109,6 +109,8 @@ on:
         required: true
       slack_webhook:
         required: true
+      jenkins_api_token:
+        required: true
 
 env:
   GOPRIVATE: github.com/kkp-dfs/*
@@ -364,4 +366,32 @@ jobs:
           directory: ${{ inputs.migrate_dir }}
           schema: ${{ inputs.migrate_schema }}
           helm_ref: ${{ inputs.helm_ref }}
-          gh_access_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+  e2e-test:
+    name: Run E2E test
+    needs:
+      - deploy_pr
+      - deploy
+      - db_migration
+    runs-on: [self-hosted, linux, deployment, main]
+    if: ${{ always() && inputs.code_lang == 'golang' }}
+    continue-on-error: true
+    steps:
+      - name: Trigger jenkins job
+        uses: joshlk/jenkins-githubaction@master
+        with:
+          url: http://jenkins.qa.svc.cluster.local:8080
+          username: jenkins
+          api_token: ${{ secrets.jenkins_api_token }}
+          job_name: API-E2E
+          parameters: >-
+            {
+              "TRIGGER": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.repository }}@${{ github.ref_name }}>",
+              "BRANCH": "main",
+              "ENVIRONMENT": "sit",
+              "INCLUDE_TAG": "-i SIT",
+              "EXCLUDE_TAG": ""
+            }
+          wait: "true"
+          timeout: "1000"
