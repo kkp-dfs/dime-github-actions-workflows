@@ -15,7 +15,7 @@ TARGET=$(echo $6 | xargs -I@ echo --target=@)
 
 /kaniko/executor \
     --context=$PWD \
+    --cache \
     $BUILD_ARGS $TARGET $DESTINATIONS
-    # --cache \
 
 echo "::set-output name=image::$3"
