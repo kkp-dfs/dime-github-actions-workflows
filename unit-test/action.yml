@@ -54,6 +54,7 @@ runs:
     - name: Run flutter unit test
       if: ${{ inputs.language == 'flutter' }}
       shell: bash
+      continue-on-error: true
       run: make test
 
     - id: fail_message
