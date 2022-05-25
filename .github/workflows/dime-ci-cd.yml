@@ -110,7 +110,7 @@ on:
       slack_webhook:
         required: true
       jenkins_api_token:
-        required: true
+        required: false
 
 env:
   GOPRIVATE: github.com/kkp-dfs/*
