@@ -89,6 +89,12 @@ runs:
       with:
         name: unittest-coverage-report
         path: ${{ inputs.coverage_file }}
+    - name: Upload goldens artifact
+      if: ${{ inputs.language == 'flutter' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: unittest-coverage-report
+        path: test/failures
 
     - id: success_coverage
       if: ${{ success() }}
