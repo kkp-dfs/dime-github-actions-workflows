@@ -250,7 +250,7 @@ runs:
         SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook }}
 
     - name: Tear down integration test environment
-      if: ${{ always() }}
+      if: ${{ always() && inputs.language == 'golang' }}
       shell: bash
       run: |
         DB_HOST=${{ steps.setup.outputs.db_host }}
