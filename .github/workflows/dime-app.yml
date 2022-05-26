@@ -151,7 +151,7 @@ jobs:
     needs: [prepare]
     strategy:
       matrix:
-        platform: [android, iso]
+        platform: [android, ios]
     continue-on-error: true
     steps:
       - name: Setup flutter
@@ -180,7 +180,7 @@ jobs:
         with:
           language: flutter
           environment: sit
-          device: ${{ steps.device.id }}
+          device: ${{ steps.device.outputs.id }}
           slack_channel: ${{ inputs.slack_channel }}
           slack_webhook: ${{ secrets.slack_webhook }}
           gh_access_token: ${{ secrets.gh_access_token }}
