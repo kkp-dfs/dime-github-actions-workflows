@@ -175,6 +175,14 @@ jobs:
         run: |
           DEVICE_ID=$(flutter devices | grep ${{ matrix.platform }} | awk -F• '{ print $2 }' | sed -e 's/ //g')
           echo "::set-output name=id::$DEVICE_ID"
+      - name: Prepare essential files for each of platform
+        run: |
+          mv key.properties ./android/
+          cp /Users/dime/dime_app_release_files/google-services-sit.json ./android/app/google-services.json
+          cp /Users/dime/dime_app_release_files/service_credentials_sit.json ./android/app/src/sit/service_credentials.json
+          cp /Users/dime/dime_app_release_files/GoogleService-Info-sit.plist ./ios/
+          cp /Users/dime/dime_app_release_files/GoogleService-Info-sit.plist ./ios/GoogleService-Info.plist
+          cp /Users/dime/dime_app_release_files/service_credentials_sit.json ./ios/service_credentials.json
       - name: Run test
         uses: kkp-dfs/dime-github-actions-workflows/integration-test@flutter-integration-test
         with:
