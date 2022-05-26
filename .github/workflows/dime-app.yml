@@ -196,6 +196,7 @@ jobs:
           mv key.properties ./android/
           cp /Users/dime/dime_app_release_files/google-services-sit.json ./android/app/google-services.json
           cp /Users/dime/dime_app_release_files/service_credentials_sit.json ./android/app/src/sit/service_credentials.json
+          cp /Users/dime/dime_app_release_files/debug-key.jks ./android/app/debug-key.jks
           cp /Users/dime/dime_app_release_files/GoogleService-Info-sit.plist ./ios/
           cp /Users/dime/dime_app_release_files/GoogleService-Info-sit.plist ./ios/GoogleService-Info.plist
           cp /Users/dime/dime_app_release_files/service_credentials_sit.json ./ios/service_credentials.json
