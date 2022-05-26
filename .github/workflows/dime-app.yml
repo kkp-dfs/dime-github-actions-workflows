@@ -43,7 +43,7 @@ jobs:
           repository: ${{ inputs.repository }}
           base_ref: ${{ inputs.base_ref }}
           target_ref: ${{ inputs.target_ref }}
-      - name: Generate environment secret file
+      - name: Generate secret files
         run: |
           JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
           echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
@@ -61,11 +61,27 @@ jobs:
           curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-`uname -s`-`uname -m` -o envsubst
           chmod +x envsubst
           ./envsubst < environment_secret_template.yaml > environment_secret_sit.yaml
-      - name: Upload artifact
+      - name: Create key properties
+        run: |
+          JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
+          TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/dime-main/login | jq -r '.auth.client_token')
+          DATA=$(curl -H "X-VAULT-TOKEN:$TOKEN" https:/vault.mydime.tech/v1/infrastructure/data/mac-mini-01)
+          export KEYSTORE_PASSWORD=$(echo $DATA | jq -r ".data.data.android_release_keystore_password")
+          cat <<EOF > key.properties
+          keyAlias=release
+          keyPassword=${KEYSTORE_PASSWORD}
+          storeFile=/Users/dime/.android/release.keystore
+          storePassword=${KEYSTORE_PASSWORD}
+          EOF
+      - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: dime-app-artifact
-          path: environment_secret_sit.yaml
+          path: |
+            environment_secret_sit.yaml
+            key.properties
+          retention-days: 1
   analyze:
     name: Run analyze
     runs-on: [self-hosted, flutter-action-runner]
