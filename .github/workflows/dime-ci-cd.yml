@@ -370,12 +370,9 @@ jobs:
 
   e2e-test:
     name: Run E2E test
-    needs:
-      - deploy_pr
-      - deploy
-      - db_migration
+    needs: [deploy]
     runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ always() && inputs.code_lang == 'golang' }}
+    if: ${{ inputs.code_lang == 'golang' }}
     continue-on-error: true
     steps:
       - name: Trigger jenkins job
