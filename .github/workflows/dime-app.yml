@@ -167,7 +167,7 @@ jobs:
     needs: [prepare]
     strategy:
       matrix:
-        platform: [android, ios]
+        platform: [android]
     continue-on-error: true
     steps:
       - name: Setup flutter
