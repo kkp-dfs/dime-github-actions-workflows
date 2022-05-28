@@ -3,6 +3,11 @@ name: Dime App workflow
 on:
   workflow_call:
     inputs:
+      platform:
+        description: Platform to run integration tests
+        required: false
+        type: string
+        default: android,ios
       repository:
         description: The owner and repository name
         required: false
@@ -86,9 +91,9 @@ jobs:
     strategy:
       matrix:
         platform: [android]
-    continue-on-error: true
     steps:
       - name: Setup flutter
+        if: ${{ contains(inputs.platform, matrix.platform) }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
         with:
           language: flutter
@@ -97,17 +102,21 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
           gh_access_token: ${{ secrets.gh_access_token }}
       - name: Download artifact
+        if: ${{ contains(inputs.platform, matrix.platform) }}
         uses: actions/download-artifact@v3
         with:
           name: dime-app-artifact
       - name: Generate config and secret
+        if: ${{ contains(inputs.platform, matrix.platform) }}
         run: make gen-config-sit
       - name: Get flutter device
         id: device
+        if: ${{ contains(inputs.platform, matrix.platform) }}
         run: |
           DEVICE_ID=$(flutter devices | grep ${{ matrix.platform }} | awk -F• '{ print $2 }' | sed -e 's/ //g')
           echo "::set-output name=id::$DEVICE_ID"
       - name: Prepare essential files for each of platform
+        if: ${{ contains(inputs.platform, matrix.platform) }}
         run: |
           mv key.properties ./android/
           cp /Users/dime/dime_app_release_files/google-services-sit.json ./android/app/google-services.json
@@ -117,6 +126,7 @@ jobs:
           cp /Users/dime/dime_app_release_files/GoogleService-Info-sit.plist ./ios/GoogleService-Info.plist
           cp /Users/dime/dime_app_release_files/service_credentials_sit.json ./ios/service_credentials.json
       - name: Run test
+        if: ${{ contains(inputs.platform, matrix.platform) }}
         uses: kkp-dfs/dime-github-actions-workflows/integration-test@flutter-integration-test
         with:
           language: flutter
