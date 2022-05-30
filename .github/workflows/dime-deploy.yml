@@ -1,0 +1,184 @@
+name: Dime Service Deploy Workflows
+
+on:
+  workflow_call:
+    inputs:
+      helm_ref:
+        description: commit reference of helm repository
+        required: false
+        type: string
+        default: main
+      image_repo:
+        description: Docker image repository
+        required: true
+        type: string
+      image_tag:
+        description: Docker image's tag
+        required: true
+        type: string
+        default: latest
+      environment:
+        description: Environment that would like to deploy services
+        required: true
+        default: sit
+        type: string
+      cluster_prefix:
+        description: cluster prefix
+        required: false
+        type: string
+        default: dime
+      hostname:
+        description: The hostname of the application service
+        required: true
+        type: string
+      additional_hostnames:
+        description: The additional hostnames of the application service
+        required: false
+        type: string
+        default: ""
+      code_lang:
+        description: The program language of this repository
+        required: true
+        type: string
+      namespace:
+        description: The namespace of destination
+        required: false
+        type: string
+        default: dime
+      application_name:
+        description: Name of application
+        required: true
+        type: string   
+      slack_channel:
+        description: The slack channel that send notification.
+        type: string
+        required: true
+      migration:
+        description: Enable/disable to run database migration job
+        type: boolean
+        required: false
+        default: false
+      migrate_dir:
+        description: Specify the directory containing migration files
+        type: string
+        required: false
+        default: ./db/migrations
+      migrate_schema:
+        description: Specify the schema file location
+        type: string
+        required: false
+        default: ./db/schema.sql
+
+    secrets:
+      gh_access_token:
+        required: true
+      slack_webhook:
+        required: true
+      jenkins_api_token:
+        required: false
+
+jobs:
+  setup:
+    name: Get ECR and paramaters
+    runs-on: [self-hosted, linux, main, deployment]
+    outputs:
+      ecr_token: ${{ steps.ecr.outputs.token }}
+      ecr_repository: ${{ steps.ecr.outputs.repository }}
+      ecr_username: ${{ steps.ecr.outputs.username }}
+      ecr_password: ${{ steps.ecr.outputs.password }}
+      endpoint: ${{ steps.paramater.outputs.host }}
+      ref: ${{ steps.paramater.outputs.ref }}
+    steps:
+      - name: Get ECR information
+        id: ecr
+        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
+      - name: Get parameters
+        id: paramater
+        run: |
+          if [[ ! -z "${{ inputs.additional_hostnames }}" ]]; then
+            HOST=${{ inputs.hostname }},${{ inputs.additional_hostnames }}
+          else
+            HOST=${{ inputs.hostname }}
+          fi
+          echo "::set-output name=host::$HOST"
+
+  deploy:
+    name: Deploy applicaton from main branch
+    needs: [setup]
+    runs-on: [self-hosted, linux, main, deployment]
+    environment:
+      name: sit
+      url: https://${{ inputs.hostname }}
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Apply Dime ArgoCD Application Helm
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        with:
+          environment: sit
+          cluster: ${{ inputs.cluster_prefix }}-${{ inputs.environment }}
+          release_name: ${{ inputs.application_name }}-sit
+          helm_ref: ${{ inputs.helm_ref }}
+          image_repo: ${{ github.repository }}
+          image_tag: ${{ inputs.image_tag }}
+          namespace: ${{ inputs.namespace }}
+          application_name: ${{ inputs.application_name }}
+          endpoint: ${{ needs.setup.outputs.endpoint }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+  db_migration:
+    name: Migrate database
+    needs: [setup]
+    runs-on: [self-hosted, linux, deployment, main]
+    if: ${{ inputs.migration }}
+    environment:
+      name: sit
+    container:
+      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/dbmate:1.12
+      credentials:
+        username: ${{ needs.setup.outputs.ecr_username }}
+        password: ${{ needs.setup.outputs.ecr_password }}
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Migrate database
+        uses: kkp-dfs/dime-github-actions-workflows/db-migration@main
+        with:
+          environment: sit
+          application_name: ${{ inputs.application_name }}
+          directory: ${{ inputs.migrate_dir }}
+          schema: ${{ inputs.migrate_schema }}
+          helm_ref: ${{ inputs.helm_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+
+  e2e-test:
+    name: Run E2E test
+    needs: [deploy]
+    runs-on: [self-hosted, linux, deployment, main]
+    if: ${{ inputs.code_lang == 'golang' }}
+    continue-on-error: true
+    steps:
+      - name: Trigger jenkins job
+        uses: joshlk/jenkins-githubaction@master
+        with:
+          url: http://jenkins.qa.svc.cluster.local:8080
+          username: jenkins
+          api_token: ${{ secrets.jenkins_api_token }}
+          job_name: API-E2E
+          parameters: >-
+            {
+              "TRIGGER": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.repository }}@${{ github.ref_name }}>",
+              "BRANCH": "main",
+              "ENVIRONMENT": "sit",
+              "INCLUDE_TAG": "-i SIT",
+              "EXCLUDE_TAG": ""
+            }
+          wait: "true"
+          timeout: "1000"
