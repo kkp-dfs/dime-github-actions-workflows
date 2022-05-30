@@ -8,10 +8,6 @@ on:
         required: false
         type: string
         default: main
-      image_repo:
-        description: Docker image repository
-        required: true
-        type: string
       image_tag:
         description: Docker image's tag
         required: true
