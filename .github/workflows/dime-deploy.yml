@@ -120,7 +120,7 @@ jobs:
           cluster: ${{ inputs.cluster_prefix }}-${{ inputs.environment }}
           release_name: ${{ inputs.application_name }}-sit
           helm_ref: ${{ inputs.helm_ref }}
-          image_repo: ${{ github.repository }}
+          image_repo: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/${{ github.repository }}
           image_tag: ${{ inputs.image_tag }}
           namespace: ${{ inputs.namespace }}
           application_name: ${{ inputs.application_name }}
