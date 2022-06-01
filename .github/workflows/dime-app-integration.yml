@@ -127,7 +127,7 @@ jobs:
           cp /Users/dime/dime_app_release_files/service_credentials_sit.json ./ios/service_credentials.json
       - name: Run test
         if: ${{ contains(inputs.platform, matrix.platform) }}
-        uses: kkp-dfs/dime-github-actions-workflows/integration-test@flutter-integration-test
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@main
         with:
           language: flutter
           environment: sit
