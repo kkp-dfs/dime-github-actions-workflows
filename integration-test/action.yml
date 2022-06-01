@@ -16,13 +16,16 @@ inputs:
   language:
     description: The program language of this repository
     required: true
+  device:
+    description: Device ID for run integration test
+    required: false
   minimum_coverage:
     description: "The minimum coverage to pass the check. Optional. Default: `0` (always passes)"
     required: false
     default: "0"
   migration:
     description: Enable/disable to run database migration job
-    required: true
+    required: false
   migrate_dir:
     description: Specify the directory containing migration files
     required: false
@@ -154,7 +157,7 @@ runs:
     - name: Run flutter integration test
       if: ${{ inputs.language == 'flutter' }}
       shell: bash
-      run: flutter test integration_test
+      run: flutter test -d ${{ inputs.device }} --flavor sit integration_test
 
     - id: success_message
       if: ${{ success() }}
@@ -247,7 +250,7 @@ runs:
         SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook }}
 
     - name: Tear down integration test environment
-      if: ${{ always() }}
+      if: ${{ always() && inputs.language == 'golang' }}
       shell: bash
       run: |
         DB_HOST=${{ steps.setup.outputs.db_host }}

@@ -1,0 +1,137 @@
+name: Dime App workflow
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        description: Platform to run integration tests
+        required: false
+        type: string
+        default: android,ios
+      repository:
+        description: The owner and repository name
+        required: false
+        type: string
+        default: ${{ github.repository }}
+      base_ref:
+        description: The branch or tag ref or commit SHA that be base code.
+        required: false
+        type: string
+        default: ${{ github.base_ref || 'main' }}
+      target_ref:
+        description: The branch or tag ref or commit SHA that will be merged to base code.
+        required: false
+        type: string
+        default: ${{ github.head_ref || github.ref_name }}
+      slack_channel:
+        description: The slack channel that send notification.
+        type: string
+        required: true
+
+    secrets:
+      gh_access_token:
+        required: true
+      slack_webhook:
+        required: true
+
+jobs:
+  prepare:
+    name: Preparation
+    runs-on: [self-hosted, linux, deployment, main]
+    steps:
+      - uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+      - name: Generate secret files
+        run: |
+          JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
+          TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/dime-main/login | jq -r '.auth.client_token')
+          DATA=$(curl -H "X-VAULT-TOKEN:$TOKEN" https:/vault.mydime.tech/v1/secrets/data/services/dime-app/testing)
+
+          export DIRECTUS_ACCESS_TOKEN=$(echo $DATA | jq -r ".data.data.DIRECTUS_ACCESS_TOKEN")
+          export PASSWORD_HASHING_SALT=$(echo $DATA | jq -r ".data.data.PASSWORD_HASHING_SALT")
+          export PIN_ENCRYPTION_KEY=$(echo $DATA | jq -r ".data.data.PIN_ENCRYPTION_KEY")
+          export SECURE_ED25519_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SECURE_ED25519_PUBLIC_KEY")
+          export SECURE_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SECURE_RSA_PUBLIC_KEY")
+          export SIGN_IN_RSA_PUBLIC_KEY=$(echo $DATA | jq -r ".data.data.SIGN_IN_RSA_PUBLIC_KEY")
+          export PATH=/opt/flutter/bin:$PATH
+
+          curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-`uname -s`-`uname -m` -o envsubst
+          chmod +x envsubst
+          ./envsubst < environment_secret_template.yaml > environment_secret_sit.yaml
+      - name: Create key properties
+        run: |
+          JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          echo "{\"role\":\"kubernetes-actions-runner\",\"jwt\":\"$JWT\"}" > payload.json
+          TOKEN=$(curl -d @payload.json https://vault.mydime.tech/v1/auth/kubernetes/actions-runner/dime-main/login | jq -r '.auth.client_token')
+          DATA=$(curl -H "X-VAULT-TOKEN:$TOKEN" https:/vault.mydime.tech/v1/infrastructure/data/mac-mini-01)
+          export KEYSTORE_PASSWORD=$(echo $DATA | jq -r ".data.data.android_release_keystore_password")
+          cat <<EOF > key.properties
+          keyAlias=release
+          keyPassword=${KEYSTORE_PASSWORD}
+          storeFile=/Users/dime/.android/release.keystore
+          storePassword=${KEYSTORE_PASSWORD}
+          EOF
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dime-app-artifact
+          path: |
+            environment_secret_sit.yaml
+            key.properties
+          retention-days: 1
+
+  integration-test:
+    name: Run integration test
+    runs-on: [self-hosted, macos]
+    needs: [prepare]
+    strategy:
+      matrix:
+        platform: [android]
+    steps:
+      - name: Setup flutter
+        if: ${{ contains(inputs.platform, matrix.platform) }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        with:
+          language: flutter
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+      - name: Download artifact
+        if: ${{ contains(inputs.platform, matrix.platform) }}
+        uses: actions/download-artifact@v3
+        with:
+          name: dime-app-artifact
+      - name: Generate config and secret
+        if: ${{ contains(inputs.platform, matrix.platform) }}
+        run: make gen-config-sit
+      - name: Get flutter device
+        id: device
+        if: ${{ contains(inputs.platform, matrix.platform) }}
+        run: |
+          DEVICE_ID=$(flutter devices | grep ${{ matrix.platform }} | awk -F• '{ print $2 }' | sed -e 's/ //g')
+          echo "::set-output name=id::$DEVICE_ID"
+      - name: Prepare essential files for each of platform
+        if: ${{ contains(inputs.platform, matrix.platform) }}
+        run: |
+          mv key.properties ./android/
+          cp /Users/dime/dime_app_release_files/google-services-sit.json ./android/app/google-services.json
+          cp /Users/dime/dime_app_release_files/service_credentials_sit.json ./android/app/src/sit/service_credentials.json
+          cp /Users/dime/dime_app_release_files/debug-key.jks ./android/app/debug-key.jks
+          cp /Users/dime/dime_app_release_files/GoogleService-Info-sit.plist ./ios/
+          cp /Users/dime/dime_app_release_files/GoogleService-Info-sit.plist ./ios/GoogleService-Info.plist
+          cp /Users/dime/dime_app_release_files/service_credentials_sit.json ./ios/service_credentials.json
+      - name: Run test
+        if: ${{ contains(inputs.platform, matrix.platform) }}
+        uses: kkp-dfs/dime-github-actions-workflows/integration-test@flutter-integration-test
+        with:
+          language: flutter
+          environment: sit
+          device: ${{ steps.device.outputs.id }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          gh_access_token: ${{ secrets.gh_access_token }}
