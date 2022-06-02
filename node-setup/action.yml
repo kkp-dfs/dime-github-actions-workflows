@@ -24,11 +24,11 @@ runs:
       shell: bash
       run: echo "::set-output name=dir::$(yarn cache dir)"
 
-    - name: Cache module and tools
-      uses: actions/cache@v2
-      with:
-        path: |
-          ./node_modules
-          **/node_modules
-          ${{ steps.yarn-cache-dir-path.outputs.dir }}
-        key: ${{ runner.os }}-node-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}
+    # - name: Cache module and tools
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: |
+    #       ./node_modules
+    #       **/node_modules
+    #       ${{ steps.yarn-cache-dir-path.outputs.dir }}
+    #     key: ${{ runner.os }}-node-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}

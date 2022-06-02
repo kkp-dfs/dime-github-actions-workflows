@@ -46,15 +46,15 @@ runs:
         gh_access_token: ${{ inputs.gh_access_token }}
 
     # Golang setup and download modules
-    - name: Cache go module and tools
-      if: ${{ inputs.language == 'golang' }}
-      uses: actions/cache@v2
-      with:
-        path: |
-          $HOME/go/pkg/mod
-          $HOME/go/bin
-          ./vendor
-        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+    # - name: Cache go module and tools
+    #   if: ${{ inputs.language == 'golang' }}
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: |
+    #       $HOME/go/pkg/mod
+    #       $HOME/go/bin
+    #       ./vendor
+    #     key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
     - name: Setup go version ${{ inputs.go_version }}
       if: ${{ inputs.language == 'golang' }}
       uses: actions/setup-go@v2
@@ -70,14 +70,14 @@ runs:
       shell: bash
 
     # Node setup and download modules
-    - name: Cache node module
-      if: ${{ inputs.language == 'node' }}
-      uses: actions/cache@v2
-      with:
-        path: |
-          ./node_modules
-          **/node_modules
-        key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}
+    # - name: Cache node module
+    #   if: ${{ inputs.language == 'node' }}
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: |
+    #       ./node_modules
+    #       **/node_modules
+    #     key: ${{ runner.os }}-${{ inputs.language }}-${{ inputs.repository }}-${{ hashFiles('**/package-lock.json') }}
     - name: Setup node version ${{ inputs.node_version }}
       if: ${{ inputs.language == 'node' }}
       uses: actions/setup-node@v2

@@ -18,16 +18,16 @@ runs:
       with:
         go-version: ${{ inputs.go-version }}
 
-    - name: Cache module and tools
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-          ~/go/bin
-          ./vendor
-        key: ${{ runner.os }}-go-cache-v3-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-cache-v3-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
-          ${{ runner.os }}-go-cache-v3-${{ inputs.repository }}-
-          ${{ runner.os }}-go-cache-v3-
+    # - name: Cache module and tools
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: |
+    #       ~/.cache/go-build
+    #       ~/go/pkg/mod
+    #       ~/go/bin
+    #       ./vendor
+    #     key: ${{ runner.os }}-go-cache-v3-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-go-cache-v3-${{ inputs.repository }}-${{ hashFiles('**/go.sum') }}
+    #       ${{ runner.os }}-go-cache-v3-${{ inputs.repository }}-
+    #       ${{ runner.os }}-go-cache-v3-
