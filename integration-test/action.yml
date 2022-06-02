@@ -93,7 +93,7 @@ runs:
         fi
 
         RMQ=$(curl -H "X-Vault-Token:$TOKEN" https://vault.mydime.tech/v1/secrets/data/rabbitmq/sit)
-        RMQ_HOST=rmq-server-rabbitmq.rabbitmq.svc.cluster.local
+        RMQ_HOST=amqx-rabbitmq.sit.mydime.tech
         RMQ_PORT=5672
         RMQ_ADMIN_USER=$(echo $RMQ | jq -r '.data.data.admin_username')
         RMQ_ADMIN_PASS=$(echo $RMQ | jq -r '.data.data.admin_password')
