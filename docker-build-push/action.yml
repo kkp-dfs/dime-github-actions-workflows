@@ -37,7 +37,7 @@ runs:
       with:
         gh_access_token: ${{ inputs.gh_access_token }}
     - shell: bash
-      run: echo ${{ inputs.repository }}
+      run: echo ${{ github.repository }}
     - name: Set docker metadata
       id: meta
       uses: docker/metadata-action@v3
