@@ -137,7 +137,7 @@ jobs:
         uses: kkp-dfs/dime-github-actions-workflows/bucket@main
         with:
           bucket: dime-integration-test-sit
-          folder: ${{ inputs.application_name }}-${{ github.job }}
+          folder: ${{ inputs.application_name }}-${{ github.run_id }}
       - name: Get parameters
         id: paramater
         run: |
