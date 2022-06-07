@@ -124,12 +124,20 @@ jobs:
       ecr_repository: ${{ steps.ecr.outputs.repository }}
       ecr_username: ${{ steps.ecr.outputs.username }}
       ecr_password: ${{ steps.ecr.outputs.password }}
+      test_bucket: ${{ steps.s3.outputs.test_bucket }}
+      test_folder: ${{ steps.s3.outputs.test_folder }}
       endpoint: ${{ steps.paramater.outputs.host }}
       ref: ${{ steps.paramater.outputs.ref }}
     steps:
       - name: Get ECR information
         id: ecr
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
+      - name: Create folder in testing bucket
+        id: s3
+        uses: kkp-dfs/dime-github-actions-workflows/bucket@main
+        with:
+          bucket: dime-integration-test-sit
+          folder: ${{ inputs.application_name }}-${{ github.job }}
       - name: Get parameters
         id: paramater
         run: |
@@ -148,6 +156,7 @@ jobs:
 
   lint:
     name: Run lint
+    needs: [setup]
     runs-on: ubuntu-latest
     steps:
       - name: Setup ${{ inputs.code_lang }}
@@ -181,6 +190,7 @@ jobs:
 
   unit-test:
     name: Run unit test
+    needs: [setup]
     runs-on: [self-hosted, go-action-runner, main]
     if: ${{ inputs.code_lang == 'golang' }}
     env:
@@ -207,6 +217,7 @@ jobs:
 
   integration-test:
     name: Run integration test
+    needs: [setup]
     runs-on: [self-hosted, go-action-runner, "${{ inputs.cluster_prefix }}-${{ inputs.environment }}"]
     if: ${{ inputs.code_lang == 'golang' }}
     continue-on-error: true
@@ -229,6 +240,8 @@ jobs:
           cluster_prefix: ${{ inputs.cluster_prefix }}
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
+          test_bucket: ${{ needs.setup.outputs.test_bucket }}
+          test_folder: ${{ needs.setup.outputs.test_folder }}
           migration: ${{ inputs.migration }}
           migrate_dir: ${{ inputs.migrate_dir }}
           migrate_schema: ${{ inputs.migrate_schema }}
@@ -392,3 +405,17 @@ jobs:
             }
           wait: "true"
           timeout: "1000"
+
+  teardown:
+    name: Teardown job
+    needs: [integration-test]
+    runs-on: [self-hosted, linux, main, deployment]
+    if: ${{ always() && inputs.language == 'golang' }}
+    continue-on-error: true
+    steps:
+      - name: Remove folder in testing bucket
+        uses: kkp-dfs/dime-github-actions-workflows/bucket@main
+        with:
+          bucket: dime-integration-test-sit
+          folder: ${{ inputs.application_name }}-${{ github.job }}
+          action: delete
