@@ -1,0 +1,28 @@
+name: Bucket preparation
+description: Prepare s3 bucket
+
+inputs:
+  bucket:
+    description: Name of s3 bucket
+    required: true
+  folder:
+    description: Name of folder
+    required: true
+  action:
+    description: Name of action that operate in bucket
+    required: false
+    default: create
+
+outputs:
+  bucket:
+    description: S3 bucket's name
+  folder:
+    description: folder in s3 bucket
+
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.bucket }}
+    - ${{ inputs.folder }}
+    - ${{ inputs.action }}
