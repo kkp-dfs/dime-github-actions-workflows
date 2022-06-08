@@ -410,7 +410,7 @@ jobs:
     name: Teardown job
     needs: [integration-test]
     runs-on: [self-hosted, linux, main, deployment]
-    if: ${{ always() && inputs.language == 'golang' }}
+    if: ${{ always() && inputs.code_lang == 'golang' }}
     continue-on-error: true
     steps:
       - name: Remove folder in testing bucket
