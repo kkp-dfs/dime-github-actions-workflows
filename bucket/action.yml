@@ -2,6 +2,10 @@ name: Bucket preparation
 description: Prepare s3 bucket
 
 inputs:
+  role_arn:
+    description: ARN of role that be assumed by action.
+    required: false
+    default: arn:aws:iam::808014229351:role/dime-sit-actions-runner-role
   bucket:
     description: Name of s3 bucket
     required: true
@@ -23,6 +27,7 @@ runs:
   using: docker
   image: Dockerfile
   args:
+    - ${{ inputs.role_arn }}
     - ${{ inputs.bucket }}
     - ${{ inputs.folder }}
     - ${{ inputs.action }}
