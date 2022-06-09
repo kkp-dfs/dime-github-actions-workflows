@@ -261,10 +261,7 @@ jobs:
     env:
       GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
     container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:21.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
+      image: public.ecr.aws/c2u4x1k5/ubuntu:21.04
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     outputs:
@@ -297,10 +294,7 @@ jobs:
       name: ${{ needs.setup.outputs.ref }}
       url: https://${{ needs.setup.outputs.endpoint }}
     container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
+      image: public.ecr.aws/c2u4x1k5/ubuntu:20.04
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
@@ -331,10 +325,7 @@ jobs:
       name: sit
       url: https://${{ needs.setup.outputs.endpoint }}
     container:
-      image: 915060398631.dkr.ecr.ap-southeast-1.amazonaws.com/kkp-dfs/ubuntu:20.04
-      credentials:
-        username: ${{ needs.setup.outputs.ecr_username }}
-        password: ${{ needs.setup.outputs.ecr_password }}
+      image: public.ecr.aws/c2u4x1k5/ubuntu:20.04
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
