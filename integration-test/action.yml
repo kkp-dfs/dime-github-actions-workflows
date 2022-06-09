@@ -200,12 +200,12 @@ runs:
                     "elements": [
                       {
                         "type": "image",
-                        "image_url": "${{ github.event.sender.avatar_url }}",
-                        "alt_text": "${{ github.event.sender.login }}"
+                        "image_url": "${{ github.event.sender.avatar_url || 'https://avatars.slack-edge.com/2022-03-30/3301647098279_8756604efe830a04456a_96.png' }}",
+                        "alt_text": "${{ github.event.sender.login || 'Schedule Trigger' }}"
                       },
                       {
                         "type": "mrkdwn",
-                        "text": "${{ github.event.sender.login }}"
+                        "text": "${{ github.event.sender.login || 'Dime Bot' }}"
                       }
                     ]
                   },
