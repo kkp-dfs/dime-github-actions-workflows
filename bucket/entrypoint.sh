@@ -10,7 +10,7 @@ aws sts get-caller-identity
 if [[ "$4" == "delete" ]]; then
     aws s3 rm s3://$2/ --recursive --exclude "*" --include "$3/*"
 else
-    aws s3api put-object --bucket $2 --key $3
+    aws s3api put-object --bucket $2 --key $3/
 fi
 
 echo "::set-output name=bucket::$2"
