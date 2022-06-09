@@ -64,7 +64,7 @@ runs:
         git fetch
         git reset ${{ inputs.helm_ref }} --hard
 
-        AWS_TOKEN=$(aws sts assume-role --role-arn $1 --role-session-name $3)
+        AWS_TOKEN=$(aws sts assume-role --role-arn arn:aws:iam::808014229351:role/dime-sit-actions-runner-role --role-session-name ${{ inputs.application_name }}-${{ github.run_id }})
         export AWS_ACCESS_KEY_ID="$(echo $AWS_TOKEN | jq -r '.Credentials.AccessKeyId')"
         export AWS_SECRET_ACCESS_KEY="$(echo $AWS_TOKEN | jq -r '.Credentials.SecretAccessKey')"
         export AWS_SESSION_TOKEN="$(echo $AWS_TOKEN | jq -r '.Credentials.SessionToken')"
