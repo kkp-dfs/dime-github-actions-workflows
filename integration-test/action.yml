@@ -64,12 +64,13 @@ runs:
         git fetch
         git reset ${{ inputs.helm_ref }} --hard
 
-        aws sts get-caller-identity
-        AWS_TOKEN=$(aws sts assume-role --role-arn arn:aws:iam::808014229351:role/dime-sit-actions-runner-role --role-session-name ${{ inputs.application_name }}-${{ github.run_id }})
-        export AWS_ACCESS_KEY_ID="$(echo $AWS_TOKEN | jq -r '.Credentials.AccessKeyId')"
-        export AWS_SECRET_ACCESS_KEY="$(echo $AWS_TOKEN | jq -r '.Credentials.SecretAccessKey')"
-        export AWS_SESSION_TOKEN="$(echo $AWS_TOKEN | jq -r '.Credentials.SessionToken')"
-        aws sts get-caller-identity
+        aws s3 ls s3://dime-integration-test-sit
+        # aws sts get-caller-identity
+        # AWS_TOKEN=$(aws sts assume-role-with-web-identity --role-arn arn:aws:iam::808014229351:role/dime-sit-actions-runner-role --role-session-name ${{ inputs.application_name }}-${{ github.run_id }})
+        # export AWS_ACCESS_KEY_ID="$(echo $AWS_TOKEN | jq -r '.Credentials.AccessKeyId')"
+        # export AWS_SECRET_ACCESS_KEY="$(echo $AWS_TOKEN | jq -r '.Credentials.SecretAccessKey')"
+        # export AWS_SESSION_TOKEN="$(echo $AWS_TOKEN | jq -r '.Credentials.SessionToken')"
+        # aws sts get-caller-identity
 
         yq eval-all '. as $item ireduce({}; . * $item)' values/${{ inputs.application_name }}/values.yaml values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml > values.yaml
         VAULT_USERNAME=$(cat values.yaml | yq eval '.application.values.secrets.default.data.DB_USERNAME' - | sed -e 's/vault:/https:\/\/vault.mydime.tech\/v1\//g')
