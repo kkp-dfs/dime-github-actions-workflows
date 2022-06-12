@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: kkp-dfs/dime-github-actions-workflows/common@main
         with:
-          gh_access_token: ${{ inputs.gh_access_token }}
+          gh_access_token: ${{ secrets.gh_access_token }}
       - name: Checkout dag repository
         uses: actions/checkout@v2
       - name: Checkout dag common lib repository
