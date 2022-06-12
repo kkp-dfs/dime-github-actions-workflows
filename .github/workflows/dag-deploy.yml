@@ -1,0 +1,21 @@
+name: Dime DAGS Deploy workflows
+
+on:
+  workflow_call:
+    inputs:
+      helm_ref:
+        description: commit reference of helm repository
+        required: false
+        type: string
+        default: main
+
+jobs:
+  dag:
+    runs-on: [self-hosted, linux, main, deployment]
+    steps:
+      - name: Checkout dag repository
+        uses: actions/checkout@v2
+      - name: Checkout dag common lib repository
+        uses: actions/checkout@v2
+        with:
+          repository: kkp-dfs/dags_common_lib
