@@ -8,6 +8,21 @@ on:
         required: false
         type: string
         default: main
+      cluster_prefix:
+        description: cluster prefix
+        required: false
+        type: string
+        default: dime
+      environment:
+        description: Environment that would like to deploy services
+        required: false
+        default: sit
+        type: string
+      namespace:
+        description: Kubernetes namespace
+        required: false
+        type: string
+        default: etl
     secrets:
       gh_access_token:
         required: true
@@ -15,13 +30,34 @@ on:
 jobs:
   dag:
     runs-on: [self-hosted, linux, main, deployment]
+    container:
+      image: public.ecr.aws/c2u4x1k5/ubuntu:21.04
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
+      - id: env
+        run: |
+          REPOSITORY=${{ github.repository }}
+          RELEASE_NAME=${REPOSITORY/kkp-dfg\//}
+          echo "::set-output name=release_name::${RELEASE_NAME/_/-}"
       - uses: kkp-dfs/dime-github-actions-workflows/common@main
         with:
           gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Checkout dags repository
-        uses: actions/checkout@v2
-      - name: Checkout dags_common_lib
-        run: git clone https://github.com/kkp-dfs/dags_common_lib.git dags/dags_common_lib
-      - run: ls -l dags/
-      - run: ls -l dags/dags_common_lib
+      - name: Checkout helm
+        run: |
+          git clone https://github.com/kkp-dfs/dime-helm.git
+          cd dime-helm
+          git checkout dag-updater
+      - name: Deploy job
+        run: |
+          helm upgrade -i ${{ steps.env.outputs.release_name }}-${{ inputs.environment }} dime-helm/charts/dime-application \
+          -f dime-helm/values/airflow-dags/values.yaml \
+          -f dime-helm/values/airflow-dags/values-${{ inputs.environment }}.yaml \
+          --set "fullnameOverride=${{ steps.env.outputs.release_name }}" \
+          --set "nameOverride=${{ steps.env.outputs.release_name }}" \
+          --set "source.username=${{ inputs.gh_access_token }}" \
+          --set "source.password=x-oauth-basic" \
+          --set "destination.cluster=${{ inputs.cluster }}" \
+          --set "destination.namespace=${{ inputs.namespace }}" \
+          --set "application.values.configmaps.data.DAGS_REPO=${{ github.repository }}"
+          --set "application.values.secrets.data.GH_ACCESS_TOKEN=${{ secrets.gh_access_token }}"
