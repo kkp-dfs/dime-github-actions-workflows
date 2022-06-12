@@ -19,5 +19,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: kkp-dfs/dags_common_lib
+          ref: main
           path: dags/dags_common_lib
       - run: ls -l
