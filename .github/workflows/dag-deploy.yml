@@ -18,7 +18,7 @@ jobs:
       - name: Checkout dag common lib repository
         uses: actions/checkout@v2
         with:
-          repository: kkp-dfs/dags_common_lib
+          repository: kkp-dfs/dags_common_lib.git
           ref: main
           path: dags/dags_common_lib
       - run: ls -l
