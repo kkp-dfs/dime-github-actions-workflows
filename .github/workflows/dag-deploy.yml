@@ -19,12 +19,9 @@ jobs:
       - uses: kkp-dfs/dime-github-actions-workflows/common@main
         with:
           gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Checkout dag repository
+      - name: Checkout dags repository
         uses: actions/checkout@v2
-      - name: Checkout dag common lib repository
-        uses: actions/checkout@v2
-        with:
-          repository: kkp-dfs/dags_common_lib
-          ref: main
-          path: dags/dags_common_lib
-      - run: ls -l
+      - name: Checkout dags_common_lib
+        run: git clone https://github.com/kkp-dfs/dags_common_lib.git dags/dags_common_lib
+      - run: ls -l dags/
+      - run: ls -l dags/dags_common_lib
