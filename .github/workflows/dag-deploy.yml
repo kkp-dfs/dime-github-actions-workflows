@@ -8,17 +8,23 @@ on:
         required: false
         type: string
         default: main
+    secrets:
+      gh_access_token:
+        required: true
 
 jobs:
   dag:
     runs-on: [self-hosted, linux, main, deployment]
     steps:
+      - uses: kkp-dfs/dime-github-actions-workflows/common@main
+        with:
+          gh_access_token: ${{ inputs.gh_access_token }}
       - name: Checkout dag repository
         uses: actions/checkout@v2
       - name: Checkout dag common lib repository
         uses: actions/checkout@v2
         with:
-          repository: kkp-dfs/dags_common_lib.git
+          repository: kkp-dfs/dags_common_lib
           ref: main
           path: dags/dags_common_lib
       - run: ls -l
