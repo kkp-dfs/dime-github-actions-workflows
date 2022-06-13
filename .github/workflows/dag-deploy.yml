@@ -57,14 +57,15 @@ jobs:
         shell: bash
         run: |
           REPOSITORY="${{ github.repository }}"
-          RELEASE_NAME=${REPOSITORY/"kkp-dfg/"/}
+          RELEASE_NAME=${REPOSITORY/"kkp-dfs/"/}
+          RELEASE_NAME=${RELEASE_NAME//_/-}
       
           helm upgrade -i ${RELEASE_NAME}-${{ inputs.environment }} dime-helm/charts/dime-application \
           -f dime-helm/values/airflow-dags/values.yaml \
           -f dime-helm/values/airflow-dags/values-${{ inputs.environment }}.yaml \
           --set "fullnameOverride=${RELEASE_NAME}" \
           --set "nameOverride=${RELEASE_NAME}" \
-          --set "source.username=${{ inputs.gh_access_token }}" \
+          --set "source.username=${{ secrets.gh_access_token }}" \
           --set "source.password=x-oauth-basic" \
           --set "destination.cluster=${{ inputs.cluster_prefix }}-${{ inputs.environment }}" \
           --set "destination.namespace=${{ inputs.namespace }}" \
