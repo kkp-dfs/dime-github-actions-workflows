@@ -69,5 +69,5 @@ jobs:
           --set "source.password=x-oauth-basic" \
           --set "destination.cluster=${{ inputs.cluster_prefix }}-${{ inputs.environment }}" \
           --set "destination.namespace=${{ inputs.namespace }}" \
-          --set "application.values.configmaps.data.DAGS_REPO=${{ github.repository }}" \
-          --set "application.values.secrets.data.GH_ACCESS_TOKEN=${{ secrets.gh_access_token }}"
+          --set "application.values.configmaps.default.data.DAGS_REPO=${{ github.repository }}" \
+          --set "application.values.secrets.default.data.GH_ACCESS_TOKEN=${{ secrets.gh_access_token }}"
