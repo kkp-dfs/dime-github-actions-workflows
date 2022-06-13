@@ -59,7 +59,7 @@ jobs:
           RELEASE_NAME=${REPOSITORY/"kkp-dfs/"/}
           RELEASE_NAME=${RELEASE_NAME//_/-}
 
-          helm create ${RELEASE_NAME}-${{ inputs.environment }}-$(date +'%Y%m%d%H%M%S') dime-helm/charts/dime-application \
+          helm install ${RELEASE_NAME}-${{ inputs.environment }}-$(date +'%Y%m%d%H%M%S') dime-helm/charts/dime-application \
           -f dime-helm/values/airflow-dags/values.yaml \
           -f dime-helm/values/airflow-dags/values-${{ inputs.environment }}.yaml \
           --set "fullnameOverride=${RELEASE_NAME}" \
