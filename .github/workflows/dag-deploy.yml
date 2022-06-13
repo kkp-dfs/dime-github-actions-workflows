@@ -56,7 +56,7 @@ jobs:
           --set "nameOverride=${RELEASE_NAME}" \
           --set "source.username=${{ inputs.gh_access_token }}" \
           --set "source.password=x-oauth-basic" \
-          --set "destination.cluster=${{ inputs.cluster }}" \
+          --set "destination.cluster=${{ inputs.cluster_prefix }}-${{ inputs.environment }}" \
           --set "destination.namespace=${{ inputs.namespace }}" \
           --set "application.values.configmaps.data.DAGS_REPO=${{ github.repository }}"
           --set "application.values.secrets.data.GH_ACCESS_TOKEN=${{ secrets.gh_access_token }}"
