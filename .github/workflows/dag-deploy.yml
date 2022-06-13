@@ -43,6 +43,16 @@ jobs:
           git clone https://github.com/kkp-dfs/dime-helm.git
           cd dime-helm
           git checkout dag-updater
+      - name: Setup kubernetes context
+        shell: bash
+        env:
+          SERVICEACCOUNT: /var/run/secrets/kubernetes.io/serviceaccount
+        run: |
+          export NAMESPACE=$(cat ${SERVICEACCOUNT}/namespace)
+          kubectl config set-credentials eks-account --token=$(cat ${SERVICEACCOUNT}/token)
+          kubectl config set-cluster eks --server=https://kubernetes.default.svc --certificate-authority=${SERVICEACCOUNT}/ca.crt
+          kubectl config set-context default --cluster=eks --user=eks-account --namespace=$NAMESPACE
+          kubectl config use-context default
       - name: Deploy job
         shell: bash
         run: |
