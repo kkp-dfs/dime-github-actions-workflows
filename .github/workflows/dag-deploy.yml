@@ -35,11 +35,6 @@ jobs:
       volumes:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
-      - id: env
-        run: |
-          REPOSITORY=${{ github.repository }}
-          RELEASE_NAME=${REPOSITORY/kkp-dfg\//}
-          echo "::set-output name=release_name::${RELEASE_NAME/_/-}"
       - uses: kkp-dfs/dime-github-actions-workflows/common@main
         with:
           gh_access_token: ${{ secrets.gh_access_token }}
@@ -49,12 +44,16 @@ jobs:
           cd dime-helm
           git checkout dag-updater
       - name: Deploy job
+        shell: bash
         run: |
-          helm upgrade -i ${{ steps.env.outputs.release_name }}-${{ inputs.environment }} dime-helm/charts/dime-application \
+          REPOSITORY="${{ github.repository }}"
+          RELEASE_NAME=${REPOSITORY/"kkp-dfg/"/}
+      
+          helm upgrade -i ${RELEASE_NAME}-${{ inputs.environment }} dime-helm/charts/dime-application \
           -f dime-helm/values/airflow-dags/values.yaml \
           -f dime-helm/values/airflow-dags/values-${{ inputs.environment }}.yaml \
-          --set "fullnameOverride=${{ steps.env.outputs.release_name }}" \
-          --set "nameOverride=${{ steps.env.outputs.release_name }}" \
+          --set "fullnameOverride=${RELEASE_NAME}" \
+          --set "nameOverride=${RELEASE_NAME}" \
           --set "source.username=${{ inputs.gh_access_token }}" \
           --set "source.password=x-oauth-basic" \
           --set "destination.cluster=${{ inputs.cluster }}" \
