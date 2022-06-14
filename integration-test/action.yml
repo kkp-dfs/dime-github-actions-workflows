@@ -300,4 +300,4 @@ runs:
         curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/users/${RMQ_USER}
         curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/vhosts/${RMQ_VHOST}
 
-        aws s3 rm s3://${{ inputs.test_bucket }}/ --recursive --exclude "*" --include "${{ inputs.test_folder }}/"
+        aws s3 rm s3://${{ inputs.test_bucket }}/ --recursive --exclude "*" --include "${{ inputs.test_folder }}/*"  --include "${{ inputs.test_folder }}"
