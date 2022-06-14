@@ -19,13 +19,6 @@ inputs:
   device:
     description: Device ID for run integration test
     required: false
-  test_bucket:
-    description: S3 bucket for integration test
-    required: false
-    default: dime-integration-test-sit
-  test_folder:
-    description: Unique folder in testing bucket
-    required: true
   minimum_coverage:
     description: "The minimum coverage to pass the check. Optional. Default: `0` (always passes)"
     required: false
@@ -69,9 +62,17 @@ runs:
         echo "::add-mask::$(echo $AWS_TOKEN | jq -r '.Credentials.AccessKeyId')"
         echo "::add-mask::$(echo $AWS_TOKEN | jq -r '.Credentials.SecretAccessKey')"
         echo "::add-mask::$(echo $AWS_TOKEN | jq -r '.Credentials.SessionToken')"
+        AWS_ACCESS_KEY_ID=$(echo $AWS_TOKEN | jq -r '.Credentials.AccessKeyId')
+        AWS_SECRET_ACCESS_KEY=$(echo $AWS_TOKEN | jq -r '.Credentials.SecretAccessKey')
+        AWS_SESSION_TOKEN=$(echo $AWS_TOKEN | jq -r '.Credentials.SessionToken')
+        TEST_BUCKET=dime-integration-test-sit
+        TEST_FOLDER=${{ inputs.application_name }}-${{ github.run_id }}
+        aws s3api put-object --bucket ${TEST_BUCKET} --key ${TEST_FOLDER}/
         echo "::set-output name=aws_access_key_id::$(echo $AWS_TOKEN | jq -r '.Credentials.AccessKeyId')"
         echo "::set-output name=aws_secret_access_key::$(echo $AWS_TOKEN | jq -r '.Credentials.SecretAccessKey')"
         echo "::set-output name=aws_session_token::$(echo $AWS_TOKEN | jq -r '.Credentials.SessionToken')"
+        echo "::set-output name=test_bucket::${TEST_BUCKET}"
+        echo "::set-output name=test_folder::${TEST_FOLDER}"
 
         yq eval-all '. as $item ireduce({}; . * $item)' values/${{ inputs.application_name }}/values.yaml values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml > values.yaml
         VAULT_USERNAME=$(cat values.yaml | yq eval '.application.values.secrets.default.data.DB_USERNAME' - | sed -e 's/vault:/https:\/\/vault.mydime.tech\/v1\//g')
@@ -156,8 +157,8 @@ runs:
         REDIS_HOST: ${{ steps.setup.outputs.redis_host }}
         REDIS_PORT: ${{ steps.setup.outputs.redis_port }}
         REDIS_PASSWORD: ${{ steps.setup.outputs.redis_pass }}
-        S3_BUCKET: ${{ inputs.test_bucket }}
-        S3_FOLDER: ${{ inputs.test_folder }}
+        S3_BUCKET: ${{ steps.setup.outputs.test_bucket }}
+        S3_FOLDER: ${{ steps.setup.outputs.test_folder }}
       run: |
         export PATH=$HOME/go/bin:$(go env GOPATH)/bin:/go/bin:$PATH
         touch $HOME/.ack-ginkgo-rc
@@ -277,6 +278,8 @@ runs:
         AWS_ACCESS_KEY_ID: ${{ steps.setup.outputs.aws_access_key_id }}
         AWS_SECRET_ACCESS_KEY: ${{ steps.setup.outputs.aws_secret_access_key }}
         AWS_SESSION_TOKEN: ${{ steps.setup.outputs.aws_session_token }}
+        TEST_BUCKET: ${{ steps.setup.outputs.test_bucket }}
+        TEST_FOLDER: ${{ steps.setup.outputs.test_folder }}
       run: |
         DB_HOST=${{ steps.setup.outputs.db_host }}
         DB_PORT=${{ steps.setup.outputs.db_port }}
@@ -300,4 +303,4 @@ runs:
         curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/users/${RMQ_USER}
         curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/vhosts/${RMQ_VHOST}
 
-        aws s3 rm s3://${{ inputs.test_bucket }}/ --recursive --exclude "*" --include "${{ inputs.test_folder }}/*"  --include "${{ inputs.test_folder }}"
+        aws s3 rm s3://${TEST_BUCKET}/ --recursive --exclude "*" --include "${TEST_FOLDER}/*"  --include "${TEST_FOLDER}"
