@@ -66,6 +66,9 @@ runs:
 
         unset AWS_WEB_IDENTITY_TOKEN_FILE
         AWS_TOKEN=$(aws sts assume-role --role-arn arn:aws:iam::808014229351:role/dime-sit-actions-runner-role --role-session-name ${{ inputs.application_name }}-${{ github.run_id }})
+        echo "::add-mask::$(echo $AWS_TOKEN | jq -r '.Credentials.AccessKeyId')"
+        echo "::add-mask::$(echo $AWS_TOKEN | jq -r '.Credentials.SecretAccessKey')"
+        echo "::add-mask::$(echo $AWS_TOKEN | jq -r '.Credentials.SessionToken')"
         echo "::set-output name=aws_access_key_id::$(echo $AWS_TOKEN | jq -r '.Credentials.AccessKeyId')"
         echo "::set-output name=aws_secret_access_key::$(echo $AWS_TOKEN | jq -r '.Credentials.SecretAccessKey')"
         echo "::set-output name=aws_session_token::$(echo $AWS_TOKEN | jq -r '.Credentials.SessionToken')"
