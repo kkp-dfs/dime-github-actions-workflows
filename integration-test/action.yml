@@ -66,9 +66,9 @@ runs:
 
         unset AWS_WEB_IDENTITY_TOKEN_FILE
         AWS_TOKEN=$(aws sts assume-role --role-arn arn:aws:iam::808014229351:role/dime-sit-actions-runner-role --role-session-name ${{ inputs.application_name }}-${{ github.run_id }})
-        export AWS_ACCESS_KEY_ID="$(echo $AWS_TOKEN | jq -r '.Credentials.AccessKeyId')"
-        export AWS_SECRET_ACCESS_KEY="$(echo $AWS_TOKEN | jq -r '.Credentials.SecretAccessKey')"
-        export AWS_SESSION_TOKEN="$(echo $AWS_TOKEN | jq -r '.Credentials.SessionToken')"
+        echo "::set-output name=aws_access_key_id::$(echo $AWS_TOKEN | jq -r '.Credentials.AccessKeyId')"
+        echo "::set-output name=aws_secret_access_key::$(echo $AWS_TOKEN | jq -r '.Credentials.SecretAccessKey')"
+        echo "::set-output name=aws_session_token::$(echo $AWS_TOKEN | jq -r '.Credentials.SessionToken')"
 
         yq eval-all '. as $item ireduce({}; . * $item)' values/${{ inputs.application_name }}/values.yaml values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml > values.yaml
         VAULT_USERNAME=$(cat values.yaml | yq eval '.application.values.secrets.default.data.DB_USERNAME' - | sed -e 's/vault:/https:\/\/vault.mydime.tech\/v1\//g')
@@ -137,6 +137,9 @@ runs:
       shell: bash
       env:
         INTEGRATION_ON_SIT: "true"
+        AWS_ACCESS_KEY_ID: ${{ steps.setup.outputs.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ steps.setup.outputs.aws_secret_access_key }}
+        AWS_SESSION_TOKEN: ${{ steps.setup.outputs.aws_session_token }}
         DB_HOST: ${{ steps.setup.outputs.db_host }}
         DB_PORT: ${{ steps.setup.outputs.db_port }}
         DB_DATABASE: ${{ steps.setup.outputs.db_name }}
