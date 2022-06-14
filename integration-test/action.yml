@@ -273,6 +273,10 @@ runs:
     - name: Tear down integration test environment
       if: ${{ always() && inputs.language == 'golang' }}
       shell: bash
+      env:
+        AWS_ACCESS_KEY_ID: ${{ steps.setup.outputs.aws_access_key_id }}
+        AWS_SECRET_ACCESS_KEY: ${{ steps.setup.outputs.aws_secret_access_key }}
+        AWS_SESSION_TOKEN: ${{ steps.setup.outputs.aws_session_token }}
       run: |
         DB_HOST=${{ steps.setup.outputs.db_host }}
         DB_PORT=${{ steps.setup.outputs.db_port }}
@@ -295,3 +299,5 @@ runs:
         curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/permissions/${RMQ_VHOST}/${RMQ_USER}
         curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/users/${RMQ_USER}
         curl -X DELETE -u "${RMQ_ADMIN_USER}:${RMQ_ADMIN_PASS}" http://${RMQ_HOST}:15672/api/vhosts/${RMQ_VHOST}
+
+        aws s3 rm s3://${{ inputs.test_bucket }}/ --recursive --exclude "*" --include "${{ inputs.test_folder }}/"
