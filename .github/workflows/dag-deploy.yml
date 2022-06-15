@@ -60,8 +60,8 @@ jobs:
           RELEASE_NAME=${REPOSITORY/"kkp-dfs/"/}
           RELEASE_NAME=${RELEASE_NAME//_/-}
 
-          kubectl patch app ${RELEASE_NAME}-${{ inputs.environment }} -p '{"metadata": {"finalizers": ["resources-finalizer.argocd.argoproj.io"]}}' --type merge
-          helm delete ${RELEASE_NAME}-${{ inputs.environment }} --wait
+          kubectl patch -n argocd app ${RELEASE_NAME}-${{ inputs.environment }} -p '{"metadata": {"finalizers": ["resources-finalizer.argocd.argoproj.io"]}}' --type merge
+          helm delete -n argocd ${RELEASE_NAME}-${{ inputs.environment }} --wait
           helm upgrade -i ${RELEASE_NAME}-${{ inputs.environment }} dime-helm/charts/dime-application \
           -f dime-helm/values/airflow-dags/values.yaml \
           -f dime-helm/values/airflow-dags/values-${{ inputs.environment }}.yaml \
