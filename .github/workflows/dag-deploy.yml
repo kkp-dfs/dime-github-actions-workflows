@@ -61,7 +61,8 @@ jobs:
           RELEASE_NAME=${RELEASE_NAME//_/-}
 
           kubectl patch -n argocd app ${RELEASE_NAME}-${{ inputs.environment }} -p '{"metadata": {"finalizers": ["resources-finalizer.argocd.argoproj.io"]}}' --type merge
-          helm delete -n argocd ${RELEASE_NAME}-${{ inputs.environment }} --wait
+          helm ls --all-namepsaces
+          helm uninstall ${RELEASE_NAME}-${{ inputs.environment }} -n argocd --wait
           sleep 5
           helm upgrade -i ${RELEASE_NAME}-${{ inputs.environment }} dime-helm/charts/dime-application \
           -f dime-helm/values/airflow-dags/values.yaml \
