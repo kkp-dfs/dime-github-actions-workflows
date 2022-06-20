@@ -1,0 +1,230 @@
+name: Dime CI/CD workflow
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: The owner and repository name
+        required: false
+        type: string
+        default: ${{ github.repository }}
+      node-version:
+        description: Version of node that would like to install
+        required: false
+        type: string
+        default: '16'
+      go-version:
+        description: Version of node that would like to install
+        required: false
+        type: string
+        default: '^1.17.2'
+      base_ref:
+        description: The branch or tag ref or commit SHA that be base code.
+        required: false
+        type: string
+        default: ${{ github.base_ref || 'main' }}
+      target_ref:
+        description: The branch or tag ref or commit SHA that will be merged to base code.
+        required: false
+        type: string
+        default: ${{ github.head_ref || github.ref_name }}
+      helm_ref:
+        description: commit reference of helm repository
+        required: false
+        type: string
+        default: main
+      environment:
+        description: Environment that would like to deploy services
+        required: true
+        default: sit
+        type: string
+      cluster_prefix:
+        description: cluster prefix
+        required: false
+        type: string
+        default: dime
+      code_lang:
+        description: The program language of this repository
+        required: true
+        type: string
+      event_name:
+        description: The name of the event that triggered the workflow run.
+        required: false
+        type: string
+        default: ${{ github.event_name }}
+      event_number:
+        description: The number of the event that triggered the workflow run.
+        required: false
+        type: string
+        default: ${{ github.event.number }}
+      namespace:
+        description: The namespace of destination
+        required: false
+        type: string
+        default: dime
+      application_name:
+        description: Name of application
+        required: true
+        type: string
+      platforms:
+        description: List of target platforms for build
+        required: false
+        type: string
+        default: linux/amd64
+      build_args:
+        description: List of build-time variables
+        required: false
+        type: string       
+      slack_channel:
+        description: The slack channel that send notification.
+        type: string
+        required: true
+      migration:
+        description: Enable/disable to run database migration job
+        type: boolean
+        required: false
+        default: false
+      migrate_dir:
+        description: Specify the directory containing migration files
+        type: string
+        required: false
+        default: ./db/migrations
+      migrate_schema:
+        description: Specify the schema file location
+        type: string
+        required: false
+        default: ./db/schema.sql
+
+    secrets:
+      gh_access_token:
+        required: true
+      slack_webhook:
+        required: true
+      jenkins_api_token:
+        required: false
+
+env:
+  GOPRIVATE: github.com/kkp-dfs/*
+
+jobs:
+  setup:
+    name: Get ECR and paramaters
+    runs-on: [self-hosted, linux, main, deployment]
+    outputs:
+      ecr_token: ${{ steps.ecr.outputs.token }}
+      ecr_repository: ${{ steps.ecr.outputs.repository }}
+      ecr_username: ${{ steps.ecr.outputs.username }}
+      ecr_password: ${{ steps.ecr.outputs.password }}
+      endpoint: ${{ steps.paramater.outputs.host }}
+      release_name: ${{ steps.paramater.outputs.release_name }}
+    steps:
+      - name: Get ECR information
+        id: ecr
+        uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
+      - name: Get parameters
+        id: paramater
+        run: |
+          REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
+          if [[ "${REF_NAME}" == "main" ]]; then
+            RELEASE_NAME=${{ inputs.application_name }}-${{ inputs.environment }}
+          else
+            RELEASE_NAME=${{ inputs.application_name }}-${REF_NAME}
+          fi
+          echo "::set-output name=release_name::${RELEASE_NAME}"
+          echo "::set-output name=host::argo.mydime.tech/applications/${RELEASE_NAME}"
+
+  lint:
+    name: Run lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup ${{ inputs.code_lang }}
+        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+          language: ${{ inputs.code_lang }}
+          go_version: ${{ inputs.go-version }}
+          node_version: ${{ inputs.node-version }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+      - name: Run ${{ inputs.code_lang }} lint
+        uses: kkp-dfs/dime-github-actions-workflows/lint@main
+        with:
+          application_name: ${{ inputs.application_name }}
+          language: ${{ inputs.code_lang }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          linter: gosec
+      - name: Run gocyclo linter
+        uses: kkp-dfs/dime-github-actions-workflows/lint@main
+        if: ${{ inputs.code_lang == 'golang' }}
+        continue-on-error: true
+        with:
+          application_name: ${{ inputs.application_name }}
+          language: ${{ inputs.code_lang }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ inputs.slack_webhook }}
+          linter: gocyclo
+
+  build:
+    name: Build & push docker images to registry
+    needs:
+      - setup
+      - lint
+    runs-on: [self-hosted, linux,  main, deployment]
+    if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
+    env:
+      GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
+    container:
+      image: public.ecr.aws/c2u4x1k5/ubuntu:21.04
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    outputs:
+      image_repo: ${{ steps.build.outputs.image_repo }}
+      image_tag: ${{ steps.build.outputs.image_tag }}
+    steps:
+      - name: Checkout
+        uses: kkp-dfs/dime-github-actions-workflows/checkout@main
+        with:
+          repository: ${{ inputs.repository }}
+          base_ref: ${{ inputs.base_ref }}
+          target_ref: ${{ inputs.target_ref }}
+      - name: Build and push docker image
+        id: build
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
+        with:
+          repository: ${{ needs.setup.outputs.ecr_repository }}
+          token: ${{ needs.setup.outputs.ecr_token }}
+          gh_access_token: ${{ secrets.gh_access_token }}
+          target: ${{ (inputs.repository == 'kkp-dfs/dime-corporate-web' && 'source') || '' }}
+
+  deploy:
+    name: Deploy applicaton from main branch
+    needs:
+      - setup
+      - build
+    runs-on: [self-hosted, linux, main, deployment]
+    if: ${{ always() && needs.build.result == 'success' }}
+    environment:
+      name: ${{ inputs.environment }}
+      url: https://${{ needs.setup.outputs.endpoint }}
+    container:
+      image: public.ecr.aws/c2u4x1k5/ubuntu:21.04
+      volumes:
+        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
+    steps:
+      - name: Apply Dime ArgoCD Application Helm
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
+        with:
+          environment: ${{ inputs.environment }}
+          release_name: ${{ needs.setup.output.release_name }}
+          helm_ref: ${{ inputs.helm_ref }}
+          cluster: ${{ inputs.cluster_prefix }}-${{ inputs.environment }}
+          namespace: ${{ inputs.namespace }}
+          application_name: ${{ inputs.application_name }}
+          endpoint: ${{ needs.setup.outputs.endpoint }}
+          image_repo: ${{ needs.build.outputs.image_repo }}
+          image_tag: ${{ needs.build.outputs.image_tag }}
+          slack_channel: ${{ inputs.slack_channel }}
+          slack_webhook: ${{ secrets.slack_webhook }}
+          gh_access_token: ${{ secrets.gh_access_token }}
