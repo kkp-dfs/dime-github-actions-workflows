@@ -11,8 +11,8 @@ EOF
 DESTINATIONS=$(echo $3 | tr " " "\n" | xargs -I@ echo --destination=@)
 BUILD_ARGS=$(echo $4 | tr " " "\n" | xargs -I@ echo --build-arg=@)
 LABELS=$(echo $5 | tr " " "\n" | xargs -I@ echo --label=@)
-TARGET=$(echo $6 | xargs -I@ echo --target=@)
-DOCKERFILE=$(echo $7 | xargs -I@ echo --dockerfile=@)
+DOCKERFILE=$(echo $6 | xargs -I@ echo --dockerfile=@)
+TARGET=$(echo $7 | xargs -I@ echo --target=@)
 
 /kaniko/executor \
     --context=$PWD \

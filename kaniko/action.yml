@@ -38,5 +38,5 @@ runs:
     - ${{ inputs.image }}
     - ${{ inputs.build_args }}
     - ${{ inputs.labels }}
-    - ${{ inputs.target }}
     - ${{ inputs.dockerfile }}
+    - ${{ inputs.target }}

@@ -6,6 +6,10 @@ inputs:
     description: The owner and repository name
     required: false
     default: ${{ github.repository }}
+  application_name:
+    description: Name of application
+    required: false
+    default: ''
   token:
     description: ECR token
     required: true
@@ -44,9 +48,13 @@ runs:
       run: echo ${{ github.repository }}
     - name: Set docker metadata
       id: meta
-      uses: docker/metadata-action@v3
+      uses: docker/metadata-action@v4
       with:
         images: ${{ inputs.image || inputs.repository }}
+        labels: |
+          maintainer=${{ github.actor }}
+          org.opencontainers.image.title=${{ inputs.application_name }}
+          org.opencontainers.image.licenses=Dimeⓒ
         tags: |
           type=semver,pattern={{version}}
           type=ref,event=pr,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
