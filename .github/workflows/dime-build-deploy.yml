@@ -33,6 +33,10 @@ on:
         required: false
         type: string
         default: main
+      dockerfile:
+        description: Path to the dockerfile to be built.
+        required: false
+        type: string
       environment:
         description: Environment that would like to deploy services
         required: true
@@ -191,12 +195,12 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
       - name: Build and push docker image
         id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@build-deploy-workflow
         with:
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
+          dockerfile: ${{ inputs.dockerfile }}
           gh_access_token: ${{ secrets.gh_access_token }}
-          target: ${{ (inputs.repository == 'kkp-dfs/dime-corporate-web' && 'source') || '' }}
 
   deploy:
     name: Deploy applicaton from main branch

@@ -12,10 +12,11 @@ DESTINATIONS=$(echo $3 | tr " " "\n" | xargs -I@ echo --destination=@)
 BUILD_ARGS=$(echo $4 | tr " " "\n" | xargs -I@ echo --build-arg=@)
 LABELS=$(echo $5 | tr " " "\n" | xargs -I@ echo --label=@)
 TARGET=$(echo $6 | xargs -I@ echo --target=@)
+DOCKERFILE=$(echo $7 | xargs -I@ echo --dockerfile=@)
 
 /kaniko/executor \
     --context=$PWD \
     --cache \
-    $BUILD_ARGS $TARGET $DESTINATIONS
+    $BUILD_ARGS $DOCKERFILE $TARGET $DESTINATIONS
 
 echo "::set-output name=image::$3"
