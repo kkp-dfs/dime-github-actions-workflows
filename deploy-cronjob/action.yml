@@ -1,0 +1,179 @@
+name: Deploy CronJob
+description: Deploy kubernetes CronJob by Helm
+
+inputs:
+  release_name:
+    description: Service release name
+    required: true
+  helm_ref:
+    description: commit reference of helm repository
+    required: false
+    default: main
+  cluster:
+    description: destination cluster name
+    required: false
+    default: dime-sit
+  namespace:
+    description: Kubernetes namespace
+    required: true
+  application_name:
+    description: Name of application
+    required: true
+  environment:
+    description: Environment that would like to deploy services
+    required: true
+    default: sit
+  endpoint:
+    description: Service endpoint
+    required: true
+  image_repo:
+    description: Docker image repository
+    required: true
+  image_tag:
+    description: Docker image's tag
+    required: true
+  slack_channel:
+    description: The slack channel that send notification.
+    required: false
+  slack_webhook:
+    description: The slack webhook url
+    required: true
+  gh_access_token:
+    description: GitHub access token
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: kkp-dfs/dime-github-actions-workflows/common@main
+      with:
+        gh_access_token: ${{ inputs.gh_access_token }}
+    - name: Checkout Dime helm repository
+      shell: bash
+      run: |
+        git clone https://github.com/kkp-dfs/dime-helm.git
+        cd dime-helm
+        git fetch
+        git checkout ${{ inputs.helm_ref }}
+    - name: Setup kubernetes context
+      shell: bash
+      env:
+        SERVICEACCOUNT: /var/run/secrets/kubernetes.io/serviceaccount
+      run: |
+        export NAMESPACE=$(cat ${SERVICEACCOUNT}/namespace)
+        kubectl config set-credentials eks-account --token=$(cat ${SERVICEACCOUNT}/token)
+        kubectl config set-cluster eks --server=https://kubernetes.default.svc --certificate-authority=${SERVICEACCOUNT}/ca.crt
+        kubectl config set-context default --cluster=eks --user=eks-account --namespace=$NAMESPACE
+        kubectl config use-context default
+    - name: Deply by helm
+      shell: bash
+      run: |
+        ENDPOINTS=$(echo ${{ inputs.endpoint }} | sed -e 's/sit/${{ inputs.environment }}/g')
+
+        if [ "${{ inputs.application_name }}" = "corporate-web" ]; then
+          export IMAGE_SETS='--set application.values.initContainers[0].image=${{ inputs.image_repo }}:${{ inputs.image_tag }}'
+        else
+          export IMAGE_SETS='--set application.values.image.repository=${{ inputs.image_repo }} --set application.values.image.tag=${{ inputs.image_tag }}'
+        fi
+
+        helm upgrade -i ${{ inputs.release_name }} dime-helm/charts/generic-cronjob \
+        -f dime-helm/values/${{ inputs.application_name }}/values.yaml \
+        -f dime-helm/values/${{ inputs.application_name }}/values-${{ inputs.environment }}.yaml \
+        --set "fullnameOverride=${{ inputs.application_name }}" \
+        --set "nameOverride=${{ inputs.application_name }}" \
+        --set "source.username=${{ inputs.gh_access_token }}" \
+        --set "source.password=x-oauth-basic" \
+        --set "destination.cluster=${{ inputs.cluster }}" \
+        --set "destination.namespace=${{ inputs.namespace }}" \
+        --set "application.values.virtualService.hosts={$ENDPOINTS}" \
+        $IMAGE_SETS
+
+    - id: success_message
+      if: ${{ success() }}
+      shell: bash
+      run: |
+        echo "::set-output name=color::#2EB67D"
+        echo "::set-output name=title::Successfully deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment"
+        echo "::set-output name=message::You can access to this deployment at https://${{ inputs.endpoint }}"
+
+    - id: fail_message
+      if: ${{ failure() }}
+      shell: bash
+      run: |
+        echo "::set-output name=color::#E01E5A"
+        echo "::set-output name=title::Fail to deploy ${{ inputs.application_name }} on ${{ inputs.environment }} environment"
+        echo "::set-output name=message::Cannot deploy ${{ inputs.application_name }} from $GITHUB_REF to ${{ inputs.environment }} environment"
+  
+    - name: Slack Notification
+      if: ${{ always() }}
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        payload: |
+          {
+            "text": "${{ steps.fail_message.outputs.title || steps.success_message.outputs.title }}",
+            "attachments": [
+              {
+                "color": "${{ steps.fail_message.outputs.color || steps.success_message.outputs.color }}",
+                "blocks": [
+                  {
+                    "type": "context",
+                    "elements": [
+                      {
+                        "type": "image",
+                        "image_url": "${{ github.event.sender.avatar_url }}",
+                        "alt_text": "${{ github.event.sender.login }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "${{ github.event.sender.login }}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "section",
+                    "text": {
+                      "type": "mrkdwn",
+                      "text": "${{ steps.fail_message.outputs.message || steps.success_message.outputs.message }}"
+                    },
+                    "fields": [
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Repository*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Event*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "${{ github.event_name }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Ref*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "*Commit*"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "${{ github.ref_name }}"
+                      },
+                      {
+                        "type": "mrkdwn",
+                        "text": "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook }}
