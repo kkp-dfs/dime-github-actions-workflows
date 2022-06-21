@@ -5,7 +5,6 @@ TOKEN=$(aws sts assume-role --role-arn $1 --role-session-name $3)
 export AWS_ACCESS_KEY_ID="$(echo $TOKEN | jq -r '.Credentials.AccessKeyId')"
 export AWS_SECRET_ACCESS_KEY="$(echo $TOKEN | jq -r '.Credentials.SecretAccessKey')"
 export AWS_SESSION_TOKEN="$(echo $TOKEN | jq -r '.Credentials.SessionToken')"
-aws sts get-caller-identity
 
 if [[ "$4" == "delete" ]]; then
     aws s3 rm s3://$2/ --recursive --exclude "*" --include "$3/*"
