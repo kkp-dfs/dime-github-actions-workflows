@@ -71,10 +71,6 @@ on:
         required: false
         type: string
         default: linux/amd64
-      image:
-        description: Docker image name
-        required: true
-        type: string
       dockerfile:
         description: Path to the dockerfile to be built.
         required: false
@@ -135,7 +131,7 @@ jobs:
         id: ecr
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
         with:
-          repository: ${{ inputs.image || github.repository }}
+          repository: ${{ 'kkp-dfs/' + inputs.application_name }}
       - name: Get parameters
         id: paramater
         run: |
@@ -204,7 +200,7 @@ jobs:
           target_ref: ${{ inputs.target_ref }}
       - name: Build and push docker image
         id: build
-        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@build-deploy-workflow
+        uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
           application_name: ${{ inputs.application_name }}
           repository: ${{ needs.setup.outputs.ecr_repository }}
@@ -228,7 +224,7 @@ jobs:
         - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
     steps:
       - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@build-deploy-workflow
+        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
           environment: ${{ inputs.environment }}
           release_name: ${{ needs.setup.outputs.release_name }}

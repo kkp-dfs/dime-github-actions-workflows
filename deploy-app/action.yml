@@ -95,7 +95,6 @@ runs:
         --set "source.password=x-oauth-basic" \
         --set "destination.cluster=${{ inputs.cluster }}" \
         --set "destination.namespace=${{ inputs.namespace }}" \
-        --set "application.version=SRE-542-user-profile-migration" \
         --set "application.values.virtualService.hosts={$ENDPOINTS}" \
         $IMAGE_SETS
 
