@@ -171,7 +171,6 @@ jobs:
       - name: Run gocyclo linter
         uses: kkp-dfs/dime-github-actions-workflows/lint@main
         if: ${{ inputs.code_lang == 'golang' }}
-        continue-on-error: true
         with:
           application_name: ${{ inputs.application_name }}
           language: ${{ inputs.code_lang }}
