@@ -50,11 +50,11 @@ runs:
       id: meta
       uses: docker/metadata-action@v4
       with:
-        images: ${{ inputs.image || inputs.repository }}
+        images: ${{ inputs.repository }}
         labels: |
           maintainer=${{ github.actor }}
           org.opencontainers.image.title=${{ inputs.application_name }}
-          org.opencontainers.image.licenses=Dimeⓒ
+          org.opencontainers.image.licenses=Copyright 2022 Dime Co., Ltd.
         tags: |
           type=semver,pattern={{version}}
           type=ref,event=pr,suffix=-{{ date 'YYYYMMDD-HHmmss' }}

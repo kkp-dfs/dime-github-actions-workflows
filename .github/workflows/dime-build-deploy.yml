@@ -206,7 +206,6 @@ jobs:
           application_name: ${{ inputs.application_name }}
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
-          image: ${{ inputs.image }}
           dockerfile: ${{ inputs.dockerfile }}
           gh_access_token: ${{ secrets.gh_access_token }}
 
