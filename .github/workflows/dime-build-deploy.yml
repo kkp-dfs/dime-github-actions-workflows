@@ -135,10 +135,9 @@ jobs:
         id: paramater
         run: |
           REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
+          RELEASE_NAME=${{ inputs.application_name }}-${REF_NAME}
           if [[ "${REF_NAME}" == "main" ]]; then
             RELEASE_NAME=${{ inputs.application_name }}-${{ inputs.environment }}
-          else
-            RELEASE_NAME=${{ inputs.application_name }}-${REF_NAME}
           fi
           echo "::set-output name=release_name::${RELEASE_NAME}"
           echo "::set-output name=host::argo.mydime.tech/applications/${RELEASE_NAME}"
@@ -227,7 +226,7 @@ jobs:
         uses: kkp-dfs/dime-github-actions-workflows/deploy-app@build-deploy-workflow
         with:
           environment: ${{ inputs.environment }}
-          release_name: ${{ needs.setup.output.release_name }}
+          release_name: ${{ needs.setup.outputs.release_name }}
           helm_ref: ${{ inputs.helm_ref }}
           cluster: ${{ inputs.cluster_prefix }}-${{ inputs.environment }}
           namespace: ${{ inputs.namespace }}
