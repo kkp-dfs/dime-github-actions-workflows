@@ -82,7 +82,12 @@ on:
       build_args:
         description: List of build-time variables
         required: false
-        type: string       
+        type: string
+      delete_before_recreate:
+        description: Delete previous deployment before re-depoloy
+        required: false
+        type: boolean
+        default: false
       slack_channel:
         description: The slack channel that send notification.
         type: string
@@ -234,6 +239,7 @@ jobs:
           endpoint: ${{ needs.setup.outputs.endpoint }}
           image_repo: ${{ needs.build.outputs.image_repo }}
           image_tag: ${{ needs.build.outputs.image_tag }}
+          delete_before_recreate: ${{ inputs.delete_before_recreate }}
           slack_channel: ${{ inputs.slack_channel }}
           slack_webhook: ${{ secrets.slack_webhook }}
           gh_access_token: ${{ secrets.gh_access_token }}
