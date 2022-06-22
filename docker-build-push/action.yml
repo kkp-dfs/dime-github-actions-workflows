@@ -67,7 +67,7 @@ runs:
       shell: bash
       run: echo "::add-mask::${{ inputs.token }}"
     - name: Build & push docker images
-      uses: kkp-dfs/dime-github-actions-workflows/kaniko@build-deploy-workflow
+      uses: kkp-dfs/dime-github-actions-workflows/kaniko@main
       with:
         image: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
