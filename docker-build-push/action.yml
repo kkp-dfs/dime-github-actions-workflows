@@ -6,6 +6,10 @@ inputs:
     description: The owner and repository name
     required: false
     default: ${{ github.repository }}
+  application_name:
+    description: Name of application
+    required: false
+    default: ''
   token:
     description: ECR token
     required: true
@@ -17,6 +21,10 @@ inputs:
     required: false
   target:
     description: Indicate which build stage is the target build stage
+    required: false
+    default: ''
+  dockerfile:
+    description: Path to the dockerfile to be built.
     required: false
   gh_access_token:
     description: GitHub access token
@@ -40,9 +48,13 @@ runs:
       run: echo ${{ github.repository }}
     - name: Set docker metadata
       id: meta
-      uses: docker/metadata-action@v3
+      uses: docker/metadata-action@v4
       with:
-        images: ${{ inputs.image || inputs.repository }}
+        images: ${{ inputs.repository }}
+        labels: |
+          maintainer=${{ github.actor }}
+          org.opencontainers.image.title=${{ inputs.application_name }}
+          org.opencontainers.image.licenses=Copyright 2022 Dime Co., Ltd.
         tags: |
           type=semver,pattern={{version}}
           type=ref,event=pr,suffix=-{{ date 'YYYYMMDD-HHmmss' }}
@@ -62,6 +74,7 @@ runs:
         build_args: ${{ inputs.build_args }}
         token: ${{ inputs.token }}
         target: ${{ inputs.target }}
+        dockerfile: ${{ inputs.dockerfile }}
 
     - id: image
       shell: bash

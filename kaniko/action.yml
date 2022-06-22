@@ -18,9 +18,14 @@ inputs:
   target:
     description: indicate which build stage is the target build stage.
     required: false
+    default: ''
   labels:
     description: docker image labels
     required: false
+  dockerfile:
+    description: Path to the dockerfile to be built. (default "Dockerfile")
+    required: false
+    default: Dockerfile
 outputs:
   image:
     description: docker image
@@ -33,4 +38,5 @@ runs:
     - ${{ inputs.image }}
     - ${{ inputs.build_args }}
     - ${{ inputs.labels }}
+    - ${{ inputs.dockerfile }}
     - ${{ inputs.target }}

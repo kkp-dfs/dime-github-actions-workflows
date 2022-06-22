@@ -32,6 +32,10 @@ inputs:
   image_tag:
     description: Docker image's tag
     required: true
+  delete_before_recreate:
+    description: Delete previous deployment before re-depoloy
+    required: false
+    default: "false"
   slack_channel:
     description: The slack channel that send notification.
     required: false
@@ -65,6 +69,12 @@ runs:
         kubectl config set-cluster eks --server=https://kubernetes.default.svc --certificate-authority=${SERVICEACCOUNT}/ca.crt
         kubectl config set-context default --cluster=eks --user=eks-account --namespace=$NAMESPACE
         kubectl config use-context default
+    - name: Delete previous deployment
+      if: ${{ inputs.delete_before_recreate == 'true' }}
+      shell: bash
+      run: |
+        kubectl patch -n argocd app ${{ inputs.release_name }} -p '{"metadata": {"finalizers": ["resources-finalizer.argocd.argoproj.io"]}}' --type merge
+        kubectl delete -n argocd app ${{ inputs.release_name }} --wait
     - name: Deply by helm
       shell: bash
       run: |

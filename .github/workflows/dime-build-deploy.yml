@@ -43,15 +43,6 @@ on:
         required: false
         type: string
         default: dime
-      hostname:
-        description: The hostname of the application service
-        required: true
-        type: string
-      additional_hostnames:
-        description: The additional hostnames of the application service
-        required: false
-        type: string
-        default: ""
       code_lang:
         description: The program language of this repository
         required: true
@@ -80,10 +71,19 @@ on:
         required: false
         type: string
         default: linux/amd64
+      dockerfile:
+        description: Path to the dockerfile to be built.
+        required: false
+        type: string
       build_args:
         description: List of build-time variables
         required: false
-        type: string       
+        type: string
+      delete_before_recreate:
+        description: Delete previous deployment before re-depoloy
+        required: false
+        type: boolean
+        default: false
       slack_channel:
         description: The slack channel that send notification.
         type: string
@@ -125,31 +125,27 @@ jobs:
       ecr_username: ${{ steps.ecr.outputs.username }}
       ecr_password: ${{ steps.ecr.outputs.password }}
       endpoint: ${{ steps.paramater.outputs.host }}
-      ref: ${{ steps.paramater.outputs.ref }}
+      release_name: ${{ steps.paramater.outputs.release_name }}
     steps:
       - name: Get ECR information
         id: ecr
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
+        with:
+          repository: ${{ 'kkp-dfs/' + inputs.application_name }}
       - name: Get parameters
         id: paramater
         run: |
           REF_NAME=$(echo "${GITHUB_REF#refs/heads/}" | sed "s/\//-/g")
-          if [ "${{ inputs.event_name }}" == "pull_request" ]; then
-            HOST=$(echo "${{ inputs.hostname }}" | sed -E 's/^[a-z0-9_\-]+\.(.+)$/${{ inputs.application_name }}-pr-${{ inputs.event_number }}.\1/i')
-          elif [ "${REF_NAME}" != "main" ]; then
-            HOST=$(echo "${{ inputs.hostname }}" | sed -E 's/^[a-z0-9_\-]+\.(.+)$/${{ inputs.application_name }}-refs-${REF_NAME}.\1/i')
-          elif [[ ! -z "${{ inputs.additional_hostnames }}" ]]; then
-            HOST=${{ inputs.hostname }},${{ inputs.additional_hostnames }}
-          else
-            HOST=${{ inputs.hostname }}
+          RELEASE_NAME=${{ inputs.application_name }}-${REF_NAME}
+          if [[ "${REF_NAME}" == "main" ]]; then
+            RELEASE_NAME=${{ inputs.application_name }}-${{ inputs.environment }}
           fi
-          echo "::set-output name=ref::$REF_NAME"
-          echo "::set-output name=host::$HOST"
+          echo "::set-output name=release_name::${RELEASE_NAME}"
+          echo "::set-output name=host::argo.mydime.tech/applications/${RELEASE_NAME}"
 
   lint:
     name: Run lint
     runs-on: ubuntu-latest
-    if: ${{ inputs.code_lang != 'java' }}
     steps:
       - name: Setup ${{ inputs.code_lang }}
         uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
@@ -179,72 +175,13 @@ jobs:
           slack_webhook: ${{ inputs.slack_webhook }}
           linter: gocyclo
 
-  unit-test:
-    name: Run unit test
-    runs-on: [self-hosted, go-action-runner, main]
-    if: ${{ inputs.code_lang == 'golang' }}
-    env:
-      GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
-    steps:
-      - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          language: ${{ inputs.code_lang }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Run unit tests
-        uses: kkp-dfs/dime-github-actions-workflows/unit-test@main
-        with:
-          minimum_coverage: 80
-          application_name: ${{ inputs.application_name }}
-          language: ${{ inputs.code_lang }}
-          slack_channel: ${{ inputs.slack_channel }}
-          slack_webhook: ${{ secrets.slack_webhook }}
-
-  integration-test:
-    name: Run integration test
-    runs-on: [self-hosted, go-action-runner, "${{ inputs.cluster_prefix }}-${{ inputs.environment }}"]
-    if: ${{ inputs.code_lang == 'golang' }}
-    continue-on-error: true
-    env:
-      GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
-    steps:
-      - name: Setup ${{ inputs.code_lang }}
-        uses: kkp-dfs/dime-github-actions-workflows/lang-setup@main
-        with:
-          repository: ${{ inputs.repository }}
-          base_ref: ${{ inputs.base_ref }}
-          target_ref: ${{ inputs.target_ref }}
-          language: ${{ inputs.code_lang }}
-          go_version: ${{ inputs.go-version }}
-          node_version: ${{ inputs.node-version }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-      - name: Run integration tests
-        uses: kkp-dfs/dime-github-actions-workflows/integration-test@main
-        with:
-          cluster_prefix: ${{ inputs.cluster_prefix }}
-          application_name: ${{ inputs.application_name }}
-          language: ${{ inputs.code_lang }}
-          migration: ${{ inputs.migration }}
-          migrate_dir: ${{ inputs.migrate_dir }}
-          migrate_schema: ${{ inputs.migrate_schema }}
-          slack_channel: ${{ inputs.slack_channel }}
-          slack_webhook: ${{ secrets.slack_webhook }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-
   build:
     name: Build & push docker images to registry
     needs:
       - setup
       - lint
-      - unit-test
-      - integration-test
     runs-on: [self-hosted, linux,  main, deployment]
-    if: ${{ (inputs.code_lang == 'java') || (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
+    if: ${{ (inputs.code_lang == 'node' && needs.lint.result == 'success') || success() }}
     env:
       GOPROXY: https://nexus.mydime.tech/repository/go-proxy,direct
     container:
@@ -265,40 +202,10 @@ jobs:
         id: build
         uses: kkp-dfs/dime-github-actions-workflows/docker-build-push@main
         with:
+          application_name: ${{ inputs.application_name }}
           repository: ${{ needs.setup.outputs.ecr_repository }}
           token: ${{ needs.setup.outputs.ecr_token }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-          target: ${{ (inputs.repository == 'kkp-dfs/dime-corporate-web' && 'source') || '' }}
-
-  deploy_pr:
-    name: Deploy application from pull-request
-    needs:
-      - setup
-      - build
-    runs-on: [self-hosted, linux, main, deployment]
-    if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref != 'main' }}
-    environment:
-      name: ${{ needs.setup.outputs.ref }}
-      url: https://${{ needs.setup.outputs.endpoint }}
-    container:
-      image: public.ecr.aws/c2u4x1k5/ubuntu:21.04
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
-    steps:
-      - name: Apply Dime ArgoCD Application Helm
-        uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
-        with:
-          environment: sit
-          release_name: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
-          helm_ref: ${{ inputs.helm_ref }}
-          cluster: ${{ inputs.cluster_prefix }}-${{ inputs.environment }}
-          namespace: ${{ inputs.application_name }}-${{ needs.setup.outputs.ref }}
-          application_name: ${{ inputs.application_name }}
-          endpoint: ${{ needs.setup.outputs.endpoint }}
-          image_repo: ${{ needs.build.outputs.image_repo }}
-          image_tag: ${{ needs.build.outputs.image_tag }}
-          slack_channel: ${{ inputs.slack_channel }}
-          slack_webhook: ${{ secrets.slack_webhook }}
+          dockerfile: ${{ inputs.dockerfile }}
           gh_access_token: ${{ secrets.gh_access_token }}
 
   deploy:
@@ -307,9 +214,9 @@ jobs:
       - setup
       - build
     runs-on: [self-hosted, linux, main, deployment]
-    if: ${{ always() && needs.build.result == 'success' && needs.setup.outputs.ref == 'main' }}
+    if: ${{ always() && needs.build.result == 'success' }}
     environment:
-      name: sit
+      name: ${{ inputs.environment }}
       url: https://${{ needs.setup.outputs.endpoint }}
     container:
       image: public.ecr.aws/c2u4x1k5/ubuntu:21.04
@@ -319,8 +226,8 @@ jobs:
       - name: Apply Dime ArgoCD Application Helm
         uses: kkp-dfs/dime-github-actions-workflows/deploy-app@main
         with:
-          environment: sit
-          release_name: ${{ inputs.application_name }}-sit
+          environment: ${{ inputs.environment }}
+          release_name: ${{ needs.setup.outputs.release_name }}
           helm_ref: ${{ inputs.helm_ref }}
           cluster: ${{ inputs.cluster_prefix }}-${{ inputs.environment }}
           namespace: ${{ inputs.namespace }}
@@ -328,53 +235,7 @@ jobs:
           endpoint: ${{ needs.setup.outputs.endpoint }}
           image_repo: ${{ needs.build.outputs.image_repo }}
           image_tag: ${{ needs.build.outputs.image_tag }}
+          delete_before_recreate: ${{ inputs.delete_before_recreate }}
           slack_channel: ${{ inputs.slack_channel }}
           slack_webhook: ${{ secrets.slack_webhook }}
           gh_access_token: ${{ secrets.gh_access_token }}
-
-  db_migration:
-    name: Migrate database
-    needs: [build]
-    runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ inputs.migration && ((inputs.code_lang == 'node' && needs.lint.result == 'success') || success()) }}
-    environment:
-      name: sit
-    container:
-      image: public.ecr.aws/c2u4x1k5/dbmate:1.12
-      volumes:
-        - /var/run/secrets/kubernetes.io/serviceaccount:/var/run/secrets/kubernetes.io/serviceaccount
-    steps:
-      - name: Migrate database
-        uses: kkp-dfs/dime-github-actions-workflows/db-migration@main
-        with:
-          environment: sit
-          application_name: ${{ inputs.application_name }}
-          directory: ${{ inputs.migrate_dir }}
-          schema: ${{ inputs.migrate_schema }}
-          helm_ref: ${{ inputs.helm_ref }}
-          gh_access_token: ${{ secrets.gh_access_token }}
-
-  e2e-test:
-    name: Run E2E test
-    needs: [deploy]
-    runs-on: [self-hosted, linux, deployment, main]
-    if: ${{ inputs.code_lang == 'golang' }}
-    continue-on-error: true
-    steps:
-      - name: Trigger jenkins job
-        uses: joshlk/jenkins-githubaction@master
-        with:
-          url: http://jenkins.qa.svc.cluster.local:8080
-          username: jenkins
-          api_token: ${{ secrets.jenkins_api_token }}
-          job_name: API-E2E
-          parameters: >-
-            {
-              "TRIGGER": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|${{ github.repository }}@${{ github.ref_name }}>",
-              "BRANCH": "main",
-              "ENVIRONMENT": "sit",
-              "INCLUDE_TAG": "-i SIT",
-              "EXCLUDE_TAG": ""
-            }
-          wait: "true"
-          timeout: "1000"
