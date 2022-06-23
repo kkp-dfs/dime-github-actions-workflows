@@ -17,6 +17,8 @@ TARGET=$(echo $7 | xargs -I@ echo --target=@)
 /kaniko/executor \
     --context=$PWD \
     --cache \
+    --use-new-run \
+    --snapshotMode=redo \
     $BUILD_ARGS $DOCKERFILE $TARGET $DESTINATIONS
 
 echo "::set-output name=image::$3"
