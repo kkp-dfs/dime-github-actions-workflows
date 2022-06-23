@@ -154,6 +154,11 @@ runs:
         RABBITMQ_VHOST: ${{ steps.setup.outputs.rmq_vhost }}
         RABBITMQ_USERNAME: ${{ steps.setup.outputs.rmq_user }}
         RABBITMQ_PASSWORD: ${{ steps.setup.outputs.rmq_pass }}
+        SECURERABBITMQ_HOST: ${{ steps.setup.outputs.rmq_host }}
+        SECURERABBITMQ_PORT: ${{ steps.setup.outputs.rmq_port }}
+        SECURERABBITMQ_VHOST: ${{ steps.setup.outputs.rmq_vhost }}
+        SECURERABBITMQ_USERNAME: ${{ steps.setup.outputs.rmq_user }}
+        SECURERABBITMQ_PASSWORD: ${{ steps.setup.outputs.rmq_pass }}
         REDIS_HOST: ${{ steps.setup.outputs.redis_host }}
         REDIS_PORT: ${{ steps.setup.outputs.redis_port }}
         REDIS_PASSWORD: ${{ steps.setup.outputs.redis_pass }}
