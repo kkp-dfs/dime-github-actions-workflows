@@ -96,6 +96,7 @@ runs:
         --set "destination.cluster=${{ inputs.cluster }}" \
         --set "destination.namespace=${{ inputs.namespace }}" \
         --set "application.values.virtualService.hosts={$ENDPOINTS}" \
+        --set "application.version=${{ inputs.helm_ref }}" \
         $IMAGE_SETS
 
     - id: success_message
