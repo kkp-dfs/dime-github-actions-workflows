@@ -131,7 +131,7 @@ jobs:
         id: ecr
         uses: kkp-dfs/dime-github-actions-workflows/get-ecr-info@main
         with:
-          repository: ${{ 'kkp-dfs/' + inputs.application_name }}
+          repository: kkp-dfs/${{ inputs.application_name }}
       - name: Get parameters
         id: paramater
         run: |
