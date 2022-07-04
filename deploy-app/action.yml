@@ -73,8 +73,12 @@ runs:
       if: ${{ inputs.delete_before_recreate == 'true' }}
       shell: bash
       run: |
-        kubectl patch -n argocd app ${{ inputs.release_name }} -p '{"metadata": {"finalizers": ["resources-finalizer.argocd.argoproj.io"]}}' --type merge
-        kubectl delete -n argocd app ${{ inputs.release_name }} --wait
+        set +e
+        kubectl get -n argocd app ${{ inputs.release_name }}
+        if [[ "$?" == "0" ]]; then
+          kubectl patch -n argocd app ${{ inputs.release_name }} -p '{"metadata": {"finalizers": ["resources-finalizer.argocd.argoproj.io"]}}' --type merge
+          kubectl delete -n argocd app ${{ inputs.release_name }} --wait
+        fi
     - name: Deply by helm
       shell: bash
       run: |
