@@ -19,6 +19,7 @@ TARGET=$(echo $7 | xargs -I@ echo --target=@)
     --cache \
     --use-new-run \
     --snapshotMode=redo \
+    --compressed-caching=false \
     $BUILD_ARGS $DOCKERFILE $TARGET $DESTINATIONS
 
 echo "::set-output name=image::$3"
