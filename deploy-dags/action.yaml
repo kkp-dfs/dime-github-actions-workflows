@@ -73,4 +73,5 @@ runs:
         --set "destination.namespace=${{ inputs.namespace }}" \
         --set "application.values.configmaps.default.data.DAGS_REPO=${{ inputs.repository }}" \
         --set "application.values.configmaps.default.data.DAGS_VERSION=${{ inputs.ref_name }}" \
-        --set "application.values.secrets.default.data.GH_ACCESS_TOKEN=${{ inputs.gh_access_token }}"
+        --set "application.values.secrets.default.data.GH_ACCESS_TOKEN=${{ inputs.gh_access_token }}" \
+        --set "application.values.volumes[1].configMap.name=${RELEASE_NAME}-scripts"
