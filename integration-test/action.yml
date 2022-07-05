@@ -133,9 +133,11 @@ runs:
         REDIS_HOST=redis-master.shared.svc.cluster.local
         REDIS_PORT=6379
         REDIS_ADMIN_PASS=$(echo $REDIS | jq -r '.data.data.admin_password')
+        REDIS_ADDRESSES=${REDIS_HOST}:${REDIS_PORT}
         echo "::set-output name=redis_host::${REDIS_HOST}"
         echo "::set-output name=redis_port::${REDIS_PORT}"
         echo "::set-output name=redis_pass::${REDIS_ADMIN_PASS}"
+        echo "::set-output name=redis_addresses::${REDIS_ADDRESSES}"
     - name: Run go integration test
       if: ${{ inputs.language == 'golang' }}
       shell: bash
@@ -159,6 +161,7 @@ runs:
         SECURERABBITMQ_VHOST: ${{ steps.setup.outputs.rmq_vhost }}
         SECURERABBITMQ_USERNAME: ${{ steps.setup.outputs.rmq_user }}
         SECURERABBITMQ_PASSWORD: ${{ steps.setup.outputs.rmq_pass }}
+        REDIS_ADDRESSES: ${{ steps.setup.outputs.redis_addresses }}
         REDIS_HOST: ${{ steps.setup.outputs.redis_host }}
         REDIS_PORT: ${{ steps.setup.outputs.redis_port }}
         REDIS_PASSWORD: ${{ steps.setup.outputs.redis_pass }}
