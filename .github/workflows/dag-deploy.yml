@@ -28,6 +28,11 @@ on:
         required: false
         type: string
         default: ${{ github.repository }}
+      ref_name:
+        description: Git commit's reference name
+        required: false
+        type: string
+        default: ${{ github.ref_name }}
     secrets:
       gh_access_token:
         required: true
@@ -77,6 +82,6 @@ jobs:
           --set "source.password=x-oauth-basic" \
           --set "destination.cluster=${{ inputs.cluster_prefix }}-${{ inputs.environment }}" \
           --set "destination.namespace=${{ inputs.namespace }}" \
-          --set "application.values.configmaps.default.data.DAGS_REPO=${{ github.repository }}" \
-          --set "application.values.configmaps.default.data.DAGS_VERSION=${{ github.ref_name }}" \
+          --set "application.values.configmaps.default.data.DAGS_REPO=${{ inputs.repository }}" \
+          --set "application.values.configmaps.default.data.DAGS_VERSION=${{ inputs.ref_name }}" \
           --set "application.values.secrets.default.data.GH_ACCESS_TOKEN=${{ secrets.gh_access_token }}"
