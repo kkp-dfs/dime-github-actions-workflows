@@ -23,6 +23,11 @@ on:
         required: false
         type: string
         default: etl
+      repository:
+        description: GitHub Repository
+        required: false
+        type: string
+        default: ${{ github.repository }}
     secrets:
       gh_access_token:
         required: true
@@ -53,7 +58,7 @@ jobs:
       - name: Deploy job
         shell: bash
         run: |
-          REPOSITORY="${{ github.repository }}"
+          REPOSITORY="${{ inputs.repository }}"
           RELEASE_NAME=${REPOSITORY/"kkp-dfs/"/}
           RELEASE_NAME=${RELEASE_NAME//_/-}
 
