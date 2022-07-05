@@ -1,0 +1,76 @@
+name: Deploy DAGs
+description: Deploy DAGs by Helm
+
+inputs:
+  helm_ref:
+    description: commit reference of helm repository
+    required: false
+    default: main
+  cluster_prefix:
+    description: cluster prefix
+    required: false
+    default: dime
+  environment:
+    description: Environment that would like to deploy services
+    required: false
+    default: sit
+  namespace:
+    description: Kubernetes namespace
+    required: false
+    default: etl
+  repository:
+    description: GitHub Repository
+    required: false
+    default: ${{ github.repository }}
+  ref_name:
+    description: Git commit's reference name
+    required: false
+    default: ${{ github.ref_name }}
+  gh_access_token:
+    description: GitHub access token
+    required: true  
+
+runs:
+  using: composite
+  steps:
+    - uses: kkp-dfs/dime-github-actions-workflows/common@main
+      with:
+        gh_access_token: ${{ inputs.gh_access_token }}
+    - name: Checkout helm
+      run: git clone https://github.com/kkp-dfs/dime-helm.git
+      shell: bash
+    - name: Setup kubernetes context
+      shell: bash
+      env:
+        SERVICEACCOUNT: /var/run/secrets/kubernetes.io/serviceaccount
+      run: |
+        export NAMESPACE=$(cat ${SERVICEACCOUNT}/namespace)
+        kubectl config set-credentials eks-account --token=$(cat ${SERVICEACCOUNT}/token)
+        kubectl config set-cluster eks --server=https://kubernetes.default.svc --certificate-authority=${SERVICEACCOUNT}/ca.crt
+        kubectl config set-context default --cluster=eks --user=eks-account --namespace=$NAMESPACE
+        kubectl config use-context default
+    - name: Deploy job
+      shell: bash
+      run: |
+        REPOSITORY="${{ inputs.repository }}"
+        RELEASE_NAME=${REPOSITORY/"kkp-dfs/"/}
+        RELEASE_NAME=${RELEASE_NAME//_/-}
+
+        if [ $(helm ls -A -f "${RELEASE_NAME}-${{ inputs.environment }}" -o json | jq -r '. | length') -gt "0" ]; then
+          kubectl patch -n argocd app ${RELEASE_NAME}-${{ inputs.environment }} -p '{"metadata": {"finalizers": ["resources-finalizer.argocd.argoproj.io"]}}' --type merge
+          kubectl delete -n argocd app ${RELEASE_NAME}-${{ inputs.environment }} --wait
+          sleep 5
+        fi
+
+        helm upgrade -i ${RELEASE_NAME}-${{ inputs.environment }} dime-helm/charts/dime-application \
+        -f dime-helm/values/airflow-dags/values.yaml \
+        -f dime-helm/values/airflow-dags/values-${{ inputs.environment }}.yaml \
+        --set "fullnameOverride=${RELEASE_NAME}" \
+        --set "nameOverride=${RELEASE_NAME}" \
+        --set "source.username=${{ inputs.gh_access_token }}" \
+        --set "source.password=x-oauth-basic" \
+        --set "destination.cluster=${{ inputs.cluster_prefix }}-${{ inputs.environment }}" \
+        --set "destination.namespace=${{ inputs.namespace }}" \
+        --set "application.values.configmaps.default.data.DAGS_REPO=${{ inputs.repository }}" \
+        --set "application.values.configmaps.default.data.DAGS_VERSION=${{ inputs.ref_name }}" \
+        --set "application.values.secrets.default.data.GH_ACCESS_TOKEN=${{ inputs.gh_access_token }}"
